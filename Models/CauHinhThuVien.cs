@@ -13,13 +13,13 @@ public class CauHinhThuVien
 {
     [Key] public int MaCauHinh { get; set; }
 
-    [Display(Name = "Số ngày mượn - Sinh viên")] public int SoNgayMuonSinhVien { get; set; } = 14;
-    [Display(Name = "Số ngày mượn - Giảng viên")] public int SoNgayMuonGiangVien { get; set; } = 30;
-    [Display(Name = "Số ngày mượn - Khác")] public int SoNgayMuonKhac { get; set; } = 14;
-    [Display(Name = "Số phiếu tối đa")] public int SoPhieuToiDa { get; set; } = 5;
-    [Display(Name = "Số lần gia hạn tối đa")] public int SoLanGiaHanToiDa { get; set; } = 2;
-    [Display(Name = "Số ngày gia hạn tối đa")] public int SoNgayGiaHanToiDa { get; set; } = 7;
-    [Display(Name = "Tiền phạt mỗi ngày")] public decimal TienPhatMoiNgay { get; set; } = 2000m;
-    [Display(Name = "Tỷ lệ phạt hư hỏng")] public decimal TyLePhatHuHong { get; set; } = 0.5m;
-    [Display(Name = "Tỷ lệ phạt mất")] public decimal TyLePhatMat { get; set; } = 1.0m;
+    [Display(Name = "Số ngày mượn - Sinh viên")] [Range(1, 365)] public int SoNgayMuonSinhVien { get; set; } = 14;
+    [Display(Name = "Số ngày mượn - Giảng viên")] [Range(1, 365)] public int SoNgayMuonGiangVien { get; set; } = 30;
+    [Display(Name = "Số ngày mượn - Khác")] [Range(1, 365)] public int SoNgayMuonKhac { get; set; } = 14;
+    [Display(Name = "Số phiếu tối đa")] [Range(1, 100)] public int SoPhieuToiDa { get; set; } = 5;
+    [Display(Name = "Số lần gia hạn tối đa")] [Range(0, 20)] public int SoLanGiaHanToiDa { get; set; } = 2;
+    [Display(Name = "Số ngày gia hạn tối đa")] [Range(1, 90)] public int SoNgayGiaHanToiDa { get; set; } = 7;
+    [Display(Name = "Tiền phạt mỗi ngày")] [Range(0, 10000000)] public decimal TienPhatMoiNgay { get; set; } = 2000m;
+    [Display(Name = "Tỷ lệ phạt hư hỏng")] [Range(0, 1)] public decimal TyLePhatHuHong { get; set; } = 0.5m;
+    [Display(Name = "Tỷ lệ phạt mất")] [Range(0, 1)] public decimal TyLePhatMat { get; set; } = 1.0m;
 }

@@ -13,7 +13,10 @@ public class PhieuMuon
 {
     [Key] public int MaPhieuMuon { get; set; }
 
+    [ForeignKey(nameof(BanDoc))] [Display(Name = "Bạn đọc")]
     public int MaBanDoc { get; set; }
+
+    [ForeignKey(nameof(Sach))] [Display(Name = "Sách")]
     public int MaSach { get; set; }
 
     [DataType(DataType.Date)] [Display(Name = "Ngày đăng ký")]
@@ -25,7 +28,7 @@ public class PhieuMuon
     [DataType(DataType.Date)] [Display(Name = "Hạn trả")]
     public DateOnly? HanTra { get; set; }
 
-    [StringLength(100)] [Display(Name = "Ghi chú")]
+    [StringLength(100)] [DataType(DataType.MultilineText)] [Display(Name = "Ghi chú")]
     public string? GhiChu { get; set; }
 
     [Display(Name = "Trạng thái")]
@@ -34,7 +37,7 @@ public class PhieuMuon
     [DataType(DataType.Date)] [Display(Name = "Ngày xử lý")]
     public DateOnly? NgayXuLy { get; set; }
 
-    [StringLength(100)] [Display(Name = "Nhận xét thủ thư")]
+    [StringLength(100)] [DataType(DataType.MultilineText)] [Display(Name = "Nhận xét thủ thư")]
     public string? NhanXetThuThu { get; set; }
 
     public BanDoc? BanDoc { get; set; }

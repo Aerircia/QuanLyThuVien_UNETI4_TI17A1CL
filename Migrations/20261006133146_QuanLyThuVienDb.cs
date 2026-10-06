@@ -134,8 +134,7 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                     ViTriKe = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
                     MoTa = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
                     TrangThai = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    ImgPath = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
-                    TheLoaiMaTheLoai = table.Column<int>(type: "int", nullable: true)
+                    ImgPath = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -144,8 +143,8 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                     table.CheckConstraint("CK_Sach_NamXuatBan", "[NamXuatBan] >= 1900");
                     table.CheckConstraint("CK_Sach_SoLuongTong", "[SoLuongTong] > 0");
                     table.ForeignKey(
-                        name: "FK_Sach_TheLoai_TheLoaiMaTheLoai",
-                        column: x => x.TheLoaiMaTheLoai,
+                        name: "FK_Sach_TheLoai_MaTheLoai",
+                        column: x => x.MaTheLoai,
                         principalTable: "TheLoai",
                         principalColumn: "MaTheLoai",
                         onDelete: ReferentialAction.Restrict);
@@ -165,22 +164,20 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                     GhiChu = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     TrangThai = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     NgayXuLy = table.Column<DateOnly>(type: "date", nullable: true),
-                    NhanXetThuThu = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    BanDocMaBanDoc = table.Column<int>(type: "int", nullable: true),
-                    SachMaSach = table.Column<int>(type: "int", nullable: true)
+                    NhanXetThuThu = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PhieuMuon", x => x.MaPhieuMuon);
                     table.ForeignKey(
-                        name: "FK_PhieuMuon_BanDoc_BanDocMaBanDoc",
-                        column: x => x.BanDocMaBanDoc,
+                        name: "FK_PhieuMuon_BanDoc_MaBanDoc",
+                        column: x => x.MaBanDoc,
                         principalTable: "BanDoc",
                         principalColumn: "MaBanDoc",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_PhieuMuon_Sach_SachMaSach",
-                        column: x => x.SachMaSach,
+                        name: "FK_PhieuMuon_Sach_MaSach",
+                        column: x => x.MaSach,
                         principalTable: "Sach",
                         principalColumn: "MaSach",
                         onDelete: ReferentialAction.Restrict);
@@ -199,16 +196,15 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                     NgayYeuCau = table.Column<DateOnly>(type: "date", nullable: false),
                     TrangThai = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     NgayXuLy = table.Column<DateOnly>(type: "date", nullable: true),
-                    NhanXet = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    PhieuMuonMaPhieuMuon = table.Column<int>(type: "int", nullable: true)
+                    NhanXet = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_GiaHanMuon", x => x.MaGiaHan);
                     table.CheckConstraint("CK_GiaHanMuon_HanTra", "[HanTraMoi] > [HanTraCu]");
                     table.ForeignKey(
-                        name: "FK_GiaHanMuon_PhieuMuon_PhieuMuonMaPhieuMuon",
-                        column: x => x.PhieuMuonMaPhieuMuon,
+                        name: "FK_GiaHanMuon_PhieuMuon_MaPhieuMuon",
+                        column: x => x.MaPhieuMuon,
                         principalTable: "PhieuMuon",
                         principalColumn: "MaPhieuMuon",
                         onDelete: ReferentialAction.Restrict);
@@ -225,15 +221,14 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                     TrangThaiMoi = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     NgayThucHien = table.Column<DateTime>(type: "datetime2", nullable: false),
                     MaNguoiThucHien = table.Column<int>(type: "int", nullable: false),
-                    GhiChu = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    PhieuMuonMaPhieuMuon = table.Column<int>(type: "int", nullable: true)
+                    GhiChu = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PhieuMuonLichSu", x => x.MaLichSu);
                     table.ForeignKey(
-                        name: "FK_PhieuMuonLichSu_PhieuMuon_PhieuMuonMaPhieuMuon",
-                        column: x => x.PhieuMuonMaPhieuMuon,
+                        name: "FK_PhieuMuonLichSu_PhieuMuon_MaPhieuMuon",
+                        column: x => x.MaPhieuMuon,
                         principalTable: "PhieuMuon",
                         principalColumn: "MaPhieuMuon",
                         onDelete: ReferentialAction.Restrict);
@@ -292,21 +287,11 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_GiaHanMuon_PhieuMuonMaPhieuMuon",
-                table: "GiaHanMuon",
-                column: "PhieuMuonMaPhieuMuon");
-
-            migrationBuilder.CreateIndex(
                 name: "UX_GiaHanMuon_ChoDuyet",
                 table: "GiaHanMuon",
                 column: "MaPhieuMuon",
                 unique: true,
                 filter: "[TrangThai] = N'ChoDuyet'");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PhieuMuon_BanDocMaBanDoc",
-                table: "PhieuMuon",
-                column: "BanDocMaBanDoc");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PhieuMuon_MaBanDoc_TrangThai",
@@ -317,11 +302,6 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                 name: "IX_PhieuMuon_MaSach_TrangThai",
                 table: "PhieuMuon",
                 columns: new[] { "MaSach", "TrangThai" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PhieuMuon_SachMaSach",
-                table: "PhieuMuon",
-                column: "SachMaSach");
 
             migrationBuilder.CreateIndex(
                 name: "UX_PhieuMuon_BanDoc_Sach_DangXuLy",
@@ -336,19 +316,19 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                 column: "MaNguoiThucHien");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PhieuMuonLichSu_PhieuMuonMaPhieuMuon",
+                name: "IX_PhieuMuonLichSu_MaPhieuMuon",
                 table: "PhieuMuonLichSu",
-                column: "PhieuMuonMaPhieuMuon");
+                column: "MaPhieuMuon");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Sach_MaTheLoai",
+                table: "Sach",
+                column: "MaTheLoai");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Sach_TenSach",
                 table: "Sach",
                 column: "TenSach");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Sach_TheLoaiMaTheLoai",
-                table: "Sach",
-                column: "TheLoaiMaTheLoai");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Sach_TrangThai",

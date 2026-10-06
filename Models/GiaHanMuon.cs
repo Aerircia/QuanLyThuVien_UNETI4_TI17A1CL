@@ -12,6 +12,7 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Models;
 public class GiaHanMuon
 {
     [Key] public int MaGiaHan { get; set; }
+    [ForeignKey(nameof(PhieuMuon))]
     public int MaPhieuMuon { get; set; }
 
     [DataType(DataType.Date)] [Display(Name = "Hạn trả cũ")]
@@ -20,7 +21,7 @@ public class GiaHanMuon
     [DataType(DataType.Date)] [Display(Name = "Hạn trả mới")]
     public DateOnly HanTraMoi { get; set; }
 
-    [StringLength(100)] [Display(Name = "Lý do")]
+    [StringLength(100)] [DataType(DataType.MultilineText)] [Display(Name = "Lý do")]
     public string? LyDo { get; set; }
 
     [DataType(DataType.Date)] [Display(Name = "Ngày yêu cầu")]
@@ -33,7 +34,7 @@ public class GiaHanMuon
     [DataType(DataType.Date)] [Display(Name = "Ngày xử lý")]
     public DateOnly? NgayXuLy { get; set; }
 
-    [StringLength(100)] [Display(Name = "Nhận xét")]
+    [StringLength(100)] [DataType(DataType.MultilineText)] [Display(Name = "Nhận xét")]
     public string? NhanXet { get; set; }
 
     public PhieuMuon? PhieuMuon { get; set; }

@@ -13,6 +13,8 @@ public class Sach
 {
     [Key] public int MaSach { get; set; }
 
+    [ForeignKey(nameof(TheLoai))]
+    [Range(1, int.MaxValue, ErrorMessage = "Vui lòng chọn thể loại")]
     [Display(Name = "Thể loại")]
     public int MaTheLoai { get; set; }
 
@@ -46,6 +48,7 @@ public class Sach
     public string? ViTriKe { get; set; }
 
     [StringLength(2000)]
+    [DataType(DataType.MultilineText)]
     [Display(Name = "Mô tả")]
     public string? MoTa { get; set; }
 
@@ -53,6 +56,7 @@ public class Sach
     public TrangThaiSach TrangThai { get; set; } = TrangThaiSach.DangPhucVu;
 
     [StringLength(255)]
+    [Display(Name = "Ảnh bìa")]
     public string? ImgPath { get; set; }
 
     // KHÔNG có cột SoLuongConLai: tính bằng LINQ từ SoLuongTong và PhieuMuons
