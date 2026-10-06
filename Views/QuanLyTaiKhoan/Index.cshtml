@@ -1,0 +1,109 @@
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: generate view liệt kê tài khoản *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.TaiKhoanListViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Quản lý tài khoản";
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+
+    var vaiTroItems = Html.GetEnumSelectList<VaiTro>().ToList();
+    foreach (var item in vaiTroItems)
+        item.Selected = Model.VaiTro is { } v && item.Value == ((int)v).ToString();
+
+    var trangThaiItems = Html.GetEnumSelectList<TrangThaiTaiKhoan>().ToList();
+    foreach (var item in trangThaiItems)
+        item.Selected = Model.TrangThai is { } t && item.Value == ((int)t).ToString();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">Quản lý tài khoản</h1>
+    <a asp-action="Create" class="btn btn-primary">Thêm tài khoản</a>
+</div>
+
+@if (TempData["ThongBao"] is string thongBao)
+{
+    <div class="alert alert-success" role="status">@thongBao</div>
+}
+@if (TempData["Loi"] is string loi)
+{
+    <div class="alert alert-danger" role="alert">@loi</div>
+}
+
+<form method="get" asp-action="Index" class="row g-2 mb-3">
+    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+    <div class="col-md-4">
+        <input name="search" value="@Model.Search" class="form-control"
+               placeholder="Tìm theo tên đăng nhập, họ tên, email" />
+    </div>
+    <div class="col-md-3">
+        <select name="vaiTro" class="form-select" asp-items="vaiTroItems">
+            <option value="">Tất cả vai trò</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select name="trangThai" class="form-select" asp-items="trangThaiItems">
+            <option value="">Tất cả trạng thái</option>
+        </select>
+    </div>
+    <div class="col-md-2 d-grid">
+        <button type="submit" class="btn btn-outline-primary">Lọc</button>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Tên đăng nhập</th>
+                <th>Họ tên</th>
+                <th>Email</th>
+                <th>Vai trò</th>
+                <th>Trạng thái</th>
+                <th>Hồ sơ bạn đọc</th>
+                <th class="text-end">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Result.Items)
+            {
+                var isSelf = item.MaTaiKhoan == Model.CurrentMaTaiKhoan;
+                var locked = item.TrangThai == TrangThaiTaiKhoan.BiKhoa;
+                <tr>
+                    <td>@item.TenDangNhap @if (isSelf) { <span class="badge bg-info text-dark">Bạn</span> }</td>
+                    <td>@item.HoTen</td>
+                    <td>@item.Email</td>
+                    <td>@item.VaiTro.GetDisplayName()</td>
+                    <td>
+                        <span class="badge @(locked ? "bg-danger" : "bg-success")">@item.TrangThai.GetDisplayName()</span>
+                    </td>
+                    <td>@(item.CoHoSoBanDoc ? "Có" : "—")</td>
+                    <td class="text-end text-nowrap">
+                        <a asp-action="Edit" asp-route-id="@item.MaTaiKhoan" class="btn btn-sm btn-outline-secondary">Sửa</a>
+                        <a asp-action="ResetPassword" asp-route-id="@item.MaTaiKhoan" class="btn btn-sm btn-outline-secondary">Đặt lại MK</a>
+
+                        @if (!isSelf)
+                        {
+                            <form asp-action="SetStatus" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@item.MaTaiKhoan" />
+                                <input type="hidden" name="trangThai" value="@(locked ? nameof(TrangThaiTaiKhoan.HoatDong) : nameof(TrangThaiTaiKhoan.BiKhoa))" />
+                                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                <button type="submit" class="btn btn-sm @(locked ? "btn-outline-success" : "btn-outline-warning")">
+                                    @(locked ? "Mở khóa" : "Khóa")
+                                </button>
+                            </form>
+                            <a asp-action="Delete" asp-route-id="@item.MaTaiKhoan" class="btn btn-sm btn-outline-danger">Xóa</a>
+                        }
+                    </td>
+                </tr>
+            }
+
+            @if (!Model.Result.Items.Any())
+            {
+                <tr><td colspan="7" class="text-center text-muted py-4">Không có tài khoản nào phù hợp.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<partial name="_PagerPartial" model="Model.Pager" />

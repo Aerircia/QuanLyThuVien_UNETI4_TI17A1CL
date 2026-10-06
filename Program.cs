@@ -1,9 +1,24 @@
+using Microsoft.EntityFrameworkCore;
+using QuanLyThuVien_UNETI4_TI17A1CL.Data;
+using QuanLyThuVien_UNETI4_TI17A1CL.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// MVC + Database
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Services
+builder.Services.AddLibraryServices(
+    builder.Configuration,
+    builder.Environment);
+
 var app = builder.Build();
+
+// Seed database
+await DbSeeder.SeedAsync(app.Services);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -15,7 +30,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
-
+app.UseSession();
 app.UseAuthorization();
 
 app.MapStaticAssets();

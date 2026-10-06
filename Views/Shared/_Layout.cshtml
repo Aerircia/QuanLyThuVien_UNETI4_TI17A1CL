@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - QuanLyThuVien_UNETI4_TI17A1CL</title>
+    <title>@ViewData["Title"] - Quản lý thư viện</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -19,14 +19,9 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
+                        @* Menu theo vai trò (mỗi module thêm liên kết vào _MenuPartial) và khu vực đăng nhập *@
+                        <partial name="_MenuPartial" />
+                        <partial name="_LoginPartial" />
                 </div>
             </div>
         </nav>
@@ -39,7 +34,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2026 - QuanLyThuVien_UNETI4_TI17A1CL - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2026 - Quản lý thư viện - QuanLyThuVien_UNETI4_TI17A1CL
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
