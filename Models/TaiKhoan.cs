@@ -29,6 +29,7 @@ public class TaiKhoan
     public string HoTen { get; set; } = string.Empty;
 
     [Required, StringLength(255), EmailAddress(ErrorMessage = "Email không đúng định dạng")]
+    [Display(Name = "Email")]
     public string Email { get; set; } = string.Empty;
 
     [Display(Name = "Vai trò")]

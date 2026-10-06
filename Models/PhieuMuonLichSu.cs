@@ -13,6 +13,7 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Models;
 public class PhieuMuonLichSu
 {
     [Key] public int MaLichSu { get; set; }
+    [ForeignKey(nameof(PhieuMuon))]
     public int MaPhieuMuon { get; set; }
 
     public TrangThaiPhieuMuon? TrangThaiCu { get; set; }
@@ -22,9 +23,11 @@ public class PhieuMuonLichSu
     public DateTime NgayThucHien { get; set; }
 
     // MaTaiKhoan của người thực hiện (FK tới TaiKhoan)
+    [ForeignKey(nameof(NguoiThucHien))]
     public int MaNguoiThucHien { get; set; }
 
-    [StringLength(100)] public string? GhiChu { get; set; }
+    [StringLength(100)] [Display(Name = "Ghi chú")]
+    public string? GhiChu { get; set; }
 
     public PhieuMuon? PhieuMuon { get; set; }
     public TaiKhoan? NguoiThucHien { get; set; }

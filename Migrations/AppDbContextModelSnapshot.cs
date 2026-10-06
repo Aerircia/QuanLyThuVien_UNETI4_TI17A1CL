@@ -178,9 +178,6 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int?>("PhieuMuonMaPhieuMuon")
-                        .HasColumnType("int");
-
                     b.Property<string>("TrangThai")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -192,8 +189,6 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                         .IsUnique()
                         .HasDatabaseName("UX_GiaHanMuon_ChoDuyet")
                         .HasFilter("[TrangThai] = N'ChoDuyet'");
-
-                    b.HasIndex("PhieuMuonMaPhieuMuon");
 
                     b.ToTable("GiaHanMuon", t =>
                         {
@@ -238,9 +233,6 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaPhieuMuon"));
 
-                    b.Property<int?>("BanDocMaBanDoc")
-                        .HasColumnType("int");
-
                     b.Property<string>("GhiChu")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
@@ -267,19 +259,12 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int?>("SachMaSach")
-                        .HasColumnType("int");
-
                     b.Property<string>("TrangThai")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("MaPhieuMuon");
-
-                    b.HasIndex("BanDocMaBanDoc");
-
-                    b.HasIndex("SachMaSach");
 
                     b.HasIndex("MaBanDoc", "MaSach")
                         .IsUnique()
@@ -314,9 +299,6 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                     b.Property<DateTime>("NgayThucHien")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("PhieuMuonMaPhieuMuon")
-                        .HasColumnType("int");
-
                     b.Property<string>("TrangThaiCu")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
@@ -330,7 +312,7 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
 
                     b.HasIndex("MaNguoiThucHien");
 
-                    b.HasIndex("PhieuMuonMaPhieuMuon");
+                    b.HasIndex("MaPhieuMuon");
 
                     b.ToTable("PhieuMuonLichSu");
                 });
@@ -378,9 +360,6 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<int?>("TheLoaiMaTheLoai")
-                        .HasColumnType("int");
-
                     b.Property<string>("TrangThai")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -392,9 +371,9 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
 
                     b.HasKey("MaSach");
 
-                    b.HasIndex("TenSach");
+                    b.HasIndex("MaTheLoai");
 
-                    b.HasIndex("TheLoaiMaTheLoai");
+                    b.HasIndex("TenSach");
 
                     b.HasIndex("TrangThai");
 
@@ -556,8 +535,9 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                 {
                     b.HasOne("QuanLyThuVien_UNETI4_TI17A1CL.Models.PhieuMuon", "PhieuMuon")
                         .WithMany("GiaHanMuons")
-                        .HasForeignKey("PhieuMuonMaPhieuMuon")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("MaPhieuMuon")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("PhieuMuon");
                 });
@@ -566,13 +546,15 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                 {
                     b.HasOne("QuanLyThuVien_UNETI4_TI17A1CL.Models.BanDoc", "BanDoc")
                         .WithMany("PhieuMuons")
-                        .HasForeignKey("BanDocMaBanDoc")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("MaBanDoc")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("QuanLyThuVien_UNETI4_TI17A1CL.Models.Sach", "Sach")
                         .WithMany("PhieuMuons")
-                        .HasForeignKey("SachMaSach")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("MaSach")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("BanDoc");
 
@@ -589,8 +571,9 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
 
                     b.HasOne("QuanLyThuVien_UNETI4_TI17A1CL.Models.PhieuMuon", "PhieuMuon")
                         .WithMany("LichSus")
-                        .HasForeignKey("PhieuMuonMaPhieuMuon")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("MaPhieuMuon")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("NguoiThucHien");
 
@@ -601,8 +584,9 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                 {
                     b.HasOne("QuanLyThuVien_UNETI4_TI17A1CL.Models.TheLoai", "TheLoai")
                         .WithMany("Sachs")
-                        .HasForeignKey("TheLoaiMaTheLoai")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("MaTheLoai")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("TheLoai");
                 });

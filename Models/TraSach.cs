@@ -12,6 +12,7 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Models;
 public class TraSach
 {
     [Key] public int MaTra { get; set; }
+    [ForeignKey(nameof(PhieuMuon))]
     public int MaPhieuMuon { get; set; }
 
     [DataType(DataType.Date)] [Display(Name = "Ngày trả")]
@@ -29,11 +30,11 @@ public class TraSach
     [Display(Name = "Trạng thái phạt")]
     public TrangThaiPhat TrangThaiPhat { get; set; } = TrangThaiPhat.KhongPhat;
 
-    [StringLength(100)] [Display(Name = "Ghi chú")]
+    [StringLength(100)] [DataType(DataType.MultilineText)] [Display(Name = "Ghi chú")]
     public string? GhiChu { get; set; }
 
     // Thủ thư nhận sách (lấy từ Session, không cho người dùng nhập)
-    [Display(Name = "Thủ thư nhận")]
+    [ForeignKey(nameof(NguoiNhan))] [Display(Name = "Thủ thư nhận")]
     public int MaNguoiNhan { get; set; }
 
     public PhieuMuon? PhieuMuon { get; set; }

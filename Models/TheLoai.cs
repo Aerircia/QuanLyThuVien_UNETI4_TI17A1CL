@@ -18,6 +18,7 @@ public class TheLoai
     public string TenTheLoai { get; set; } = string.Empty;
 
     [StringLength(255)]
+    [DataType(DataType.MultilineText)]
     [Display(Name = "Mô tả")]
     public string? MoTa { get; set; }
 
