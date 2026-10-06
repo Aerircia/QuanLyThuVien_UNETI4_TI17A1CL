@@ -10,6 +10,11 @@
     <div class="col-md-6 col-lg-4">
         <h1 class="h4 mb-3">Đăng nhập</h1>
 
+        @if (TempData["ThongBao"] is string thanhCong)
+        {
+            <div class="alert alert-success" role="status">@thanhCong</div>
+        }
+
         @if (ViewBag.ThongBao is string thongBao)
         {
             <div class="alert alert-warning" role="alert">@thongBao</div>
@@ -33,6 +38,10 @@
 
             <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
         </form>
+
+        <p class="mt-3 text-center">
+            <a asp-action="ForgotPassword">Quên mật khẩu?</a>
+        </p>
     </div>
 </div>
 

@@ -12,11 +12,13 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Controllers;
 public class TaiKhoanController : Controller
 {
     private readonly IAuthService _auth;
+    private readonly IPasswordResetService _passwordReset;
     private readonly ICurrentUserService _current;
 
-    public TaiKhoanController(IAuthService auth, ICurrentUserService current)
+    public TaiKhoanController(IAuthService auth, IPasswordResetService passwordReset, ICurrentUserService current)
     {
         _auth = auth;
+        _passwordReset = passwordReset;
         _current = current;
     }
 
@@ -125,6 +127,99 @@ public class TaiKhoanController : Controller
         }
 
         model.MatKhauCu = model.MatKhauMoi = model.XacNhanMatKhauMoi = string.Empty;
+        return View(model);
+    }
+
+    // ---------- Quên mật khẩu, bước 1: nhập email để nhận OTP ----------
+
+    [HttpGet]
+    public IActionResult ForgotPassword() => View(new ForgotPasswordViewModel());
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var result = await _passwordReset.RequestAsync(model.Email, HttpContext.RequestAborted);
+
+        switch (result.Status)
+        {
+            case RequestResetStatus.Sent:
+                TempData["ThongBao"] = "Mã OTP đã được gửi tới email của bạn.";
+                return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim() });
+
+            case RequestResetStatus.EmailNotFound:
+                ModelState.AddModelError(nameof(model.Email), "Email không tồn tại trong hệ thống.");
+                break;
+
+            case RequestResetStatus.AccountLocked:
+                ModelState.AddModelError(string.Empty, "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.");
+                break;
+
+            case RequestResetStatus.CooldownActive:
+                ModelState.AddModelError(string.Empty,
+                    $"Vui lòng đợi {result.RetryAfterSeconds} giây trước khi yêu cầu mã mới.");
+                break;
+
+            case RequestResetStatus.HourlyLimitReached:
+                ModelState.AddModelError(string.Empty,
+                    $"Bạn đã yêu cầu mã quá nhiều lần. Vui lòng thử lại sau khoảng {Math.Max(1, (result.RetryAfterSeconds + 59) / 60)} phút.");
+                break;
+
+            default:
+                ModelState.AddModelError(string.Empty, "Không gửi được email. Vui lòng thử lại sau.");
+                break;
+        }
+
+        return View(model);
+    }
+
+    // ---------- Quên mật khẩu, bước 2: nhập OTP và mật khẩu mới ----------
+
+    [HttpGet]
+    public IActionResult ResetPassword(string? email = null) =>
+        View(new ResetPasswordViewModel { Email = email ?? string.Empty });
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            model.MatKhauMoi = model.XacNhanMatKhauMoi = string.Empty;
+            return View(model);
+        }
+
+        var status = await _passwordReset.ResetAsync(
+            model.Email, model.MaOtp, model.MatKhauMoi, HttpContext.RequestAborted);
+
+        switch (status)
+        {
+            case ResetPasswordStatus.Success:
+                TempData["ThongBao"] = "Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.";
+                return RedirectToAction(nameof(Login));
+
+            case ResetPasswordStatus.EmailNotFound:
+                ModelState.AddModelError(nameof(model.Email), "Email không tồn tại trong hệ thống.");
+                break;
+
+            case ResetPasswordStatus.AccountLocked:
+                ModelState.AddModelError(string.Empty, "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.");
+                break;
+
+            case ResetPasswordStatus.TooManyAttempts:
+                ModelState.AddModelError(string.Empty,
+                    "Bạn đã nhập sai quá nhiều lần. Vui lòng quay lại bước trước để nhận mã mới.");
+                break;
+
+            default:
+                ModelState.AddModelError(nameof(model.MaOtp), "Mã OTP không đúng hoặc đã hết hạn.");
+                break;
+        }
+
+        model.MaOtp = model.MatKhauMoi = model.XacNhanMatKhauMoi = string.Empty;
         return View(model);
     }
 }

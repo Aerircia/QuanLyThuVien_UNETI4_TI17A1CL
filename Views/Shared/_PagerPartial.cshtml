@@ -1,0 +1,77 @@
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: thiết kế view phân trang chung *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.PagerViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Common
+@{
+    // Giữ nguyên điều kiện tìm kiếm/lọc/sắp xếp, chỉ đổi page / pageSize.
+    Dictionary<string, string> Route(int page, int? size = null)
+    {
+        var values = new Dictionary<string, string>(Model.RouteValues)
+        {
+            ["page"] = page.ToString(),
+            ["pageSize"] = (size ?? Model.PageSize).ToString()
+        };
+        return values;
+    }
+
+    var first = Math.Max(1, Model.Page - 2);
+    var last = Math.Min(Model.TotalPages, Model.Page + 2);
+}
+
+<nav aria-label="Phân trang" class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+    <div class="small">
+        Hiển thị
+        @foreach (var size in PagingDefaults.PageSizes)
+        {
+            <a class="btn btn-sm @(size == Model.PageSize ? "btn-primary" : "btn-outline-secondary")"
+               asp-controller="@Model.Controller" asp-action="@Model.Action"
+               asp-all-route-data="Route(1, size)">@size</a>
+        }
+        dòng/trang &middot; Tổng @Model.TotalCount &middot; Trang @Model.Page / @Model.TotalPages
+    </div>
+
+    <ul class="pagination pagination-sm mb-0">
+        <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+            <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action"
+               asp-all-route-data="Route(Model.Page - 1)">Trước</a>
+        </li>
+
+        @if (first > 1)
+        {
+            <li class="page-item">
+                <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action"
+                   asp-all-route-data="Route(1)">1</a>
+            </li>
+            @if (first > 2)
+            {
+                <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+            }
+        }
+
+        @for (var p = first; p <= last; p++)
+        {
+            <li class="page-item @(p == Model.Page ? "active" : "")">
+                <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action"
+                   asp-all-route-data="Route(p)">@p</a>
+            </li>
+        }
+
+        @if (last < Model.TotalPages)
+        {
+            @if (last < Model.TotalPages - 1)
+            {
+                <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+            }
+            <li class="page-item">
+                <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action"
+                   asp-all-route-data="Route(Model.TotalPages)">@Model.TotalPages</a>
+            </li>
+        }
+
+        <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+            <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action"
+               asp-all-route-data="Route(Model.Page + 1)">Sau</a>
+        </li>
+    </ul>
+</nav>

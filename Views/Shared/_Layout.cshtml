@@ -20,7 +20,7 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                         @* Menu theo vai trò (mỗi module thêm liên kết vào _MenuPartial) và khu vực đăng nhập *@
-                        <a class="nav-link" asp-controller="Home" asp-action="Index">Trang chủ</a>
+                        <partial name="_MenuPartial" />
                         <partial name="_LoginPartial" />
                 </div>
             </div>
