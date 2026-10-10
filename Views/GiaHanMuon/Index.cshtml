@@ -1,0 +1,94 @@
+@* Họ và tên: Vũ Ngọc Hương Giang *@
+@* Mã sinh viên: 23103100280 *@
+@* Nội dung thực hiện: view Thủ thư xem danh sách yêu cầu gia hạn  *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.GiaHanMuonListViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Yêu cầu gia hạn";
+
+    var trangThaiItems = Html.GetEnumSelectList<TrangThaiGiaHan>().ToList();
+    foreach (var item in trangThaiItems)
+        item.Selected = Model.TrangThai is { } t && item.Value == ((int)t).ToString();
+}
+
+<h1 class="h4 mb-3">Yêu cầu gia hạn</h1>
+
+@if (TempData["ThongBao"] is string thongBao)
+{
+    <div class="alert alert-success" role="status">@thongBao</div>
+}
+@if (TempData["Loi"] is string loi)
+{
+    <div class="alert alert-danger" role="alert">@loi</div>
+}
+
+<form method="get" asp-action="Index" class="row g-2 mb-3">
+    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+    <div class="col-md-6">
+        <input name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo họ tên bạn đọc hoặc tên sách" />
+    </div>
+    <div class="col-md-4">
+        <select name="trangThai" class="form-select" asp-items="trangThaiItems">
+            <option value="">Tất cả trạng thái</option>
+        </select>
+    </div>
+    <div class="col-md-2 d-grid">
+        <button type="submit" class="btn btn-outline-primary">Lọc</button>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Phiếu</th>
+                <th>Bạn đọc</th>
+                <th>Sách</th>
+                <th>Hạn trả cũ</th>
+                <th>Hạn trả mới</th>
+                <th>Lý do</th>
+                <th>Ngày yêu cầu</th>
+                <th>Trạng thái</th>
+                <th class="text-end">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Result.Items)
+            {
+                var badge = item.TrangThai switch
+                {
+                    TrangThaiGiaHan.ChoDuyet => "bg-warning text-dark",
+                    TrangThaiGiaHan.DaDuyet => "bg-success",
+                    _ => "bg-danger"
+                };
+                <tr>
+                    <td>#@item.MaPhieuMuon</td>
+                    <td>@item.TenBanDoc</td>
+                    <td>@item.TenSach</td>
+                    <td>@item.HanTraCu.ToString("dd/MM/yyyy")</td>
+                    <td>@item.HanTraMoi.ToString("dd/MM/yyyy")</td>
+                    <td>@item.LyDo</td>
+                    <td>@item.NgayYeuCau.ToString("dd/MM/yyyy")</td>
+                    <td><span class="badge @badge">@item.TrangThai.GetDisplayName()</span></td>
+                    <td class="text-end text-nowrap">
+                        @if (item.TrangThai == TrangThaiGiaHan.ChoDuyet)
+                        {
+                            <a asp-action="Process" asp-route-id="@item.MaGiaHan" class="btn btn-sm btn-primary">Xử lý</a>
+                        }
+                        else
+                        {
+                            <a asp-action="Process" asp-route-id="@item.MaGiaHan" class="btn btn-sm btn-outline-secondary">Xem</a>
+                        }
+                    </td>
+                </tr>
+            }
+
+            @if (!Model.Result.Items.Any())
+            {
+                <tr><td colspan="9" class="text-center text-muted py-4">Không có yêu cầu gia hạn nào phù hợp.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<partial name="_PagerPartial" model="Model.Pager" />
