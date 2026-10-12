@@ -1,0 +1,70 @@
+@* Họ và tên: Vũ Ngọc Hương Giang *@
+@* Mã sinh viên: 23103100280 *@
+@* Nội dung thực hiện: view bạn đọc gửi yêu cầu gia hạn phiếu mượn *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.GiaHanMuonCreateViewModel
+@{
+    ViewData["Title"] = "Yêu cầu gia hạn";
+    var info = Model.Info!;
+    var min = info.HanTraHienTai?.AddDays(1).ToString("yyyy-MM-dd");
+    var max = info.HanTraMoiToiDa?.ToString("yyyy-MM-dd");
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <h1 class="h4 mb-3">Yêu cầu gia hạn phiếu mượn #@info.MaPhieuMuon</h1>
+
+        @if (TempData["ThongBao"] is string thongBao)
+        {
+            <div class="alert alert-success" role="status">@thongBao</div>
+        }
+
+        <dl class="row">
+            <dt class="col-sm-5">Sách</dt>
+            <dd class="col-sm-7">@info.TenSach</dd>
+            <dt class="col-sm-5">Hạn trả hiện tại</dt>
+            <dd class="col-sm-7">@(info.HanTraHienTai?.ToString("dd/MM/yyyy"))</dd>
+            <dt class="col-sm-5">Số lần đã gia hạn</dt>
+            <dd class="col-sm-7">@info.SoLanDaGiaHan / @info.SoLanToiDa</dd>
+            <dt class="col-sm-5">Mỗi lần tối đa</dt>
+            <dd class="col-sm-7">@info.SoNgayToiDa ngày</dd>
+        </dl>
+
+        @if (!info.DuocGiaHan)
+        {
+            <div class="alert alert-warning" role="alert">
+                <strong>Phiếu này hiện không thể gia hạn:</strong>
+                <ul class="mb-0">
+                    @foreach (var m in info.CanhBao)
+                    {
+                        <li>@m</li>
+                    }
+                </ul>
+            </div>
+        }
+        else
+        {
+            <form asp-action="Create" asp-route-maPhieuMuon="@info.MaPhieuMuon" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+                <div class="mb-3">
+                    <label asp-for="HanTraMoi" class="form-label"></label>
+                    <input asp-for="HanTraMoi" class="form-control" type="date" min="@min" max="@max" />
+                    <div class="form-text">Chọn hạn trả mới trong khoảng đến @(info.HanTraMoiToiDa?.ToString("dd/MM/yyyy")).</div>
+                    <span asp-validation-for="HanTraMoi" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="LyDo" class="form-label"></label>
+                    <textarea asp-for="LyDo" class="form-control" rows="3" maxlength="100"></textarea>
+                    <span asp-validation-for="LyDo" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Gửi yêu cầu</button>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
