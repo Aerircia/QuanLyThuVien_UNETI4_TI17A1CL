@@ -33,7 +33,7 @@ public static class ServiceCollectionExtensions
 
         services.AddHttpContextAccessor();
 
-        // Common services
+        // module email / otp / password reset
         services.AddMemoryCache();
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<IPasswordHasher<TaiKhoan>, PasswordHasher<TaiKhoan>>();
@@ -72,6 +72,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITaiKhoanService, TaiKhoanService>();
         services.AddScoped<IOtpService, OtpService>();
         services.AddScoped<IPasswordResetService, PasswordResetService>();
+        services.AddScoped<ICauHinhThuVienService, CauHinhThuVienService>();
 
         return services;
     }
