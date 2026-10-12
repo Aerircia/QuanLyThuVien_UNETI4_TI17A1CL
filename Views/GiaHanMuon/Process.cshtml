@@ -1,0 +1,85 @@
+@* Họ và tên: Vũ Ngọc Hương Giang *@
+@* Mã sinh viên: 23103100280 *@
+@* Nội dung thực hiện: view Thủ thư duyệt hoặc từ chối yêu cầu gia hạn *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.GiaHanMuonProcessViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Xử lý yêu cầu gia hạn";
+    var d = Model.Detail!;
+    var choDuyet = d.TrangThai == TrangThaiGiaHan.ChoDuyet;
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="h4 mb-3">Yêu cầu gia hạn #@d.MaGiaHan</h1>
+
+        <dl class="row">
+            <dt class="col-sm-4">Bạn đọc</dt>
+            <dd class="col-sm-8">@d.TenBanDoc</dd>
+            <dt class="col-sm-4">Sách</dt>
+            <dd class="col-sm-8">@d.TenSach (phiếu #@d.MaPhieuMuon - @d.TrangThaiPhieu.GetDisplayName())</dd>
+            <dt class="col-sm-4">Số bản còn lại</dt>
+            <dd class="col-sm-8">@d.SoLuongConLai</dd>
+            <dt class="col-sm-4">Số lần đã gia hạn</dt>
+            <dd class="col-sm-8">@d.SoLanDaGiaHan / @d.SoLanToiDa</dd>
+            <dt class="col-sm-4">Hạn trả hiện tại</dt>
+            <dd class="col-sm-8">@(d.HanTraHienTai?.ToString("dd/MM/yyyy"))</dd>
+            <dt class="col-sm-4">Hạn trả cũ -> mới</dt>
+            <dd class="col-sm-8">@d.HanTraCu.ToString("dd/MM/yyyy") -> <strong>@d.HanTraMoi.ToString("dd/MM/yyyy")</strong></dd>
+            <dt class="col-sm-4">Lý do</dt>
+            <dd class="col-sm-8">@d.LyDo</dd>
+            <dt class="col-sm-4">Ngày yêu cầu</dt>
+            <dd class="col-sm-8">@d.NgayYeuCau.ToString("dd/MM/yyyy")</dd>
+            <dt class="col-sm-4">Trạng thái</dt>
+            <dd class="col-sm-8">@d.TrangThai.GetDisplayName()</dd>
+            @if (!choDuyet)
+            {
+                <dt class="col-sm-4">Ngày xử lý</dt>
+                <dd class="col-sm-8">@(d.NgayXuLy?.ToString("dd/MM/yyyy"))</dd>
+                <dt class="col-sm-4">Nhận xét</dt>
+                <dd class="col-sm-8">@d.NhanXet</dd>
+            }
+        </dl>
+
+        @if (choDuyet)
+        {
+            @if (d.CanhBao.Count > 0)
+            {
+                <div class="alert alert-warning" role="alert">
+                    <strong>Không đủ điều kiện duyệt:</strong>
+                    <ul class="mb-0">
+                        @foreach (var m in d.CanhBao)
+                        {
+                            <li>@m</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <form asp-action="Process" asp-route-id="@d.MaGiaHan" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+                <div class="mb-3">
+                    <label asp-for="NhanXet" class="form-label"></label>
+                    <textarea asp-for="NhanXet" class="form-control" rows="3" maxlength="100"></textarea>
+                    <div class="form-text">Bắt buộc nhập khi từ chối.</div>
+                    <span asp-validation-for="NhanXet" class="text-danger"></span>
+                </div>
+                @if (d.DuDieuKienDuyet)
+                {
+                    <button type="submit" name="duyet" value="true" class="btn btn-success">Duyệt</button>
+                }
+                <button type="submit" name="duyet" value="false" class="btn btn-danger">Từ chối</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+            </form>
+        }
+        else
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

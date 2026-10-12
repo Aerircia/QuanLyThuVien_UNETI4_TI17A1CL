@@ -1,0 +1,125 @@
+@* Họ và tên: Vũ Ngọc Hương Giang *@
+@* Mã sinh viên: 23103100280 *@
+@* Nội dung thực hiện: view Thủ thư nhận trả sách *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.TraSachCreateViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Nhận trả sách";
+    var p = Model.Preview!;
+
+    decimal TongTheo(TinhTrangSach tt) => tt switch
+    {
+        TinhTrangSach.HuHong => p.TongHuHong,
+        TinhTrangSach.Mat => p.TongMat,
+        _ => p.TongBinhThuong
+    };
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <h1 class="h4 mb-3">Nhận trả sách - phiếu #@p.MaPhieuMuon</h1>
+
+        <dl class="row">
+            <dt class="col-sm-5">Bạn đọc</dt>
+            <dd class="col-sm-7">@p.TenBanDoc @(p.MaSoThe is null ? "" : $"({p.MaSoThe})")</dd>
+            <dt class="col-sm-5">Sách</dt>
+            <dd class="col-sm-7">@p.TenSach</dd>
+            <dt class="col-sm-5">Giá bìa</dt>
+            <dd class="col-sm-7">@p.GiaBia.ToString("N0") đ</dd>
+            <dt class="col-sm-5">Ngày mượn</dt>
+            <dd class="col-sm-7">@(p.NgayMuon?.ToString("dd/MM/yyyy"))</dd>
+            <dt class="col-sm-5">Hạn trả</dt>
+            <dd class="col-sm-7">@(p.HanTra?.ToString("dd/MM/yyyy"))</dd>
+            <dt class="col-sm-5">Ngày trả (hôm nay)</dt>
+            <dd class="col-sm-7">@p.NgayTra.ToString("dd/MM/yyyy")</dd>
+            <dt class="col-sm-5">Số ngày trễ</dt>
+            <dd class="col-sm-7">
+                @if (p.SoNgayTre > 0)
+                {
+                    <span class="badge bg-danger">Trễ @p.SoNgayTre ngày</span>
+                    <span class="ms-1">(phạt trễ @p.TienPhatTre.ToString("N0") đ)</span>
+                }
+                else
+                {
+                    <span>Đúng hạn</span>
+                }
+            </dd>
+        </dl>
+
+        @{ var pv = Model.Preview!; }
+        <table class="table table-sm">
+            <thead>
+                <tr><th>Khoản phạt</th><th class="text-end">Bình thường</th><th class="text-end">Hư hỏng</th><th class="text-end">Mất</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1. Trả trễ @pv.SoNgayTre ngày <small class="text-muted">(TienPhatTreHanService)</small></td>
+                    <td class="text-end">@pv.TienPhatTre.ToString("N0") đ</td>
+                    <td class="text-end">@pv.TienPhatTre.ToString("N0") đ</td>
+                    <td class="text-end">@pv.TienPhatTre.ToString("N0") đ</td>
+                </tr>
+                <tr>
+                    <td>2. Tình trạng sách <small class="text-muted">(TienPhatTinhTrangSachService)</small></td>
+                    <td class="text-end">0 đ</td>
+                    <td class="text-end">@pv.PhatHuHong.ToString("N0") đ</td>
+                    <td class="text-end">@pv.PhatMat.ToString("N0") đ</td>
+                </tr>
+                <tr class="fw-bold">
+                    <td>Tổng</td>
+                    <td class="text-end">@pv.TongBinhThuong.ToString("N0") đ</td>
+                    <td class="text-end">@pv.TongHuHong.ToString("N0") đ</td>
+                    <td class="text-end">@pv.TongMat.ToString("N0") đ</td>
+                </tr>
+            </tbody>
+        </table>
+
+        @if (!p.DuocTra)
+        {
+            <div class="alert alert-warning" role="alert">
+                <strong>Không thể ghi nhận trả sách:</strong>
+                <ul class="mb-0">
+                    @foreach (var m in p.CanhBao)
+                    {
+                        <li>@m</li>
+                    }
+                </ul>
+            </div>
+            <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+        }
+        else
+        {
+            <form asp-action="Create" asp-route-maPhieuMuon="@p.MaPhieuMuon" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+                <div class="mb-3">
+                    <label class="form-label">@Html.DisplayNameFor(m => m.TinhTrang)</label>
+                    @foreach (var tt in Enum.GetValues<TinhTrangSach>())
+                    {
+                        var radioId = $"tinhTrang_{tt}";
+                        <div class="form-check">
+                            <input type="radio" asp-for="TinhTrang" value="@tt" class="form-check-input" id="@radioId" />
+                            <label class="form-check-label" for="@radioId">
+                                @tt.GetDisplayName() - tiền phạt <strong>@TongTheo(tt).ToString("N0") đ</strong>
+                            </label>
+                        </div>
+                    }
+                    <span asp-validation-for="TinhTrang" class="text-danger"></span>
+                    <div class="form-text">Tiền phạt do hệ thống tính lại khi lưu; Thủ thư không nhập tay.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="GhiChu" class="form-label"></label>
+                    <textarea asp-for="GhiChu" class="form-control" rows="3" maxlength="100"></textarea>
+                    <span asp-validation-for="GhiChu" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Xác nhận trả sách</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

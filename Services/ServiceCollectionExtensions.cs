@@ -65,7 +65,7 @@ public static class ServiceCollectionExtensions
                 "Email:Host chưa được cấu hình. Đặt Email__Host, Email__Username, " +
                 "Email__Password, Email__FromAddress (biến môi trường hoặc user-secrets).");
         }
-
+        
         // Services
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
@@ -74,6 +74,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPasswordResetService, PasswordResetService>();
         services.AddScoped<ICauHinhThuVienService, CauHinhThuVienService>();
 
+        services.AddScoped<IGiaHanMuonService, GiaHanMuonService>();
+        services.AddScoped<ITraSachService, TraSachService>();
+        services.AddScoped<ITienPhatTreHanService, TienPhatTreHanService>();
+        services.AddScoped<ITienPhatTinhTrangSachService, TienPhatTinhTrangSachService>();
         return services;
     }
 }
