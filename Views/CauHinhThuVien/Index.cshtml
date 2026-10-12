@@ -1,0 +1,92 @@
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Xây dựng view để quản lý cấu hình thư viện *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.CauHinhThuVienViewModel
+@{
+    ViewData["Title"] = "Cấu hình thư viện";
+}
+
+<h1 class="h3 mb-3">Cấu hình thư viện</h1>
+
+@if (TempData["Success"] is string ok)
+{
+    <div class="alert alert-success">@ok</div>
+}
+
+<p class="text-muted">
+    Thay đổi chỉ áp dụng cho các thao tác mới. Phiếu đã giao sách giữ nguyên hạn trả;
+    tiền phạt tính theo mức hiện hành tại thời điểm trả sách.
+</p>
+
+<form asp-action="Index" method="post">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <div class="card mb-3">
+        <div class="card-header">Thời hạn mượn</div>
+        <div class="card-body row g-3">
+            <div class="col-md-4">
+                <label asp-for="SoNgayMuonSinhVien" class="form-label"></label>
+                <input asp-for="SoNgayMuonSinhVien" class="form-control" type="number" min="1" max="365" />
+                <span asp-validation-for="SoNgayMuonSinhVien" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="SoNgayMuonGiangVien" class="form-label"></label>
+                <input asp-for="SoNgayMuonGiangVien" class="form-control" type="number" min="1" max="365" />
+                <span asp-validation-for="SoNgayMuonGiangVien" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="SoNgayMuonKhac" class="form-label"></label>
+                <input asp-for="SoNgayMuonKhac" class="form-control" type="number" min="1" max="365" />
+                <span asp-validation-for="SoNgayMuonKhac" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">Giới hạn mượn và gia hạn</div>
+        <div class="card-body row g-3">
+            <div class="col-md-4">
+                <label asp-for="SoPhieuToiDa" class="form-label"></label>
+                <input asp-for="SoPhieuToiDa" class="form-control" type="number" min="1" max="20" />
+                <span asp-validation-for="SoPhieuToiDa" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="SoLanGiaHanToiDa" class="form-label"></label>
+                <input asp-for="SoLanGiaHanToiDa" class="form-control" type="number" min="0" max="10" />
+                <span asp-validation-for="SoLanGiaHanToiDa" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="SoNgayGiaHanToiDa" class="form-label"></label>
+                <input asp-for="SoNgayGiaHanToiDa" class="form-control" type="number" min="1" max="30" />
+                <span asp-validation-for="SoNgayGiaHanToiDa" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">Mức phạt</div>
+        <div class="card-body row g-3">
+            <div class="col-md-4">
+                <label asp-for="TienPhatMoiNgay" class="form-label"></label>
+                <input asp-for="TienPhatMoiNgay" class="form-control" type="number" min="0" max="1000000" step="100" />
+                <span asp-validation-for="TienPhatMoiNgay" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="PhanTramPhatHuHong" class="form-label"></label>
+                <input asp-for="PhanTramPhatHuHong" class="form-control" type="number" min="0" max="100" step="any" />
+                <span asp-validation-for="PhanTramPhatHuHong" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="PhanTramPhatMat" class="form-label"></label>
+                <input asp-for="PhanTramPhatMat" class="form-control" type="number" min="0" max="100" step="any" />
+                <span asp-validation-for="PhanTramPhatMat" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Lưu cấu hình</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
