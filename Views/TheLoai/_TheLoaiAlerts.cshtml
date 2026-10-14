@@ -1,0 +1,12 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Hiển thị thông báo kết quả và lỗi thao tác thể loại. *@
+
+@if (TempData["ThongBao"] is string thongBao)
+{
+    <div class="alert alert-success" role="status">@thongBao</div>
+}
+@if (TempData["Loi"] is string loi)
+{
+    <div class="alert alert-danger" role="alert">@loi</div>
+}

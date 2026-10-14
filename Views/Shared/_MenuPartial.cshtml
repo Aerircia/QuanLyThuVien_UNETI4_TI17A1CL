@@ -18,6 +18,9 @@
     @if (Current.IsInRole(VaiTro.Admin))
     {
         <li class="nav-item">
+            <a class="nav-link" asp-controller="TheLoai" asp-action="Index">Quản lý thể loại</a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link" asp-controller="QuanLyTaiKhoan" asp-action="Index">Quản lý tài khoản</a>
         </li>
     }

@@ -1,0 +1,23 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Trang chỉnh sửa thông tin thể loại với dữ liệu được điền sẵn và nút hủy. *@
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.TheLoaiFormViewModel
+@{
+    ViewData["Title"] = "Sửa thể loại";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <h1 class="h3 mb-3">Sửa thể loại</h1>
+        <form asp-action="Edit" method="post">
+            <partial name="_TheLoaiForm" model="Model" />
+            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,27 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Hiển thị thông tin chi tiết, số sách liên quan và các thao tác thể loại. *@
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.TheLoaiDetailsViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Chi tiết thể loại";
+}
+
+<partial name="_TheLoaiAlerts" />
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Chi tiết thể loại</h1>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.MaTheLoai" class="btn btn-outline-secondary">Sửa</a>
+        <a asp-action="Delete" asp-route-id="@Model.MaTheLoai" class="btn btn-outline-danger">Xóa</a>
+        <a asp-action="Index" class="btn btn-outline-primary">Quay lại danh sách</a>
+    </div>
+</div>
+
+<dl class="row">
+    <dt class="col-sm-3">Tên thể loại</dt><dd class="col-sm-9">@Model.TenTheLoai</dd>
+    <dt class="col-sm-3">Mô tả</dt><dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.MoTa) ? "Chưa có mô tả." : Model.MoTa)</dd>
+    <dt class="col-sm-3">Khu vực lưu trữ</dt><dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.KhuVucLuuTru) ? "Chưa cập nhật" : Model.KhuVucLuuTru)</dd>
+    <dt class="col-sm-3">Số sách</dt><dd class="col-sm-9">@Model.SoLuongSach</dd>
+    <dt class="col-sm-3">Trạng thái</dt><dd class="col-sm-9">@Model.TrangThai.GetDisplayName()</dd>
+</dl>

@@ -1,0 +1,84 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Hiển thị danh sách, tìm kiếm, phân trang và thao tác quản lý thể loại dành cho Admin. *@
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.TheLoaiIndexViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Quản lý thể loại";
+}
+
+<partial name="_TheLoaiAlerts" />
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Quản lý thể loại</h1>
+    <a asp-action="Create" class="btn btn-primary">Thêm thể loại</a>
+</div>
+
+<form asp-action="Index" method="get" class="row g-2 mb-3">
+    <div class="col-md-6">
+        <label for="tuKhoa" class="form-label">Tìm kiếm thể loại</label>
+        <input id="tuKhoa" name="tuKhoa" value="@Model.TuKhoa" class="form-control"
+               placeholder="Tên thể loại hoặc mô tả" />
+    </div>
+    <div class="col-md-3 d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-outline-primary">Tìm kiếm</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Xóa bộ lọc</a>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Tên thể loại</th>
+                <th>Mô tả</th>
+                <th>Khu vực lưu trữ</th>
+                <th>Số sách</th>
+                <th>Trạng thái</th>
+                <th class="text-end">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.TheLoais.Items)
+            {
+                <tr>
+                    <td><a asp-action="Details" asp-route-id="@item.MaTheLoai" class="fw-semibold text-decoration-none">@item.TenTheLoai</a></td>
+                    <td>@(string.IsNullOrWhiteSpace(item.MoTa) ? "—" : item.MoTa)</td>
+                    <td>@(string.IsNullOrWhiteSpace(item.KhuVucLuuTru) ? "—" : item.KhuVucLuuTru)</td>
+                    <td>@item.SoLuongSach</td>
+                    <td>
+                        <span class="badge @(item.TrangThai == TrangThaiTheLoai.HoatDong ? "bg-success" : "bg-secondary")">
+                            @item.TrangThai.GetDisplayName()
+                        </span>
+                    </td>
+                    <td class="text-end text-nowrap">
+                        <a asp-action="Details" asp-route-id="@item.MaTheLoai" class="btn btn-sm btn-outline-primary">Chi tiết</a>
+                        <a asp-action="Edit" asp-route-id="@item.MaTheLoai" class="btn btn-sm btn-outline-secondary">Sửa</a>
+                        <a asp-action="Delete" asp-route-id="@item.MaTheLoai" class="btn btn-sm btn-outline-danger">Xóa</a>
+                    </td>
+                </tr>
+            }
+            @if (Model.TheLoais.Items.Count == 0)
+            {
+                <tr><td colspan="6" class="text-center text-muted py-4">Không tìm thấy thể loại phù hợp.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.TheLoais.TotalCount > 0)
+{
+    <nav aria-label="Phân trang thể loại" class="d-flex justify-content-between align-items-center">
+        <span class="text-muted">Trang @Model.TheLoais.PageIndex / @Model.TheLoais.TotalPages — @Model.TheLoais.TotalCount thể loại</span>
+        <ul class="pagination mb-0">
+            <li class="page-item @(!Model.TheLoais.HasPreviousPage ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-tuKhoa="@Model.TuKhoa"
+                   asp-route-page="@(Model.TheLoais.PageIndex - 1)">Trước</a>
+            </li>
+            <li class="page-item @(!Model.TheLoais.HasNextPage ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-tuKhoa="@Model.TuKhoa"
+                   asp-route-page="@(Model.TheLoais.PageIndex + 1)">Tiếp</a>
+            </li>
+        </ul>
+    </nav>
+}

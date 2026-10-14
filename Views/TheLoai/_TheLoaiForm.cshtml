@@ -1,0 +1,34 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Tạo form chung cho thêm và sửa thể loại. *@
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.TheLoaiFormViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+
+<input asp-for="MaTheLoai" type="hidden" />
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+<div class="mb-3">
+    <label asp-for="TenTheLoai" class="form-label"></label>
+    <input asp-for="TenTheLoai" class="form-control" autofocus />
+    <span asp-validation-for="TenTheLoai" class="text-danger"></span>
+</div>
+<div class="mb-3">
+    <label asp-for="MoTa" class="form-label"></label>
+    <textarea asp-for="MoTa" class="form-control" rows="3"></textarea>
+    <span asp-validation-for="MoTa" class="text-danger"></span>
+</div>
+<div class="mb-3">
+    <label asp-for="KhuVucLuuTru" class="form-label"></label>
+    <input asp-for="KhuVucLuuTru" class="form-control" />
+    <span asp-validation-for="KhuVucLuuTru" class="text-danger"></span>
+</div>
+<div class="mb-3">
+    <label asp-for="TrangThai" class="form-label"></label>
+    <select asp-for="TrangThai" class="form-select">
+        @foreach (var status in Enum.GetValues<TrangThaiTheLoai>())
+        {
+            <option value="@status">@status.GetDisplayName()</option>
+        }
+    </select>
+    <span asp-validation-for="TrangThai" class="text-danger"></span>
+</div>

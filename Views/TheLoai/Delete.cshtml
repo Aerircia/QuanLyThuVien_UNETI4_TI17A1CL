@@ -1,0 +1,23 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Xác nhận xóa thể loại, cảnh báo nếu còn sách liên quan và chỉ xóa bằng POST. *@
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.TheLoaiDetailsViewModel
+@{
+    ViewData["Title"] = "Xóa thể loại";
+}
+
+<partial name="_TheLoaiAlerts" />
+<h1 class="h3 mb-3">Xác nhận xóa thể loại</h1>
+<div class="alert alert-warning">
+    Bạn có chắc chắn muốn xóa thể loại <strong>@Model.TenTheLoai</strong> không?
+    <div>Số sách đang thuộc thể loại này: <strong>@Model.SoLuongSach</strong>.</div>
+</div>
+@if (Model.SoLuongSach > 0)
+{
+    <div class="alert alert-info">Thể loại còn sách nên không thể xóa. Hãy chuyển trạng thái sang “Ngừng hoạt động”.</div>
+}
+<form asp-action="Delete" asp-route-id="@Model.MaTheLoai" method="post">
+    <button type="submit" class="btn btn-danger" disabled="@(Model.SoLuongSach > 0)">Xóa thể loại</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+</form>
