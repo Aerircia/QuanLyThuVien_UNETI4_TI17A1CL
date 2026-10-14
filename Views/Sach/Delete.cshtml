@@ -1,0 +1,55 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Xác nhận xóa sách, hiển thị thông tin liên quan và cảnh báo chặn xóa khi có phiếu mượn hoặc lịch sử. *@
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.SachDeleteViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Xóa sách";
+}
+<partial name="_SachAlerts" />
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <h1 class="h3 mb-3">Xác nhận xóa sách</h1>
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex gap-3 mb-3">
+                    @if (!string.IsNullOrWhiteSpace(Model.ImgPath))
+                    {
+                        <img src="@Model.ImgPath" alt="Ảnh bìa @Model.TenSach" class="rounded border"
+                             style="width:90px;height:120px;object-fit:cover" />
+                    }
+                    <div>
+                        <h2 class="h5">@Model.TenSach</h2>
+                        <div>Tác giả: @Model.TacGia</div>
+                        <div>Thể loại: @Model.TenTheLoai</div>
+                        <div>Nhà xuất bản: @(Model.NhaXuatBan ?? "Chưa cập nhật")</div>
+                        <div>Số lượng: @Model.SoLuongTong</div>
+                        <div>Trạng thái: @Model.TrangThai.GetDisplayName()</div>
+                    </div>
+                </div>
+
+                @if (Model.CoPhieuDangXuLy)
+                {
+                    <div class="alert alert-danger">Không thể xóa sách đang có phiếu mượn chờ duyệt, đã duyệt hoặc đang mượn.</div>
+                }
+                else if (Model.CoLichSuMuon)
+                {
+                    <div class="alert alert-warning">Sách đã có lịch sử mượn, không thể xóa. Vui lòng chuyển trạng thái sang Ngừng phục vụ.</div>
+                }
+                else
+                {
+                    <div class="alert alert-warning">Sách sẽ bị xóa vĩnh viễn. Bạn có chắc chắn muốn tiếp tục?</div>
+                }
+
+                <form asp-action="Delete" asp-route-id="@Model.MaSach" method="post">
+                    @if (!Model.CoPhieuDangXuLy && !Model.CoLichSuMuon)
+                    {
+                        <button type="submit" class="btn btn-danger">Xác nhận xóa</button>
+                    }
+                    <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -26,6 +26,10 @@ public class Sach
     [Display(Name = "Tác giả")]
     public string TacGia { get; set; } = string.Empty;
 
+    [StringLength(20, ErrorMessage = "ISBN không được vượt quá 20 ký tự")]
+    [Display(Name = "ISBN / Mã sách")]
+    public string? ISBN { get; set; }
+
     [StringLength(255)]
     [Display(Name = "Nhà xuất bản")]
     public string? NhaXuatBan { get; set; }
@@ -35,7 +39,7 @@ public class Sach
     [Display(Name = "Năm xuất bản")]
     public int NamXuatBan { get; set; }
 
-    [Range(1, int.MaxValue, ErrorMessage = "Số lượng tổng phải > 0")]
+    [Range(0, int.MaxValue, ErrorMessage = "Số lượng tổng phải lớn hơn hoặc bằng 0")]
     [Display(Name = "Số lượng tổng")]
     public int SoLuongTong { get; set; }
 
@@ -59,7 +63,9 @@ public class Sach
     [Display(Name = "Ảnh bìa")]
     public string? ImgPath { get; set; }
 
-    // KHÔNG có cột SoLuongConLai: tính bằng LINQ từ SoLuongTong và PhieuMuons
+    [Timestamp]
+    public byte[] RowVersion { get; set; } = [];
+
     public TheLoai? TheLoai { get; set; }
     public ICollection<PhieuMuon> PhieuMuons { get; set; } = new List<PhieuMuon>();
 }

@@ -1,0 +1,74 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Tạo partial dùng chung cho trường thông tin sách, chọn thể loại và tải/xem trước ảnh bìa. *@
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.SachFormViewModel
+<input asp-for="RowVersion" type="hidden" />
+<div class="row g-3">
+    <div class="col-md-8">
+        <label asp-for="TenSach" class="form-label"></label>
+        <input asp-for="TenSach" class="form-control" />
+        <span asp-validation-for="TenSach" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="MaTheLoai" class="form-label"></label>
+        <select asp-for="MaTheLoai" class="form-select">
+            <option value="0">-- Chọn thể loại đang hoạt động --</option>
+            @foreach (var category in Model.TheLoaiOptions)
+            {
+                <option value="@category.MaTheLoai">@category.TenTheLoai</option>
+            }
+        </select>
+        <span asp-validation-for="MaTheLoai" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="TacGia" class="form-label"></label>
+        <input asp-for="TacGia" class="form-control" />
+        <span asp-validation-for="TacGia" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="ISBN" class="form-label"></label>
+        <input asp-for="ISBN" class="form-control" />
+        <span asp-validation-for="ISBN" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="NhaXuatBan" class="form-label"></label>
+        <input asp-for="NhaXuatBan" class="form-control" />
+        <span asp-validation-for="NhaXuatBan" class="text-danger"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="NamXuatBan" class="form-label"></label>
+        <input asp-for="NamXuatBan" class="form-control" />
+        <span asp-validation-for="NamXuatBan" class="text-danger"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="SoLuongTong" class="form-label"></label>
+        <input asp-for="SoLuongTong" class="form-control" min="0" />
+        <span asp-validation-for="SoLuongTong" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="GiaBia" class="form-label"></label>
+        <input asp-for="GiaBia" class="form-control" />
+        <span asp-validation-for="GiaBia" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="ViTriKe" class="form-label"></label>
+        <input asp-for="ViTriKe" class="form-control" />
+        <span asp-validation-for="ViTriKe" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="AnhBia" class="form-label"></label>
+        <input asp-for="AnhBia" class="form-control" type="file" accept=".jpg,.jpeg,.png,.webp" />
+        <div class="form-text">Định dạng JPG, PNG hoặc WEBP; dung lượng tối đa 2 MB.</div>
+        <span asp-validation-for="AnhBia" class="text-danger"></span>
+        @if (!string.IsNullOrWhiteSpace(Model.AnhBiaHienTai))
+        {
+            <div class="mt-2"><img src="@Model.AnhBiaHienTai" alt="Ảnh bìa hiện tại" style="max-height:120px" /></div>
+        }
+    </div>
+    <div class="col-12">
+        <label asp-for="MoTa" class="form-label"></label>
+        <textarea asp-for="MoTa" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="MoTa" class="text-danger"></span>
+    </div>
+</div>

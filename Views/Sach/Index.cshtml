@@ -1,0 +1,194 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Hiển thị danh mục sách, vị trí kệ, tìm kiếm/lọc, phân trang và nút quản lý theo vai trò. *@
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.SachIndexViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@using QuanLyThuVien_UNETI4_TI17A1CL.ViewModels
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces
+@inject ICurrentUserService Current
+@{
+    ViewData["Title"] = "Danh mục sách";
+    var staff = Current.IsInRole(VaiTro.Admin, VaiTro.ThuThu);
+}
+
+<partial name="_SachAlerts" />
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Danh mục sách</h1>
+    @if (staff)
+    {
+        <a asp-action="Create" class="btn btn-primary">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" class="me-1">
+                <path d="M8 1a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2H9v5a1 1 0 1 1-2 0V9H2a1 1 0 1 1 0-2h5V2a1 1 0 0 1 1-1z" />
+            </svg>
+            Thêm
+        </a>
+    }
+</div>
+
+<form asp-action="Index" method="get" class="card card-body mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-lg-4 col-md-6">
+            <label asp-for="TuKhoa" class="form-label">Từ khóa</label>
+            <input asp-for="TuKhoa" class="form-control" placeholder="Tên sách, tác giả, ISBN/mã sách, thể loại, vị trí kệ" />
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <label asp-for="TuKhoaTheLoai" class="form-label">Tìm kiếm thể loại</label>
+            <input asp-for="TuKhoaTheLoai" class="form-control" />
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <label asp-for="TheLoaiId" class="form-label">Thể loại chính xác</label>
+            <select asp-for="TheLoaiId" class="form-select">
+                <option value="">Tất cả thể loại</option>
+                @foreach (var category in Model.TheLoaiOptions)
+                {
+                    <option value="@category.MaTheLoai">@category.TenTheLoai (@category.SoLuongSach)</option>
+                }
+            </select>
+        </div>
+        <div class="col-lg-2 col-md-6">
+            <label asp-for="ConSach" class="form-label">Tình trạng kho</label>
+            <select asp-for="ConSach" class="form-select">
+                <option value="">Tất cả</option>
+                <option value="true">Còn sách</option>
+                <option value="false">Hết sách</option>
+            </select>
+        </div>
+        @if (staff)
+        {
+            <div class="col-lg-3 col-md-6">
+                <label asp-for="TrangThai" class="form-label">Trạng thái phục vụ</label>
+                <select asp-for="TrangThai" class="form-select">
+                    <option value="">Tất cả trạng thái</option>
+                    @foreach (var status in Enum.GetValues<TrangThaiSach>())
+                    {
+                        <option value="@status">@status.GetDisplayName()</option>
+                    }
+                </select>
+            </div>
+        }
+        <div class="col-lg-3 col-md-6">
+            <label asp-for="SapXep" class="form-label">Sắp xếp theo</label>
+            <select asp-for="SapXep" class="form-select">
+                <option value="@SapXepSach.TenSach">Tên sách</option>
+                <option value="@SapXepSach.TacGia">Tác giả</option>
+                <option value="@SapXepSach.NamXuatBan">Năm xuất bản</option>
+                <option value="@SapXepSach.SoLuongConLai">Số lượng còn lại</option>
+            </select>
+        </div>
+        <div class="col-lg-2 col-md-6">
+            <label class="form-label" for="GiamDan">Thứ tự</label>
+            <select asp-for="GiamDan" class="form-select">
+                <option value="false">Tăng dần</option>
+                <option value="true">Giảm dần</option>
+            </select>
+        </div>
+        <div class="col-lg-4 col-md-6 d-flex gap-2">
+            <button type="submit" class="btn btn-outline-primary">Tìm kiếm</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Xóa bộ lọc</a>
+        </div>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Sách</th>
+                <th>Tác giả</th>
+                <th>Vị trí kệ</th>
+                <th>Thể loại</th>
+                <th>Năm</th>
+                <th>Tồn kho</th>
+                <th>Khả dụng</th>
+                @if (staff) { <th>Trạng thái</th> }
+                @if (staff) { <th class="text-end">Thao tác</th> }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var book in Model.Sach.Items)
+            {
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            @if (!string.IsNullOrWhiteSpace(book.ImgPath))
+                            {
+                                <img src="@book.ImgPath" alt="Ảnh bìa @book.TenSach" class="rounded border"
+                                     style="width:48px;height:64px;object-fit:cover" />
+                            }
+                            <div>
+                                <a asp-action="Details" asp-route-id="@book.MaSach" class="fw-semibold text-decoration-none">@book.TenSach</a>
+                                @if (!string.IsNullOrWhiteSpace(book.ISBN))
+                                {
+                                    <div class="small text-muted">ISBN: @book.ISBN</div>
+                                }
+                            </div>
+                        </div>
+                    </td>
+                    <td>@book.TacGia</td>
+                    <td>@(string.IsNullOrWhiteSpace(book.ViTriKe) ? "Chưa cập nhật" : book.ViTriKe)</td>
+                    <td>@book.TenTheLoai</td>
+                    <td>@book.NamXuatBan</td>
+                    <td>@book.SoLuongConLai / @book.SoLuongTong</td>
+                    <td>
+                        @if (book.SoLuongConLai > 0)
+                        {
+                            <span class="badge bg-success">Còn sách</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Hết sách</span>
+                        }
+                    </td>
+                    @if (staff)
+                    {
+                        <td><span class="badge bg-secondary">@book.TrangThai.GetDisplayName()</span></td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="Edit" asp-route-id="@book.MaSach" class="btn btn-sm btn-outline-secondary">Sửa</a>
+                            <a asp-action="ChangeStatus" asp-route-id="@book.MaSach" class="btn btn-sm btn-outline-warning">Đổi trạng thái</a>
+                            <a asp-action="Delete" asp-route-id="@book.MaSach" class="btn btn-sm btn-outline-danger">Xóa</a>
+                        </td>
+                    }
+                </tr>
+            }
+            @if (Model.Sach.Items.Count == 0)
+            {
+                <tr>
+                    <td colspan="@(staff ? 9 : 7)" class="text-center text-muted py-4">
+                        @if (!string.IsNullOrWhiteSpace(Model.TuKhoaTheLoai))
+                        {
+                            <span>Không tìm thấy thể loại phù hợp</span>
+                        }
+                        else
+                        {
+                            <span>Không tìm thấy sách phù hợp.</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.Sach.TotalCount > 0)
+{
+    <nav aria-label="Phân trang danh sách sách" class="d-flex justify-content-between align-items-center">
+        <span class="text-muted">Trang @Model.Sach.PageIndex / @Model.Sach.TotalPages — @Model.Sach.TotalCount sách</span>
+        <ul class="pagination mb-0">
+            <li class="page-item @(!Model.Sach.HasPreviousPage ? "disabled" : "")">
+                <a class="page-link"
+                   asp-route-TuKhoa="@Model.TuKhoa" asp-route-TuKhoaTheLoai="@Model.TuKhoaTheLoai"
+                   asp-route-TheLoaiId="@Model.TheLoaiId" asp-route-ConSach="@Model.ConSach"
+                   asp-route-TrangThai="@Model.TrangThai" asp-route-SapXep="@Model.SapXep"
+                   asp-route-GiamDan="@Model.GiamDan" asp-route-Page="@(Model.Sach.PageIndex - 1)">Trước</a>
+            </li>
+            <li class="page-item @(!Model.Sach.HasNextPage ? "disabled" : "")">
+                <a class="page-link"
+                   asp-route-TuKhoa="@Model.TuKhoa" asp-route-TuKhoaTheLoai="@Model.TuKhoaTheLoai"
+                   asp-route-TheLoaiId="@Model.TheLoaiId" asp-route-ConSach="@Model.ConSach"
+                   asp-route-TrangThai="@Model.TrangThai" asp-route-SapXep="@Model.SapXep"
+                   asp-route-GiamDan="@Model.GiamDan" asp-route-Page="@(Model.Sach.PageIndex + 1)">Tiếp</a>
+            </li>
+        </ul>
+    </nav>
+}

@@ -1,0 +1,86 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Hiển thị chi tiết sách gồm vị trí kệ, tình trạng còn sách, liên kết thể loại và thao tác theo vai trò. *@
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.SachDetailsViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces
+@inject ICurrentUserService Current
+@{
+    ViewData["Title"] = Model.TenSach;
+    var staff = Current.IsInRole(VaiTro.Admin, VaiTro.ThuThu);
+    var coTheMuon = Model.TrangThai == TrangThaiSach.DangPhucVu && Model.SoLuongConLai > 0;
+}
+
+<partial name="_SachAlerts" />
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">@Model.TenSach</h1>
+    <div class="d-flex gap-2">
+        @if (staff)
+        {
+            <a asp-action="Edit" asp-route-id="@Model.MaSach" class="btn btn-outline-secondary">Sửa</a>
+            <a asp-action="ChangeStatus" asp-route-id="@Model.MaSach" class="btn btn-outline-warning">Đổi trạng thái</a>
+            <a asp-action="Delete" asp-route-id="@Model.MaSach" class="btn btn-outline-danger">Xóa</a>
+        }
+        <a asp-action="Index" class="btn btn-outline-primary">Quay lại danh sách</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4 col-lg-3">
+        @if (!string.IsNullOrWhiteSpace(Model.ImgPath))
+        {
+            <img src="@Model.ImgPath" alt="Ảnh bìa @Model.TenSach" class="img-fluid rounded border shadow-sm" />
+        }
+        else
+        {
+            <div class="border rounded bg-light text-muted d-flex align-items-center justify-content-center" style="height:320px">
+                Chưa có ảnh bìa
+            </div>
+        }
+    </div>
+    <div class="col-md-8 col-lg-9">
+        <dl class="row">
+            <dt class="col-sm-3">Tác giả</dt><dd class="col-sm-9">@Model.TacGia</dd>
+            <dt class="col-sm-3">ISBN / Mã sách</dt><dd class="col-sm-9">@(Model.ISBN ?? $"Mã sách {Model.MaSach}")</dd>
+            <dt class="col-sm-3">Nhà xuất bản</dt><dd class="col-sm-9">@(Model.NhaXuatBan ?? "Chưa cập nhật")</dd>
+            <dt class="col-sm-3">Năm xuất bản</dt><dd class="col-sm-9">@Model.NamXuatBan</dd>
+            <dt class="col-sm-3">Thể loại</dt>
+            <dd class="col-sm-9"><a asp-action="Index" asp-route-TheLoaiId="@Model.MaTheLoai">@Model.TenTheLoai</a></dd>
+            <dt class="col-sm-3">Vị trí kệ</dt><dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.ViTriKe) ? "Chưa cập nhật" : Model.ViTriKe)</dd>
+            <dt class="col-sm-3">Số lượng tổng</dt><dd class="col-sm-9">@Model.SoLuongTong</dd>
+            <dt class="col-sm-3">Số lượng còn lại</dt>
+            <dd class="col-sm-9">
+                @Model.SoLuongConLai
+                @if (Model.SoLuongConLai > 0)
+                {
+                    <span class="badge bg-success ms-2">Còn sách</span>
+                }
+                else
+                {
+                    <span class="badge bg-danger ms-2">Hết sách</span>
+                }
+            </dd>
+            <dt class="col-sm-3">Trạng thái</dt><dd class="col-sm-9">@Model.TrangThai.GetDisplayName()</dd>
+            <dt class="col-sm-3">Mô tả</dt>
+            <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.MoTa) ? "Chưa có mô tả." : Model.MoTa)</dd>
+        </dl>
+
+        @if (!staff)
+        {
+            if (coTheMuon)
+            {
+                <form asp-controller="PhieuMuon" asp-action="Register" asp-route-id="@Model.MaSach" method="post">
+                    <button type="submit" class="btn btn-primary">Đăng ký mượn</button>
+                </form>
+            }
+            else
+            {
+                <button type="button" class="btn btn-secondary" disabled>Đăng ký mượn</button>
+                <div class="small text-muted mt-1">
+                    @(Model.TrangThai == TrangThaiSach.TamNgung ? "Sách tạm ngưng phục vụ" : "Hết sách")
+                </div>
+            }
+        }
+    </div>
+</div>

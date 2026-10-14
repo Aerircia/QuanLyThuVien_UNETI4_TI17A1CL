@@ -1,0 +1,35 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Hiển thị form xác nhận đổi trạng thái sách với các nhãn trạng thái. *@
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.SachChangeStatusViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Đổi trạng thái sách";
+}
+<partial name="_SachAlerts" />
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-5">
+        <h1 class="h3 mb-3">Đổi trạng thái sách</h1>
+        <div class="card">
+            <div class="card-body">
+                <p>Bạn đang thay đổi trạng thái của sách <strong>@Model.TenSach</strong>.</p>
+                <form asp-action="ChangeStatus" asp-route-id="@Model.MaSach" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <label asp-for="TrangThai" class="form-label">Trạng thái mới</label>
+                    <select asp-for="TrangThai" class="form-select">
+                        @foreach (var status in Enum.GetValues<TrangThaiSach>())
+                        {
+                            <option value="@status">@status.GetDisplayName()</option>
+                        }
+                    </select>
+                    <span asp-validation-for="TrangThai" class="text-danger"></span>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">Xác nhận đổi trạng thái</button>
+                        <a asp-action="Details" asp-route-id="@Model.MaSach" class="btn btn-outline-secondary">Hủy</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

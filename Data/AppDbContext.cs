@@ -1,3 +1,7 @@
+// Họ và tên: Vũ Tiến Thành
+// Mã sinh viên: 23103100255
+// Nội dung thực hiện: Cấu hình EF Core cho sách, bao gồm chỉ mục và ràng buộc số lượng còn lại, cùng RowVersion để phát hiện cập nhật đồng thời.
+
 // Họ và tên: Lại Anh Quân
 // Mã sinh viên: 23103100255
 // Nội dung thực hiện: Xây dựng appDbContext, cấu hình các entity, quan hệ, ràng buộc, index, và cách lưu trữ enum trong cơ sở dữ liệu.
@@ -66,6 +70,7 @@ public class AppDbContext : DbContext
 
         // ---- Money / ratio precision ----
         b.Entity<Sach>().Property(x => x.GiaBia).HasPrecision(18, 2);
+        b.Entity<Sach>().Property(x => x.RowVersion).IsRowVersion();
         b.Entity<TraSach>().Property(x => x.TienPhat).HasPrecision(18, 2);
         b.Entity<CauHinhThuVien>().Property(x => x.TienPhatMoiNgay).HasPrecision(18, 2);
         b.Entity<CauHinhThuVien>().Property(x => x.TyLePhatHuHong).HasPrecision(5, 2);
@@ -89,9 +94,9 @@ public class AppDbContext : DbContext
         // ---- Integrity: CHECK constraints ----
         b.Entity<Sach>().ToTable(t =>
         {
-            t.HasCheckConstraint("CK_Sach_SoLuongTong", "[SoLuongTong] > 0");
+            t.HasCheckConstraint("CK_Sach_SoLuongTong", "[SoLuongTong] >= 0");
             t.HasCheckConstraint("CK_Sach_GiaBia", "[GiaBia] >= 0");
-            t.HasCheckConstraint("CK_Sach_NamXuatBan", "[NamXuatBan] >= 1900");
+            t.HasCheckConstraint("CK_Sach_NamXuatBan", "[NamXuatBan] >= 1450");
         });
         b.Entity<BanDoc>().ToTable(t =>
             t.HasCheckConstraint("CK_BanDoc_HanThe", "[NgayHetHanThe] > [NgayCapThe]"));

@@ -329,6 +329,10 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("ISBN")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<string>("ImgPath")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
@@ -346,6 +350,12 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                     b.Property<string>("NhaXuatBan")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<int>("SoLuongTong")
                         .HasColumnType("int");
@@ -381,9 +391,9 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                         {
                             t.HasCheckConstraint("CK_Sach_GiaBia", "[GiaBia] >= 0");
 
-                            t.HasCheckConstraint("CK_Sach_NamXuatBan", "[NamXuatBan] >= 1900");
+                            t.HasCheckConstraint("CK_Sach_NamXuatBan", "[NamXuatBan] >= 1450");
 
-                            t.HasCheckConstraint("CK_Sach_SoLuongTong", "[SoLuongTong] > 0");
+                            t.HasCheckConstraint("CK_Sach_SoLuongTong", "[SoLuongTong] >= 0");
                         });
                 });
 
