@@ -1,0 +1,116 @@
+@* Họ và tên: Phùng Ngọc Bảo *@
+@* Mã sinh viên: 23103100278 *@
+@* Nội dung thực hiện: Generate 11 nhóm thống kê LINQ. *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.ThongKeReport
+
+@{
+    ViewData["Title"] = "Thống kê thư viện";
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-1">Thống kê thư viện</h1>
+    </div>
+    <a asp-action="Dashboard" class="btn btn-outline-secondary">Quay lại Dashboard</a>
+</div>
+
+<section class="card mb-4">
+    <div class="card-header fw-semibold">1. Số đầu sách theo thể loại</div>
+    <div class="table-responsive"><table class="table table-sm table-striped mb-0">
+        <thead><tr><th>Thể loại</th><th class="text-end">Số đầu sách</th></tr></thead><tbody>
+        @foreach (var row in Model.DauSachTheoTheLoai)
+        { <tr><td>@row.TenTheLoai</td><td class="text-end">@row.SoDauSach</td></tr> }
+        </tbody></table></div>
+</section>
+
+<section class="card mb-4">
+    <div class="card-header fw-semibold">2. Số lượt mượn theo từng đầu sách</div>
+    <div class="table-responsive"><table class="table table-sm table-striped mb-0">
+        <thead><tr><th>Mã sách</th><th>Đầu sách</th><th class="text-end">Lượt mượn</th></tr></thead><tbody>
+        @foreach (var row in Model.LuotMuonTheoSach)
+        { <tr><td>@row.MaSach</td><td>@row.TenSach</td><td class="text-end">@row.SoLuot</td></tr> }
+        @if (Model.LuotMuonTheoSach.Count == 0) { <tr><td colspan="3" class="text-center text-muted">Chưa có lượt mượn.</td></tr> }
+        </tbody></table></div>
+</section>
+
+<section class="card mb-4">
+    <div class="card-header fw-semibold">3. Số phiếu mượn theo trạng thái</div>
+    <div class="table-responsive"><table class="table table-sm table-striped mb-0">
+        <thead><tr><th>Trạng thái</th><th class="text-end">Số phiếu</th></tr></thead><tbody>
+        @foreach (var row in Model.PhieuMuonTheoTrangThai)
+        { <tr><td>@row.TrangThai</td><td class="text-end">@row.SoPhieu</td></tr> }
+        </tbody></table></div>
+</section>
+
+<section class="card mb-4">
+    <div class="card-header fw-semibold">4. Top 10 đầu sách được mượn nhiều nhất</div>
+    <div class="table-responsive"><table class="table table-sm table-striped mb-0">
+        <thead><tr><th>Hạng</th><th>Đầu sách</th><th class="text-end">Lượt mượn</th></tr></thead><tbody>
+        @{ var rank = 0; }
+        @foreach (var row in Model.Top10Sach)
+        { rank++; <tr><td>@rank</td><td>@row.TenSach</td><td class="text-end">@row.SoLuot</td></tr> }
+        </tbody></table></div>
+</section>
+
+<section class="card mb-4">
+    <div class="card-header fw-semibold">5. Bạn đọc mượn nhiều nhất (Top 10)</div>
+    <div class="table-responsive"><table class="table table-sm table-striped mb-0">
+        <thead><tr><th>Mã bạn đọc</th><th>Họ tên</th><th class="text-end">Lượt mượn</th></tr></thead><tbody>
+        @foreach (var row in Model.BanDocMuonNhieu)
+        { <tr><td>@row.MaBanDoc</td><td>@row.HoTen</td><td class="text-end">@row.SoLuot</td></tr> }
+        </tbody></table></div>
+</section>
+
+<section class="card mb-4">
+    <div class="card-header fw-semibold">6. Số lượt mượn theo tháng (12 tháng gần nhất)</div>
+    <div class="table-responsive"><table class="table table-sm table-striped mb-0">
+        <thead><tr><th>Tháng</th><th class="text-end">Lượt mượn</th></tr></thead><tbody>
+        @foreach (var row in Model.LuotMuonTheoThang)
+        { <tr><td>@row.Ky</td><td class="text-end">@row.SoLuong</td></tr> }
+        </tbody></table></div>
+</section>
+
+<section class="card mb-4">
+    <div class="card-header fw-semibold">7. Số lượt trả sách theo tháng</div>
+    <div class="table-responsive"><table class="table table-sm table-striped mb-0">
+        <thead><tr><th>Tháng</th><th class="text-end">Lượt trả</th></tr></thead><tbody>
+        @foreach (var row in Model.LuotTraTheoThang)
+        { <tr><td>@row.Ky</td><td class="text-end">@row.SoLuong</td></tr> }
+        </tbody></table></div>
+</section>
+
+<section class="card mb-4">
+    <div class="card-header fw-semibold">8. Tiền phạt theo tháng</div>
+    <div class="table-responsive"><table class="table table-sm table-striped mb-0">
+        <thead><tr><th>Tháng</th><th class="text-end">Tiền phạt</th></tr></thead><tbody>
+        @foreach (var row in Model.TienPhatTheoThang)
+        { <tr><td>@row.Ky</td><td class="text-end">@row.TienPhat.ToString("N0") đ</td></tr> }
+        </tbody></table></div>
+</section>
+
+<section class="card mb-4">
+    <div class="card-header fw-semibold">9. Số lượt gia hạn được duyệt theo đầu sách</div>
+    <div class="table-responsive"><table class="table table-sm table-striped mb-0">
+        <thead><tr><th>Mã sách</th><th>Đầu sách</th><th class="text-end">Lượt gia hạn</th></tr></thead><tbody>
+        @foreach (var row in Model.GiaHanTheoSach)
+        { <tr><td>@row.MaSach</td><td>@row.TenSach</td><td class="text-end">@row.SoLuot</td></tr> }
+        @if (Model.GiaHanTheoSach.Count == 0) { <tr><td colspan="3" class="text-center text-muted">Chưa có yêu cầu gia hạn được duyệt.</td></tr> }
+        </tbody></table></div>
+</section>
+
+<section class="card mb-4">
+    <div class="card-header fw-semibold">10. Tỷ lệ phiếu trả trễ trên tổng số phiếu đã trả</div>
+    <div class="card-body">
+        <div class="display-6">@Model.TyLeTraTrePhanTram.ToString("N1")%</div>
+        <p class="text-muted mb-0">Tính bằng số bản ghi TraSach có SoNgayTre &gt; 0 chia cho tổng bản ghi TraSach.</p>
+    </div>
+</section>
+
+<section class="card mb-4">
+    <div class="card-header fw-semibold">11. Tỷ lệ sách đang được mượn trên tổng số sách theo thể loại</div>
+    <div class="table-responsive"><table class="table table-sm table-striped mb-0">
+        <thead><tr><th>Thể loại</th><th class="text-end">Số cuốn đang mượn</th><th class="text-end">Tổng số cuốn</th><th class="text-end">Tỷ lệ</th></tr></thead><tbody>
+        @foreach (var row in Model.TyLeMuonTheoTheLoai)
+        { <tr><td>@row.TenTheLoai</td><td class="text-end">@row.SoCuonDangMuon</td><td class="text-end">@row.TongSoCuon</td><td class="text-end">@row.TyLePhanTram.ToString("N1")%</td></tr> }
+        </tbody></table></div>
+</section>

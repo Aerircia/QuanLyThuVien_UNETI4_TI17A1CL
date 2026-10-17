@@ -63,23 +63,40 @@ public sealed class ThongKeService : IThongKeService
         var nextMonth = firstMonth.AddMonths(12);
 
         // 1. Số đầu sách theo thể loại, kể cả thể loại chưa có đầu sách
-        var byCategory = await _db.TheLoais
+        // Dùng anonymous type trong truy vấn SQL; ánh xạ sang record sau ToListAsync
+        // Tránh EF Core không dịch được projection record khi cần dùng thuộc tính sau Select
+        var byCategoryRaw = await _db.TheLoais
             .AsNoTracking()
             .OrderBy(t => t.TenTheLoai)
-            .Select(t => new ThongKeTheLoaiItem(
-                t.MaTheLoai, t.TenTheLoai, t.Sachs.Count()))
+            .Select(t => new
+            {
+                t.MaTheLoai,
+                t.TenTheLoai,
+                SoDauSach = t.Sachs.Count()
+            })
             .ToListAsync(ct);
+        var byCategory = byCategoryRaw
+            .Select(x => new ThongKeTheLoaiItem(x.MaTheLoai, x.TenTheLoai, x.SoDauSach))
+            .ToList();
 
         // Định nghĩa thống nhất: một lượt mượn là một phiếu đã được giao (NgayMuon != null)
         var borrowed = _db.PhieuMuons.AsNoTracking().Where(p => p.NgayMuon != null);
 
         // 2. Số lượt mượn theo từng đầu sách.
-        var byBook = await borrowed
+        var byBookRaw = await borrowed
             .GroupBy(p => new { p.MaSach, TenSach = p.Sach!.TenSach })
-            .Select(g => new ThongKeSachItem(g.Key.MaSach, g.Key.TenSach, g.Count()))
+            .Select(g => new
+            {
+                g.Key.MaSach,
+                g.Key.TenSach,
+                SoLuot = g.Count()
+            })
             .OrderByDescending(x => x.SoLuot)
             .ThenBy(x => x.TenSach)
             .ToListAsync(ct);
+        var byBook = byBookRaw
+            .Select(x => new ThongKeSachItem(x.MaSach, x.TenSach, x.SoLuot))
+            .ToList();
 
         // 3. Số phiếu theo trạng thái; trạng thái không có dữ liệu vẫn hiện 0
         var statusRaw = await _db.PhieuMuons
@@ -97,13 +114,21 @@ public sealed class ThongKeService : IThongKeService
         var top10 = byBook.Take(10).ToList();
 
         // 5. Bạn đọc mượn nhiều nhất (hiển thị top 10 để dễ so sánh)
-        var byReader = await borrowed
+        var byReaderRaw = await borrowed
             .GroupBy(p => new { p.MaBanDoc, HoTen = p.BanDoc!.HoTen })
-            .Select(g => new ThongKeBanDocItem(g.Key.MaBanDoc, g.Key.HoTen, g.Count()))
+            .Select(g => new
+            {
+                g.Key.MaBanDoc,
+                g.Key.HoTen,
+                SoLuot = g.Count()
+            })
             .OrderByDescending(x => x.SoLuot)
             .ThenBy(x => x.HoTen)
             .Take(10)
             .ToListAsync(ct);
+        var byReader = byReaderRaw
+            .Select(x => new ThongKeBanDocItem(x.MaBanDoc, x.HoTen, x.SoLuot))
+            .ToList();
 
         // 6. Lượt mượn theo tháng trong 12 tháng gần nhất
         var borrowByMonthRaw = await borrowed
@@ -150,7 +175,7 @@ public sealed class ThongKeService : IThongKeService
         }
 
         // 9. Số yêu cầu gia hạn đã được duyệt theo đầu sách
-        var byExtension = await _db.GiaHanMuons
+        var byExtensionRaw = await _db.GiaHanMuons
             .AsNoTracking()
             .Where(g => g.TrangThai == TrangThaiGiaHan.DaDuyet)
             .GroupBy(g => new
@@ -158,10 +183,18 @@ public sealed class ThongKeService : IThongKeService
                 MaSach = g.PhieuMuon!.MaSach,
                 TenSach = g.PhieuMuon!.Sach!.TenSach
             })
-            .Select(g => new ThongKeSachItem(g.Key.MaSach, g.Key.TenSach, g.Count()))
+            .Select(g => new
+            {
+                g.Key.MaSach,
+                g.Key.TenSach,
+                SoLuot = g.Count()
+            })
             .OrderByDescending(x => x.SoLuot)
             .ThenBy(x => x.TenSach)
             .ToListAsync(ct);
+        var byExtension = byExtensionRaw
+            .Select(x => new ThongKeSachItem(x.MaSach, x.TenSach, x.SoLuot))
+            .ToList();
 
         // 10. Tỷ lệ phiếu trả trễ trên tổng số bản ghi trả
         var tongTra = await _db.TraSachs.CountAsync(ct);
