@@ -1,0 +1,59 @@
+\@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100257 *@
+@* Nội dung thực hiện: Xây dựng view cho việc liệt kê sách (Admin, Thủ thư) *@
+
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.Services.Common.PagedResult<QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.SachListItem>
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@using QuanLyThuVien_UNETI4_TI17A1CL.ViewModels
+@{
+    ViewData["Title"] = "Quản lý sách";
+    var statuses = Html.GetEnumSelectList<TrangThaiSach>().ToList();
+    foreach (var option in statuses)
+        option.Selected = ViewBag.TrangThai is TrangThaiSach selected && option.Value == ((int)selected).ToString();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">Quản lý sách</h1>
+    <a asp-action="Create" class="btn btn-primary">Thêm sách</a>
+</div>
+@if (TempData["ThongBao"] is string notice) { <div class="alert alert-success">@notice</div> }
+@if (TempData["Loi"] is string error) { <div class="alert alert-danger">@error</div> }
+
+<form method="get" asp-action="Index" class="row g-2 mb-3">
+    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+    <div class="col-md-4"><input name="search" value="@ViewBag.Search" class="form-control" placeholder="Tên sách, tác giả, nhà xuất bản" /></div>
+    <div class="col-md-3">
+        <select name="maTheLoai" class="form-select" asp-items="(IEnumerable<SelectListItem>)ViewBag.TheLoaiOptions">
+            <option value="">Mọi thể loại</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select name="trangThai" class="form-select" asp-items="statuses"><option value="">Mọi trạng thái</option></select>
+    </div>
+    <div class="col-md-2 d-grid"><button type="submit" class="btn btn-outline-primary">Lọc</button></div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead><tr><th>Tên sách</th><th>Tác giả</th><th>Thể loại</th><th>Năm XB</th><th class="text-end">Số lượng</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var book in Model.Items)
+        {
+            <tr>
+                <td>@book.TenSach</td><td>@book.TacGia</td><td>@book.TenTheLoai</td>
+                <td>@book.NamXuatBan</td><td class="text-end">@book.SoLuongTong</td>
+                <td>@book.TrangThai.GetDisplayName()</td>
+                <td class="text-end text-nowrap">
+                    <a asp-action="Details" asp-route-id="@book.MaSach" class="btn btn-sm btn-outline-secondary">Chi tiết</a>
+                    <a asp-action="Edit" asp-route-id="@book.MaSach" class="btn btn-sm btn-outline-primary">Sửa</a>
+                    <a asp-action="Delete" asp-route-id="@book.MaSach" class="btn btn-sm btn-outline-danger">Xóa</a>
+                </td>
+            </tr>
+        }
+        @if (!Model.Items.Any()) { <tr><td colspan="7" class="text-center text-muted py-4">Không tìm thấy sách phù hợp.</td></tr> }
+        </tbody>
+    </table>
+</div>
+<partial name="_PagerPartial" model="(PagerViewModel)ViewBag.Pager" />

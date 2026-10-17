@@ -1,0 +1,14 @@
+    @* Họ và tên: Vũ Tiến Thành *@
+    @* Mã sinh viên: 23103100257 *@
+    @* Nội dung thực hiện: Xây dựng view cho việc xóa sách (Admin, Thủ thư) *@
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.SachDetail
+@{
+    ViewData["Title"] = "Xóa sách";
+}
+<h1 class="h4 mb-3">Xóa sách</h1>
+<div class="alert alert-warning">Bạn có chắc muốn xóa sách <strong>@Model.TenSach</strong> không? Sách đã có phiếu mượn sẽ không thể xóa.</div>
+<form asp-action="Delete" asp-route-id="@Model.MaSach" method="post">
+    <button type="submit" class="btn btn-danger">Xóa</button>
+    <a asp-action="Details" asp-route-id="@Model.MaSach" class="btn btn-outline-secondary">Hủy</a>
+</form>
