@@ -62,11 +62,17 @@ public sealed record TraSachPreview(
     public decimal PhatHuHong { get; set; }
     public decimal PhatMat { get; set; }
 }
+    public sealed record PhieuChoTraFilter( string? Search, bool ChiQuaHan = false, int Page = 1, int PageSize = PagingDefaults.DefaultPageSize);
+    public sealed record PhieuChoTraItem(int MaPhieuMuon, string TenBanDoc, string? MaSoThe, string TenSach, DateOnly? NgayMuon, DateOnly? HanTra)
+{
+    public int SoNgayTre { get; set; }
+}
 public sealed record TraSachInput(int MaPhieuMuon, TinhTrangSach TinhTrang, string? GhiChu);
 
 public interface ITraSachService
 {
     Task<PagedResult<TraSachListItem>> GetListAsync(TraSachFilter filter, CancellationToken ct = default);
+    Task<PagedResult<PhieuChoTraItem>> GetPhieuChoTraAsync(PhieuChoTraFilter filter, CancellationToken ct = default);
     Task<TraSachPreview?> GetPreviewAsync(int maPhieuMuon, CancellationToken ct = default);
     Task<ServiceResult<int>> CreateAsync(TraSachInput input, int actingMaTaiKhoan, CancellationToken ct = default);
     Task<TraSachDetail?> GetAsync(int maTra, CancellationToken ct = default);
