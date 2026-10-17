@@ -70,6 +70,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<ITaiKhoanService, TaiKhoanService>();
+        services.AddScoped<ISachService, SachService>();
+        services.AddScoped<ITheLoaiService, TheLoaiService>();
         services.AddScoped<IOtpService, OtpService>();
         services.AddScoped<IPasswordResetService, PasswordResetService>();
         services.AddScoped<ICauHinhThuVienService, CauHinhThuVienService>();
