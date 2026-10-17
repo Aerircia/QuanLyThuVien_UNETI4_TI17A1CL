@@ -25,10 +25,14 @@
         <li class="nav-item">
             <a class="nav-link text-dark" asp-controller="CauHinhThuVien" asp-action="Index">Cấu hình thư viện</a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="TheLoai" asp-action="Index">Thể loại</a>
+        </li>
 
     }
     @if (Current.IsInRole(VaiTro.Admin, VaiTro.ThuThu))
     {
+        <li class="nav-item"><a class="nav-link" asp-controller="Sach" asp-action="Index">Sách</a></li>
         <li class="nav-item"><a class="nav-link" asp-controller="GiaHanMuon" asp-action="Index">Yêu cầu gia hạn</a></li>
         <li class="nav-item"><a class="nav-link" asp-controller="TraSach" asp-action="Index">Trả sách</a></li>
     }

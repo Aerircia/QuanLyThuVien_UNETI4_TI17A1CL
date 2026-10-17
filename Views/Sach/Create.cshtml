@@ -1,0 +1,28 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100257 *@
+@* Nội dung thực hiện: Xây dựng view cho việc thêm sách (Admin, Thủ thư) *@
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.Models.Sach
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Thêm sách";
+}
+<h1 class="h4 mb-3">Thêm sách</h1>
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+    <div class="mb-3"><label asp-for="TenSach" class="form-label"></label><input asp-for="TenSach" class="form-control" /><span asp-validation-for="TenSach" class="text-danger"></span></div>
+    <div class="mb-3"><label asp-for="TacGia" class="form-label"></label><input asp-for="TacGia" class="form-control" /><span asp-validation-for="TacGia" class="text-danger"></span></div>
+    <div class="mb-3"><label asp-for="MaTheLoai" class="form-label"></label><select asp-for="MaTheLoai" asp-items="(IEnumerable<SelectListItem>)ViewBag.TheLoaiOptions" class="form-select"><option value="">-- Chọn thể loại --</option></select><span asp-validation-for="MaTheLoai" class="text-danger"></span></div>
+    <div class="mb-3"><label asp-for="NhaXuatBan" class="form-label"></label><input asp-for="NhaXuatBan" class="form-control" /><span asp-validation-for="NhaXuatBan" class="text-danger"></span></div>
+    <div class="mb-3"><label asp-for="NamXuatBan" class="form-label"></label><input asp-for="NamXuatBan" class="form-control" /><span asp-validation-for="NamXuatBan" class="text-danger"></span></div>
+    <div class="mb-3"><label asp-for="SoLuongTong" class="form-label"></label><input asp-for="SoLuongTong" class="form-control" /><span asp-validation-for="SoLuongTong" class="text-danger"></span></div>
+    <div class="mb-3"><label asp-for="GiaBia" class="form-label"></label><input asp-for="GiaBia" class="form-control" /><span asp-validation-for="GiaBia" class="text-danger"></span></div>
+    <div class="mb-3"><label asp-for="ViTriKe" class="form-label"></label><input asp-for="ViTriKe" class="form-control" /><span asp-validation-for="ViTriKe" class="text-danger"></span></div>
+    <div class="mb-3"><label asp-for="ImgPath" class="form-label"></label><input asp-for="ImgPath" class="form-control" /><span asp-validation-for="ImgPath" class="text-danger"></span></div>
+    <div class="mb-3"><label asp-for="MoTa" class="form-label"></label><textarea asp-for="MoTa" class="form-control" rows="4"></textarea><span asp-validation-for="MoTa" class="text-danger"></span></div>
+    <div class="mb-3"><label asp-for="TrangThai" class="form-label"></label><select asp-for="TrangThai" asp-items="Html.GetEnumSelectList<TrangThaiSach>()" class="form-select"></select></div>
+    <button type="submit" class="btn btn-primary">Lưu</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

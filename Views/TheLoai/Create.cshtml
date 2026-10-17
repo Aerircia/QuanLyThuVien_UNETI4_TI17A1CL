@@ -1,0 +1,20 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100257 *@
+@* Nội dung thực hiện: Xây dựng view cho việc thêm thể loại (Admin) *@
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.Models.TheLoai
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Thêm thể loại";
+}
+<h1 class="h4 mb-3">Thêm thể loại</h1>
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+    <div class="mb-3"><label asp-for="TenTheLoai" class="form-label"></label><input asp-for="TenTheLoai" class="form-control" /><span asp-validation-for="TenTheLoai" class="text-danger"></span></div>
+    <div class="mb-3"><label asp-for="KhuVucLuuTru" class="form-label"></label><input asp-for="KhuVucLuuTru" class="form-control" /><span asp-validation-for="KhuVucLuuTru" class="text-danger"></span></div>
+    <div class="mb-3"><label asp-for="MoTa" class="form-label"></label><textarea asp-for="MoTa" class="form-control" rows="4"></textarea><span asp-validation-for="MoTa" class="text-danger"></span></div>
+    <div class="mb-3"><label asp-for="TrangThai" class="form-label"></label><select asp-for="TrangThai" asp-items="Html.GetEnumSelectList<TrangThaiTheLoai>()" class="form-select"></select></div>
+    <button type="submit" class="btn btn-primary">Lưu</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
