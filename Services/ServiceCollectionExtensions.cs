@@ -33,7 +33,7 @@ public static class ServiceCollectionExtensions
 
         services.AddHttpContextAccessor();
 
-        // Common services
+        // module email / otp / password reset
         services.AddMemoryCache();
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<IPasswordHasher<TaiKhoan>, PasswordHasher<TaiKhoan>>();
@@ -65,16 +65,23 @@ public static class ServiceCollectionExtensions
                 "Email:Host chưa được cấu hình. Đặt Email__Host, Email__Username, " +
                 "Email__Password, Email__FromAddress (biến môi trường hoặc user-secrets).");
         }
-
+        
         // Services
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<ITaiKhoanService, TaiKhoanService>();
+        services.AddScoped<ISachService, SachService>();
+        services.AddScoped<ITheLoaiService, TheLoaiService>();
         services.AddScoped<IOtpService, OtpService>();
         services.AddScoped<IPasswordResetService, PasswordResetService>();
         services.AddScoped<IBanDocService, BanDocService>();
         services.AddScoped<IPhieuMuonService, PhieuMuonService>();
+        services.AddScoped<ICauHinhThuVienService, CauHinhThuVienService>();
 
+        services.AddScoped<IGiaHanMuonService, GiaHanMuonService>();
+        services.AddScoped<ITraSachService, TraSachService>();
+        services.AddScoped<ITienPhatTreHanService, TienPhatTreHanService>();
+        services.AddScoped<ITienPhatTinhTrangSachService, TienPhatTinhTrangSachService>();
         return services;
     }
 }

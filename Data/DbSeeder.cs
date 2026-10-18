@@ -12,7 +12,7 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Data;
 // Baseline seed only: settings row, one account per role, one reader profile.
 // Idempotent - safe to run on every startup. The volume required by the spec (section 16)
 // is a later task, added per module as DbSeeder.<Module>.cs (make this class partial then).
-public static class DbSeeder
+public static partial class DbSeeder
 {
     public static async Task SeedAsync(IServiceProvider sp)
     {
@@ -82,5 +82,6 @@ public static class DbSeeder
             // MaSoThe is left null on purpose: the database sequence fills it (TV-000001)
         });
         await db.SaveChangesAsync();
+        await SeedGiaHanMuonVaTraSachAsync(db);
     }
 }
