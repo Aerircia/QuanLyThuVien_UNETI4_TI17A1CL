@@ -10,12 +10,33 @@
 @using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces
 @inject ICurrentUserService Current
 
-@* Menu chính theo vai trò. Chỉ để hiển thị: quyền [AuthorizeRole] kiểm tra ở Controller.
-   Mỗi module thêm liên kết của mình vào đây. *@
 <ul class="navbar-nav me-auto">
     <li class="nav-item">
-        <a class="nav-link" asp-controller="Home" asp-action="Index">Trang chủ</a>
+        <a class="nav-link" asp-controller="Home" asp-action="Index">Trang chủ / Kho sách</a>
     </li>
+
+    @if (Current.IsInRole(VaiTro.BanDoc))
+    {
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="PhieuMuon" asp-action="MyLoans">Phiếu mượn của tôi</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="PhieuMuon" asp-action="MyFines">Tiền phạt của tôi</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="BanDoc" asp-action="MyProfile">Thẻ &amp; Hồ sơ cá nhân</a>
+        </li>
+    }
+
+    @if (Current.IsInRole(VaiTro.Admin, VaiTro.ThuThu))
+    {
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="PhieuMuon" asp-action="Index">Quản lý phiếu mượn</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="BanDoc" asp-action="Index">Quản lý bạn đọc</a>
+        </li>
+    }
 
     @if (Current.IsInRole(VaiTro.Admin))
     {

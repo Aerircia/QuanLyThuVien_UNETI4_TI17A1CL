@@ -1,0 +1,120 @@
+@* Họ và tên: Nguyễn Hữu Tuấn *@
+@* Mã sinh viên: 23103100136 *@
+@* Nội dung thực hiện: View thêm bạn đọc mới (Thủ thư & Admin) *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.BanDocCreateViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Thêm bạn đọc";
+    var unlinkedAccounts = ViewBag.UnlinkedAccounts as List<QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.TaiKhoanLookupItem> ?? new();
+}
+
+<div class="container py-3">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="h4 mb-0">Thêm hồ sơ bạn đọc mới</h1>
+                <a asp-action="Index" class="btn btn-outline-secondary">← Quay lại danh sách</a>
+            </div>
+
+            <div class="app-card">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <div class="mb-4 p-3 bg-light rounded border">
+                        <label asp-for="MaTaiKhoan" class="form-label fw-bold"></label> <span class="text-danger">*</span>
+                        <select asp-for="MaTaiKhoan" class="form-select">
+                            <option value="">-- Chọn tài khoản người dùng liên kết --</option>
+                            @foreach (var acc in unlinkedAccounts)
+                            {
+                                <option value="@acc.MaTaiKhoan">@acc.TenDangNhap - @acc.HoTen (@acc.Email)</option>
+                            }
+                        </select>
+                        <span asp-validation-for="MaTaiKhoan" class="text-danger small"></span>
+                        <div class="form-text small">Chỉ những tài khoản có vai trò 'Bạn đọc' chưa có hồ sơ mới xuất hiện ở đây.</div>
+                    </div>
+
+                    <h5 class="h6 text-muted mb-3 text-uppercase">1. Thông tin cá nhân</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="HoTen" class="form-label fw-semibold"></label> <span class="text-danger">*</span>
+                            <input asp-for="HoTen" class="form-control" placeholder="Họ và tên bạn đọc" />
+                            <span asp-validation-for="HoTen" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label asp-for="NgaySinh" class="form-label fw-semibold"></label> <span class="text-danger">*</span>
+                            <input asp-for="NgaySinh" type="date" class="form-control" />
+                            <span asp-validation-for="NgaySinh" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label asp-for="GioiTinh" class="form-label fw-semibold"></label>
+                            <select asp-for="GioiTinh" class="form-select" asp-items="Html.GetEnumSelectList<GioiTinh>()"></select>
+                            <span asp-validation-for="GioiTinh" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="SoDienThoai" class="form-label fw-semibold"></label> <span class="text-danger">*</span>
+                            <input asp-for="SoDienThoai" class="form-control" placeholder="0912345678" />
+                            <span asp-validation-for="SoDienThoai" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label fw-semibold"></label> <span class="text-danger">*</span>
+                            <input asp-for="Email" type="email" class="form-control" placeholder="email@uneti.edu.vn" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="DiaChi" class="form-label fw-semibold"></label> <span class="text-danger">*</span>
+                            <input asp-for="DiaChi" class="form-control" placeholder="Địa chỉ thường trú hoặc tạm trú" />
+                            <span asp-validation-for="DiaChi" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <h5 class="h6 text-muted mb-3 text-uppercase">2. Thông tin thẻ thư viện</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="MaSoThe" class="form-label fw-semibold"></label>
+                            <input asp-for="MaSoThe" class="form-control font-monospace" placeholder="Để trống để hệ thống tự sinh (TV-00000X)" />
+                            <span asp-validation-for="MaSoThe" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="LoaiBanDoc" class="form-label fw-semibold"></label>
+                            <select asp-for="LoaiBanDoc" class="form-select" asp-items="Html.GetEnumSelectList<LoaiBanDoc>()"></select>
+                            <span asp-validation-for="LoaiBanDoc" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="NgayCapThe" class="form-label fw-semibold"></label> <span class="text-danger">*</span>
+                            <input asp-for="NgayCapThe" type="date" class="form-control" />
+                            <span asp-validation-for="NgayCapThe" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="NgayHetHanThe" class="form-label fw-semibold"></label> <span class="text-danger">*</span>
+                            <input asp-for="NgayHetHanThe" type="date" class="form-control" />
+                            <span asp-validation-for="NgayHetHanThe" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="TrangThai" class="form-label fw-semibold"></label>
+                            <select asp-for="TrangThai" class="form-select" asp-items="Html.GetEnumSelectList<TrangThaiBanDoc>()"></select>
+                            <span asp-validation-for="TrangThai" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4 pt-2 border-top">
+                        <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+                        <button type="submit" class="btn btn-primary px-4">Tạo hồ sơ bạn đọc</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

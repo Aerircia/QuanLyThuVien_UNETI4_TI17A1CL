@@ -25,6 +25,7 @@ public static partial class DbSeeder
         await SeedSettingsAsync(db);
         await SeedAccountsAsync(db);
         await SeedBanDocAsync(db);
+        await SeedModule3Async(db);
         await SeedGiaHanMuonVaTraSachAsync(db);
     }
 
