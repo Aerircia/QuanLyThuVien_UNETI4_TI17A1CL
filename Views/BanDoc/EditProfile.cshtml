@@ -1,0 +1,86 @@
+@* Họ và tên: Nguyễn Hữu Tuấn *@
+@* Mã sinh viên: 23103100136 *@
+@* Nội dung thực hiện: View cập nhật thông tin cá nhân của chính bạn đọc (EditProfile) *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.BanDocEditProfileViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Cập nhật thông tin cá nhân";
+}
+
+<div class="container py-3">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h4 mb-1">Cập nhật thông tin cá nhân</h1>
+                    <p class="text-muted mb-0">Bạn đọc chỉ được chỉnh sửa thông tin cá nhân của chính mình.</p>
+                </div>
+                <a asp-action="MyProfile" class="btn btn-outline-secondary">← Quay lại hồ sơ</a>
+            </div>
+
+            <div class="app-card">
+                <form asp-action="EditProfile" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <!-- Thông tin thẻ cố định (chỉ xem) -->
+                    <div class="alert alert-light border mb-4">
+                        <h6 class="fw-bold mb-2 text-primary">Thông tin thẻ thư viện (Chỉ thủ thư mới có quyền điều chỉnh)</h6>
+                        <div class="row g-2 small text-muted">
+                            <div class="col-sm-3">Mã số thẻ: <strong class="text-dark">@(Model.MaSoThe ?? "Chưa cấp")</strong></div>
+                            <div class="col-sm-3">Loại bạn đọc: <strong class="text-dark">@Model.LoaiBanDoc.GetDisplayName()</strong></div>
+                            <div class="col-sm-3">Ngày cấp: <strong class="text-dark">@Model.NgayCapThe.ToString("dd/MM/yyyy")</strong></div>
+                            <div class="col-sm-3">Hạn thẻ: <strong class="text-dark">@Model.NgayHetHanThe.ToString("dd/MM/yyyy")</strong></div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label asp-for="HoTen" class="form-label fw-semibold"></label> <span class="text-danger">*</span>
+                            <input asp-for="HoTen" class="form-control" placeholder="Nhập họ và tên đầy đủ" />
+                            <span asp-validation-for="HoTen" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="NgaySinh" class="form-label fw-semibold"></label> <span class="text-danger">*</span>
+                            <input asp-for="NgaySinh" type="date" class="form-control" />
+                            <span asp-validation-for="NgaySinh" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="GioiTinh" class="form-label fw-semibold"></label>
+                            <select asp-for="GioiTinh" class="form-select" asp-items="Html.GetEnumSelectList<GioiTinh>()"></select>
+                            <span asp-validation-for="GioiTinh" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="SoDienThoai" class="form-label fw-semibold"></label> <span class="text-danger">*</span>
+                            <input asp-for="SoDienThoai" class="form-control" placeholder="Ví dụ: 0912345678" />
+                            <span asp-validation-for="SoDienThoai" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label fw-semibold"></label> <span class="text-danger">*</span>
+                            <input asp-for="Email" type="email" class="form-control" placeholder="Ví dụ: example@uneti.edu.vn" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label asp-for="DiaChi" class="form-label fw-semibold"></label> <span class="text-danger">*</span>
+                            <input asp-for="DiaChi" class="form-control" placeholder="Địa chỉ hiện tại" />
+                            <span asp-validation-for="DiaChi" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4 pt-2 border-top">
+                        <a asp-action="MyProfile" class="btn btn-outline-secondary">Hủy</a>
+                        <button type="submit" class="btn btn-primary px-4">Lưu thay đổi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

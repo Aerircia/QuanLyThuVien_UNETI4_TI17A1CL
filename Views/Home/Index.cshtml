@@ -1,8 +1,160 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@* Họ và tên: Nguyễn Hữu Tuấn *@
+@* Mã sinh viên: 23103100136 *@
+@* Nội dung thực hiện: Trang chủ tra cứu sách và điểm khởi đầu quy trình đăng ký mượn sách (Module 3) *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.BookCatalogViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces
+@inject ICurrentUserService Current
+@{
+    ViewData["Title"] = "Trang chủ - Thư viện UNETI";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- Hero banner -->
+<div class="p-4 p-md-5 mb-4 rounded-4 text-white" style="background: linear-gradient(135deg, #4d6e41 0%, #5b7f4d 60%, #7d9f6b 100%); box-shadow: 0 12px 30px rgba(91, 127, 77, 0.25);">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <h1 class="display-5 fw-bold mb-2">Mượn sách siêu dễ, đọc thả ga! ✨</h1>
+            <p class="lead mb-4 opacity-90">
+                Tìm kiếm đầu sách, bấm đăng ký mượn online, nhận sách tại quầy thủ thư và theo dõi hạn trả mọi lúc mọi nơi.
+            </p>
+            <form method="get" asp-action="Index" class="row g-2">
+                <div class="col-sm-8 col-md-9">
+                    <input name="search" value="@Model.Search" class="form-control form-control-lg border-0 shadow-sm"
+                           placeholder="Nhập tên cuốn sách hoặc tác giả bạn muốn đọc..." />
+                </div>
+                <div class="col-sm-4 col-md-3 d-grid">
+                    <button type="submit" class="btn btn-dark btn-lg shadow-sm fw-semibold">Tìm kiếm</button>
+                </div>
+            </form>
+        </div>
+        <div class="col-lg-4 d-none d-lg-block text-center">
+            <div class="p-3 bg-white bg-opacity-10 rounded-4 backdrop-blur">
+                <div class="row g-2 text-white">
+                    <div class="col-6">
+                        <div class="p-2 border border-white border-opacity-25 rounded-3">
+                            <span class="h3 fw-bold d-block mb-0">@Model.TongSoDauSach</span>
+                            <small class="opacity-75">Đầu sách</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 border border-white border-opacity-25 rounded-3">
+                            <span class="h3 fw-bold d-block mb-0">@Model.TongSoBanSach</span>
+                            <small class="opacity-75">Bản trong kho</small>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-2">
+                        <small class="opacity-90">Hạn mượn: 14 ngày (Sinh viên) · 30 ngày (Giảng viên)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (TempData["ThongBao"] is string thongBao)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+        @thongBao
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["Loi"] is string loi)
+{
+    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+        @loi
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Bộ lọc thể loại & tình trạng sách -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <span class="text-muted small fw-semibold me-1">Thể loại:</span>
+        <a asp-action="Index" asp-route-search="@Model.Search" asp-route-conSach="@Model.ConSach"
+           class="btn btn-sm rounded-pill @(!Model.MaTheLoai.HasValue ? "btn-primary" : "btn-light border")">
+            Tất cả
+        </a>
+        @foreach (var cat in Model.TheLoais)
+        {
+            <a asp-action="Index" asp-route-maTheLoai="@cat.MaTheLoai" asp-route-search="@Model.Search" asp-route-conSach="@Model.ConSach"
+               class="btn btn-sm rounded-pill @(Model.MaTheLoai == cat.MaTheLoai ? "btn-primary" : "btn-light border")">
+                @cat.TenTheLoai
+            </a>
+        }
+    </div>
+
+    <div class="d-flex gap-2">
+        <a asp-action="Index" asp-route-maTheLoai="@Model.MaTheLoai" asp-route-search="@Model.Search" asp-route-conSach="@(Model.ConSach == true ? null : "true")"
+           class="btn btn-sm rounded-pill @(Model.ConSach == true ? "btn-success" : "btn-outline-secondary")">
+            @(Model.ConSach == true ? "✓ Đang lọc: Còn sách" : "Chỉ hiện sách còn")
+        </a>
+        @if (Model.MaTheLoai.HasValue || !string.IsNullOrWhiteSpace(Model.Search) || Model.ConSach.HasValue)
+        {
+            <a asp-action="Index" class="btn btn-sm btn-outline-danger rounded-pill">Xóa lọc</a>
+        }
+    </div>
+</div>
+
+<!-- Lưới danh sách các đầu sách -->
+<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mb-5">
+    @foreach (var book in Model.Books)
+    {
+        <div class="col">
+            <div class="app-card h-100 d-flex flex-column p-3">
+                <div class="book-cover-mock mb-3">
+                    <small class="text-uppercase fw-semibold">@(book.TenTheLoai ?? "THƯ VIỆN")</small>
+                    <div>
+                        <h5>@book.TenSach</h5>
+                        <small class="text-white-50">@book.TacGia</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center small text-white-50">
+                        <span>Kệ @(book.ViTriKe ?? "A")</span>
+                        <span>@book.NamXuatBan</span>
+                    </div>
+                </div>
+
+                <div class="flex-grow-1">
+                    <h6 class="fw-bold text-dark mb-1 text-truncate" title="@book.TenSach">@book.TenSach</h6>
+                    <p class="text-muted small mb-2 text-truncate">@book.TacGia</p>
+
+                    <div class="d-flex justify-content-between align-items-center small mb-3">
+                        <span class="text-muted">Giá: @book.GiaBia.ToString("N0") ₫</span>
+                        @if (book.ConSach)
+                        {
+                            <span class="badge badge-soft-success">Còn @book.SoLuongConLai/@book.SoLuongTong bản</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-soft-danger">Hết sách</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="mt-auto pt-2 border-top">
+                    @if (book.ConSach)
+                    {
+                        <a asp-controller="PhieuMuon" asp-action="Register" asp-route-id="@book.MaSach"
+                           class="btn btn-primary btn-sm w-100 fw-semibold">
+                            Đăng ký mượn
+                        </a>
+                    }
+                    else
+                    {
+                        <button class="btn btn-light btn-sm w-100 text-muted" disabled>Tạm hết sách</button>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!Model.Books.Any())
+    {
+        <div class="col-12">
+            <div class="text-center py-5 app-card">
+                <h5 class="text-muted">Không tìm thấy đầu sách nào phù hợp</h5>
+                <p class="small text-muted mb-3">Thử thay đổi từ khóa hoặc bộ lọc thể loại khác.</p>
+                <a asp-action="Index" class="btn btn-outline-primary btn-sm">Xem tất cả sách</a>
+            </div>
+        </div>
+    }
 </div>

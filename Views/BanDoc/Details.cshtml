@@ -1,0 +1,266 @@
+@* Họ và tên: Nguyễn Hữu Tuấn *@
+@* Mã sinh viên: 23103100136 *@
+@* Nội dung thực hiện: View chi tiết thông tin bạn đọc và lịch sử mượn trả (Thủ thư & Admin) *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.BanDocDetail
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Chi tiết bạn đọc - " + Model.HoTen;
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var locked = Model.TrangThai == TrangThaiBanDoc.NgungHoatDong;
+}
+
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h4 mb-0">Hồ sơ bạn đọc: @Model.HoTen</h1>
+            <span class="text-muted small font-monospace">Mã bạn đọc #@Model.MaBanDoc · Mã số thẻ: @(Model.MaSoThe ?? "Chưa cấp")</span>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-outline-secondary">← Danh sách</a>
+            <a asp-action="Edit" asp-route-id="@Model.MaBanDoc" class="btn btn-outline-primary">Sửa hồ sơ</a>
+            <form asp-action="SetStatus" method="post" class="d-inline">
+                <input type="hidden" name="id" value="@Model.MaBanDoc" />
+                <input type="hidden" name="trangThai" value="@(locked ? nameof(TrangThaiBanDoc.HoatDong) : nameof(TrangThaiBanDoc.NgungHoatDong))" />
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                <button type="submit" class="btn @(locked ? "btn-outline-success" : "btn-outline-warning")"
+                        onclick="return confirm('Bạn có chắc muốn @(locked ? "mở khóa" : "tạm khóa") bạn đọc này?');">
+                    @(locked ? "Mở khóa" : "Tạm khóa")
+                </button>
+            </form>
+        </div>
+    </div>
+
+    @if (TempData["ThongBao"] is string thongBao)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>Thành công!</strong> @thongBao
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row g-3 mb-4">
+        <!-- Card thẻ thư viện -->
+        <div class="col-lg-4">
+            <div class="library-card-widget mb-3">
+                <div class="card-sub">THẺ BẠN ĐỌC THƯ VIỆN</div>
+                <div class="card-code">@(Model.MaSoThe ?? "CHƯA CẤP")</div>
+                <div class="card-name">@Model.HoTen</div>
+                <div class="card-meta d-flex justify-content-between">
+                    <span>@Model.LoaiBanDoc.GetDisplayName()</span>
+                    <span>Hạn: @Model.NgayHetHanThe.ToString("dd/MM/yyyy")</span>
+                </div>
+            </div>
+
+            <div class="app-card">
+                <h6 class="fw-bold text-muted text-uppercase small mb-3">Tóm tắt tình trạng</h6>
+                <div class="list-group list-group-flush small">
+                    <div class="list-group-item d-flex justify-content-between px-0">
+                        <span>Trạng thái tài khoản:</span>
+                        <span class="badge @(locked ? "bg-danger" : "bg-success")">@Model.TrangThai.GetDisplayName()</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between px-0">
+                        <span>Hạn thẻ thư viện:</span>
+                        <span class="@(Model.TheHetHan ? "text-danger fw-bold" : "text-dark")">
+                            @Model.NgayHetHanThe.ToString("dd/MM/yyyy")
+                            @(Model.TheHetHan ? "(Hết hạn)" : "")
+                        </span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between px-0">
+                        <span>Số sách đang mượn:</span>
+                        <span class="fw-bold text-primary">@Model.SoPhieuDangMuon</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between px-0">
+                        <span>Số phiếu quá hạn:</span>
+                        <span class="fw-bold @(Model.SoPhieuQuaHan > 0 ? "text-danger" : "text-muted")">@Model.SoPhieuQuaHan</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between px-0">
+                        <span>Tiền phạt chưa nộp:</span>
+                        <span class="fw-bold @(Model.TongTienPhatChuaNop > 0 ? "text-danger" : "text-muted")">@Model.TongTienPhatChuaNop.ToString("N0") ₫</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chi tiết thông tin cá nhân -->
+        <div class="col-lg-8">
+            <div class="app-card h-100">
+                <h6 class="fw-bold text-muted text-uppercase small mb-3">Thông tin chi tiết</h6>
+                <div class="row g-2">
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Họ và tên</small>
+                        <span class="fw-semibold">@Model.HoTen</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Tên đăng nhập hệ thống</small>
+                        <span>@(Model.TenDangNhap ?? "—")</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Ngày sinh</small>
+                        <span>@Model.NgaySinh.ToString("dd/MM/yyyy")</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Giới tính</small>
+                        <span>@Model.GioiTinh.GetDisplayName()</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Số điện thoại</small>
+                        <span>@(Model.SoDienThoai ?? "—")</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Email</small>
+                        <span>@(Model.Email ?? "—")</span>
+                    </div>
+                    <div class="col-12">
+                        <small class="text-muted d-block">Địa chỉ</small>
+                        <span>@(Model.DiaChi ?? "—")</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Ngày cấp thẻ</small>
+                        <span>@Model.NgayCapThe.ToString("dd/MM/yyyy")</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Ngày hết hạn thẻ</small>
+                        <span>@Model.NgayHetHanThe.ToString("dd/MM/yyyy")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lịch sử phiếu mượn & phạt -->
+    <div class="app-card p-0 overflow-hidden">
+        <ul class="nav nav-tabs nav-fill bg-light border-bottom" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-loans" type="button">
+                    Lịch sử phiếu mượn (@Model.PhieuMuons.Count)
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-fines" type="button">
+                    Lịch sử phạt (@Model.KhoanPhats.Count)
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content p-3">
+            <!-- Tab phiếu mượn -->
+            <div class="tab-pane fade show active" id="tab-loans" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Tên sách</th>
+                                <th>Thể loại</th>
+                                <th>Ngày đăng ký</th>
+                                <th>Ngày mượn</th>
+                                <th>Hạn trả</th>
+                                <th>Trạng thái</th>
+                                <th class="text-end">Chi tiết</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in Model.PhieuMuons)
+                            {
+                                <tr>
+                                    <td>#@p.MaPhieuMuon</td>
+                                    <td>
+                                        <div class="fw-semibold">@p.TenSach</div>
+                                        <small class="text-muted">@p.TacGia</small>
+                                    </td>
+                                    <td>@(p.TheLoai ?? "—")</td>
+                                    <td>@p.NgayDangKy.ToString("dd/MM/yyyy")</td>
+                                    <td>@(p.NgayMuon?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                    <td>
+                                        @if (p.HanTra.HasValue)
+                                        {
+                                            <span class="@(p.IsOverdue ? "text-danger fw-bold" : "")">
+                                                @p.HanTra.Value.ToString("dd/MM/yyyy")
+                                            </span>
+                                            @if (p.IsOverdue)
+                                            {
+                                                <span class="badge bg-danger ms-1">Trễ @p.SoNgayQuaHan ngày</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge @(p.TrangThai switch {
+                                            TrangThaiPhieuMuon.ChoDuyet => "bg-warning text-dark",
+                                            TrangThaiPhieuMuon.DaDuyet => "bg-info text-dark",
+                                            TrangThaiPhieuMuon.DangMuon => p.IsOverdue ? "bg-danger" : "bg-primary",
+                                            TrangThaiPhieuMuon.DaTra => "bg-success",
+                                            TrangThaiPhieuMuon.TuChoi => "bg-danger",
+                                            _ => "bg-secondary"
+                                        })">
+                                            @p.TrangThai.GetDisplayName()
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <a asp-controller="PhieuMuon" asp-action="Details" asp-route-id="@p.MaPhieuMuon" class="btn btn-sm btn-outline-info">
+                                            Xem
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+
+                            @if (!Model.PhieuMuons.Any())
+                            {
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-3">Bạn đọc chưa có phiếu mượn nào.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab tiền phạt -->
+            <div class="tab-pane fade" id="tab-fines" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Phiếu mượn</th>
+                                <th>Sách</th>
+                                <th>Ngày trả</th>
+                                <th>Tình trạng sách</th>
+                                <th>Số ngày trễ</th>
+                                <th class="text-end">Tiền phạt</th>
+                                <th>Trạng thái nộp</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var f in Model.KhoanPhats)
+                            {
+                                <tr>
+                                    <td>#@f.MaPhieuMuon</td>
+                                    <td>@f.TenSach</td>
+                                    <td>@f.NgayTra.ToString("dd/MM/yyyy")</td>
+                                    <td>@f.TinhTrangSach.GetDisplayName()</td>
+                                    <td>@f.SoNgayTre ngày</td>
+                                    <td class="text-end fw-bold text-danger">@f.TienPhat.ToString("N0") ₫</td>
+                                    <td>
+                                        <span class="badge @(f.TrangThaiPhat == TrangThaiPhat.DaNop ? "bg-success" : "bg-danger")">
+                                            @f.TrangThaiPhat.GetDisplayName()
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+
+                            @if (!Model.KhoanPhats.Any())
+                            {
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-3">Bạn đọc không có khoản phạt nào.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
