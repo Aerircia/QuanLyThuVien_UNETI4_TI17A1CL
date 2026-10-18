@@ -1,0 +1,149 @@
+@* Họ và tên: Nguyễn Hữu Tuấn *@
+@* Mã sinh viên: 23103100136 *@
+@* Nội dung thực hiện: View hiển thị hồ sơ cá nhân và thẻ thư viện của bạn đọc (MyProfile) *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.BanDocProfileViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Hồ sơ của tôi";
+}
+
+<div class="container py-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Hồ sơ cá nhân &amp; Thẻ thư viện</h1>
+            <p class="text-muted mb-0">Quản lý thông tin tài khoản và theo dõi trạng thái thẻ thư viện của bạn.</p>
+        </div>
+        @if (Model != null)
+        {
+            <a asp-action="EditProfile" class="btn btn-outline-primary">
+                <i class="bi bi-pencil-square"></i> Cập nhật thông tin
+            </a>
+        }
+    </div>
+
+    @if (TempData["ThongBao"] is string thongBao)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>Thành công!</strong> @thongBao
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (ViewBag.ThongBaoChuaCoHoSo is string chuaCo)
+    {
+        <div class="alert alert-warning" role="alert">
+            <h4 class="alert-heading">Chưa có hồ sơ bạn đọc</h4>
+            <p class="mb-0">@chuaCo</p>
+        </div>
+    }
+    else if (Model != null)
+    {
+        <div class="row g-4">
+            <!-- Thẻ thư viện trực quan -->
+            <div class="col-lg-5">
+                <div class="library-card-widget mb-3">
+                    <div class="card-sub">THƯ VIỆN ĐẠI HỌC KINH TẾ - KỸ THUẬT CÔNG NGHIỆP</div>
+                    <div class="card-code">@(Model.MaSoThe ?? "CHƯA CẤP")</div>
+                    <div class="card-name">@Model.HoTen</div>
+                    <div class="card-meta d-flex justify-content-between align-items-center">
+                        <span>@Model.LoaiBanDoc.GetDisplayName()</span>
+                        <span>Hạn thẻ: @Model.NgayHetHanThe.ToString("dd/MM/yyyy")</span>
+                    </div>
+                </div>
+
+                <div class="app-card">
+                    <h5 class="h6 text-muted mb-3 text-uppercase">Tình trạng mượn sách</h5>
+                    <div class="row text-center g-2">
+                        <div class="col-4">
+                            <div class="p-2 border rounded bg-light">
+                                <small class="text-muted d-block">Đang mượn</small>
+                                <span class="h5 mb-0 fw-bold text-primary">@Model.SoPhieuDangMuon</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 border rounded bg-light">
+                                <small class="text-muted d-block">Quá hạn</small>
+                                <span class="h5 mb-0 fw-bold @(Model.SoPhieuQuaHan > 0 ? "text-danger" : "text-muted")">@Model.SoPhieuQuaHan</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 border rounded bg-light">
+                                <small class="text-muted d-block">Nợ phạt</small>
+                                <span class="h6 mb-0 fw-bold @(Model.TongTienPhatChuaNop > 0 ? "text-danger" : "text-muted")">@Model.TongTienPhatChuaNop.ToString("N0") ₫</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Model.TheHetHan)
+                    {
+                        <div class="alert alert-danger mt-3 mb-0 py-2 small">
+                            <strong>Cảnh báo:</strong> Thẻ thư viện của bạn đã hết hạn. Hãy liên hệ thủ thư để được gia hạn thẻ.
+                        </div>
+                    }
+
+                    <div class="d-grid mt-3">
+                        <a asp-controller="PhieuMuon" asp-action="MyLoans" class="btn btn-outline-primary btn-sm">
+                            Xem danh sách phiếu mượn của tôi
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chi tiết thông tin cá nhân -->
+            <div class="col-lg-7">
+                <div class="app-card h-100">
+                    <h5 class="h6 text-muted mb-4 text-uppercase">Thông tin cá nhân</h5>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4 text-muted">Họ và tên</dt>
+                        <dd class="col-sm-8 fw-semibold">@Model.HoTen</dd>
+
+                        <dt class="col-sm-4 text-muted">Tên đăng nhập</dt>
+                        <dd class="col-sm-8">@(Model.TenDangNhap ?? "—")</dd>
+
+                        <dt class="col-sm-4 text-muted">Ngày sinh</dt>
+                        <dd class="col-sm-8">@Model.NgaySinh.ToString("dd/MM/yyyy")</dd>
+
+                        <dt class="col-sm-4 text-muted">Giới tính</dt>
+                        <dd class="col-sm-8">@Model.GioiTinh.GetDisplayName()</dd>
+
+                        <dt class="col-sm-4 text-muted">Số điện thoại</dt>
+                        <dd class="col-sm-8">@(Model.SoDienThoai ?? "—")</dd>
+
+                        <dt class="col-sm-4 text-muted">Email</dt>
+                        <dd class="col-sm-8">@(Model.Email ?? "—")</dd>
+
+                        <dt class="col-sm-4 text-muted">Địa chỉ</dt>
+                        <dd class="col-sm-8">@(Model.DiaChi ?? "—")</dd>
+
+                        <hr class="my-3 text-muted" />
+
+                        <dt class="col-sm-4 text-muted">Mã số thẻ</dt>
+                        <dd class="col-sm-8"><span class="badge bg-secondary font-monospace">@(Model.MaSoThe ?? "Chưa cấp")</span></dd>
+
+                        <dt class="col-sm-4 text-muted">Loại bạn đọc</dt>
+                        <dd class="col-sm-8">@Model.LoaiBanDoc.GetDisplayName()</dd>
+
+                        <dt class="col-sm-4 text-muted">Ngày cấp thẻ</dt>
+                        <dd class="col-sm-8">@Model.NgayCapThe.ToString("dd/MM/yyyy")</dd>
+
+                        <dt class="col-sm-4 text-muted">Ngày hết hạn thẻ</dt>
+                        <dd class="col-sm-8">
+                            @Model.NgayHetHanThe.ToString("dd/MM/yyyy")
+                            @if (Model.TheHetHan)
+                            {
+                                <span class="badge bg-danger ms-2">Đã hết hạn</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-4 text-muted">Trạng thái thẻ</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge @(Model.TrangThai == TrangThaiBanDoc.HoatDong ? "bg-success" : "bg-danger")">
+                                @Model.TrangThai.GetDisplayName()
+                            </span>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    }
+</div>

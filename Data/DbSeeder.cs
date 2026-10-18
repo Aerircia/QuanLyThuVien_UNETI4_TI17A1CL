@@ -25,6 +25,7 @@ public static class DbSeeder
         await SeedSettingsAsync(db);
         await SeedAccountsAsync(db);
         await SeedBanDocAsync(db);
+        await SeedModule3Async(db);
     }
 
     private static async Task SeedSettingsAsync(AppDbContext db)

@@ -72,6 +72,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITaiKhoanService, TaiKhoanService>();
         services.AddScoped<IOtpService, OtpService>();
         services.AddScoped<IPasswordResetService, PasswordResetService>();
+        services.AddScoped<IBanDocService, BanDocService>();
+        services.AddScoped<IPhieuMuonService, PhieuMuonService>();
 
         return services;
     }
