@@ -1,0 +1,81 @@
+@* Họ và tên: Vũ Ngọc Hương Giang *@
+@* Mã sinh viên: 23103100280 *@
+@* Nội dung thực hiện: view danh sách phiếu đang mượn chờ nhận trả *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.PhieuChoTraListViewModel
+@{
+    ViewData["Title"] = "Phiếu chờ nhận trả";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">Phiếu đang mượn chờ nhận trả</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary">Lịch sử trả sách</a>
+</div>
+
+<form method="get" asp-action="ChoTra" class="row g-2 mb-3 align-items-center">
+    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+    <div class="col-md-6">
+        <input name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo họ tên, mã số thẻ bạn đọc hoặc tên sách" />
+    </div>
+    <div class="col-md-3">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="chiQuaHan" name="chiQuaHan" value="true" checked="@Model.ChiQuaHan" />
+            <label class="form-check-label" for="chiQuaHan">Chỉ phiếu quá hạn</label>
+        </div>
+    </div>
+    <div class="col-md-3 d-grid">
+        <button type="submit" class="btn btn-outline-primary">Lọc</button>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Phiếu</th>
+                <th>Bạn đọc</th>
+                <th>Sách</th>
+                <th>Ngày mượn</th>
+                <th>Hạn trả</th>
+                <th>Tình trạng</th>
+                <th class="text-end">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Result.Items)
+            {
+                <tr>
+                    <td>#@item.MaPhieuMuon</td>
+                    <td>
+                        @item.TenBanDoc
+                        @if (!string.IsNullOrEmpty(item.MaSoThe))
+                        {
+                            <small class="text-muted d-block">@item.MaSoThe</small>
+                        }
+                    </td>
+                    <td>@item.TenSach</td>
+                    <td>@(item.NgayMuon?.ToString("dd/MM/yyyy") ?? "—")</td>
+                    <td>@(item.HanTra?.ToString("dd/MM/yyyy") ?? "—")</td>
+                    <td>
+                        @if (item.SoNgayTre > 0)
+                        {
+                            <span class="badge bg-danger">Quá hạn @item.SoNgayTre ngày</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Còn hạn</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="Create" asp-route-maPhieuMuon="@item.MaPhieuMuon" class="btn btn-sm btn-primary">Nhận trả</a>
+                    </td>
+                </tr>
+            }
+
+            @if (!Model.Result.Items.Any())
+            {
+                <tr><td colspan="7" class="text-center text-muted py-4">Không có phiếu đang mượn nào chờ nhận trả.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+<partial name="_PagerPartial" model="Model.Pager" />

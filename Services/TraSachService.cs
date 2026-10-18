@@ -113,6 +113,46 @@ public class TraSachService : ITraSachService
         PhatTinhTrang = _phatTinhTrang.TinhTienPhat(cfg, detail.TinhTrang, detail.GiaBia)
     };
 }
+// Danh sách phiếu đang mượn chờ nhận trả
+    public async Task<PagedResult<PhieuChoTraItem>> GetPhieuChoTraAsync(PhieuChoTraFilter filter, CancellationToken ct = default)
+    {
+        var today = Today;
+
+        // Chỉ phiếu Đang mượn và chưa có bản ghi trả (mỗi phiếu chỉ trả một lần)
+        var query = _db.PhieuMuons.AsNoTracking()
+            .Where(p => p.TrangThai == TrangThaiPhieuMuon.DangMuon && p.TraSach == null);
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            var s = filter.Search.Trim();
+            query = query.Where(p => p.BanDoc!.HoTen.Contains(s) ||
+                                     p.Sach!.TenSach.Contains(s) ||
+                                     (p.BanDoc!.MaSoThe != null && p.BanDoc!.MaSoThe.Contains(s)));
+        }
+
+        if (filter.ChiQuaHan)
+            query = query.Where(p => p.HanTra != null && p.HanTra < today);
+
+        // Hạn trả sớm nhất lên đầu: phiếu quá hạn nằm trên cùng
+        var projected = query
+            .OrderBy(p => p.HanTra)
+            .ThenBy(p => p.MaPhieuMuon)
+            .Select(p => new PhieuChoTraItem(
+                p.MaPhieuMuon,
+                p.BanDoc!.HoTen,
+                p.BanDoc!.MaSoThe,
+                p.Sach!.TenSach,
+                p.NgayMuon,
+                p.HanTra));
+
+        var page = await PagedResult<PhieuChoTraItem>.CreateAsync(projected, filter.Page, filter.PageSize, ct);
+
+        // Số ngày trễ tính bằng đúng service tính trễ, giống lúc nhận trả
+        foreach (var item in page.Items)
+            item.SoNgayTre = _phatTre.TinhSoNgayTre(item.HanTra, today);
+
+        return page;
+    }
 
  //Xem trước khi nhận trả
     public async Task<TraSachPreview?> GetPreviewAsync(int maPhieuMuon, CancellationToken ct = default)

@@ -21,7 +21,15 @@ public class TraSachListViewModel
     public PagedResult<TraSachListItem> Result { get; set; } = default!;
     public PagerViewModel Pager { get; set; } = default!;
 }
-
+// danh sách phiếu đang mượn chờ nhận trả
+public class PhieuChoTraListViewModel
+{
+    public string? Search { get; set; }
+    public bool ChiQuaHan { get; set; }
+    public int PageSize { get; set; } = PagingDefaults.DefaultPageSize;
+    public PagedResult<PhieuChoTraItem> Result { get; set; } = default!;
+    public PagerViewModel Pager { get; set; } = default!;
+}
 // chọn tình trạng sách và ghi chú
 public class TraSachCreateViewModel
 {

@@ -42,7 +42,6 @@ public class TraSachController : Controller
         if (search is not null) routeValues["search"] = search;
         if (tinhTrang.HasValue) routeValues["tinhTrang"] = tinhTrang.Value.ToString();
         if (trangThaiPhat.HasValue) routeValues["trangThaiPhat"] = trangThaiPhat.Value.ToString();
-
         return View(new TraSachListViewModel
         {
             Search = search,
@@ -51,6 +50,32 @@ public class TraSachController : Controller
             PageSize = result.PageSize,
             Result = result,
             Pager = PagerViewModel.From(result, "TraSach", nameof(Index), routeValues)
+        });
+    }
+// Phiếu đang mượn chờ nhận trả
+    [HttpGet]
+    public async Task<IActionResult> ChoTra(
+        string? search,
+        bool chiQuaHan = false,
+        int page = 1,
+        int pageSize = PagingDefaults.DefaultPageSize)
+    {
+        search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+
+        var result = await _service.GetPhieuChoTraAsync(
+            new PhieuChoTraFilter(search, chiQuaHan, page, pageSize), HttpContext.RequestAborted);
+
+        var routeValues = new Dictionary<string, string>();
+        if (search is not null) routeValues["search"] = search;
+        if (chiQuaHan) routeValues["chiQuaHan"] = "true";
+
+        return View(new PhieuChoTraListViewModel
+        {
+            Search = search,
+            ChiQuaHan = chiQuaHan,
+            PageSize = result.PageSize,
+            Result = result,
+            Pager = PagerViewModel.From(result, "TraSach", nameof(ChoTra), routeValues)
         });
     }
 
