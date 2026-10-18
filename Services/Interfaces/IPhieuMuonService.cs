@@ -7,8 +7,6 @@ using QuanLyThuVien_UNETI4_TI17A1CL.Services.Common;
 
 namespace QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces;
 
-public sealed record TheLoaiOption(int MaTheLoai, string TenTheLoai);
-
 // Điều kiện tìm kiếm, lọc, sắp xếp và phân trang
 public sealed record PhieuMuonFilter(
     string? Search,
