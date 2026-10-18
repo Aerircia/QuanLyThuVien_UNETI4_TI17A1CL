@@ -6,6 +6,10 @@
 @* Mã sinh viên: 23103100280 *@
 @* Nội dung thực hiện: thêm liên kết menu yêu cầu gia hạn và trả sách *@
 
+@* Họ và tên: Phùng Ngọc Bảo *@
+@* Mã sinh viên: 23103100278 *@
+@* Nội dung thực hiện: thêm liên kết menu thóng kê và quản lý phiếu mượn *@
+
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
 @using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces
 @inject ICurrentUserService Current
@@ -29,6 +33,8 @@
     }
     @if (Current.IsInRole(VaiTro.Admin, VaiTro.ThuThu))
     {
+        <li class="nav-item"><a class="nav-link" asp-controller="QuanLyPhieuMuon" asp-action="Index">Quản lý phiếu mượn</a></li>
+        <li class="nav-item"><a class="nav-link" asp-controller="ThongKe" asp-action="Dashboard">Dashboard &amp; thống kê</a></li>
         <li class="nav-item"><a class="nav-link" asp-controller="GiaHanMuon" asp-action="Index">Yêu cầu gia hạn</a></li>
         <li class="nav-item"><a class="nav-link" asp-controller="TraSach" asp-action="Index">Trả sách</a></li>
     }
