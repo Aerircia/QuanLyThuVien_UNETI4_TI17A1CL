@@ -25,6 +25,8 @@ public static partial class DbSeeder
         await SeedSettingsAsync(db);
         await SeedAccountsAsync(db);
         await SeedBanDocAsync(db);
+        await SeedModule3Async(db);
+        await SeedGiaHanMuonVaTraSachAsync(db);
     }
 
     private static async Task SeedSettingsAsync(AppDbContext db)
@@ -81,6 +83,5 @@ public static partial class DbSeeder
             // MaSoThe is left null on purpose: the database sequence fills it (TV-000001)
         });
         await db.SaveChangesAsync();
-        await SeedGiaHanMuonVaTraSachAsync(db);
     }
 }
