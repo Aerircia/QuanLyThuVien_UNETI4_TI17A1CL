@@ -1,0 +1,49 @@
+@* Họ và tên: Phùng Ngọc Bảo *@
+@* Mã sinh viên: 23103100278 *@
+@* Nội dung thực hiện: Generate Dashboard 9 chỉ số thư viện. *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.DashboardSummary
+
+@{
+    ViewData["Title"] = "Dashboard thư viện";
+    var cards = new[]
+    {
+        ("Tổng thể loại", Model.TongTheLoai.ToString("N0"), "biên mục"),
+        ("Tổng đầu sách", Model.TongDauSach.ToString("N0"), "đầu sách"),
+        ("Tổng số cuốn", Model.TongCuonSach.ToString("N0"), "bản sách"),
+        ("Tổng bạn đọc", Model.TongBanDoc.ToString("N0"), "hồ sơ"),
+        ("Tổng phiếu mượn", Model.TongPhieuMuon.ToString("N0"), "phiếu"),
+        ("Chờ duyệt", Model.SoPhieuChoDuyet.ToString("N0"), "phiếu cần xử lý"),
+        ("Đang mượn", Model.SoPhieuDangMuon.ToString("N0"), "phiếu đang giữ sách"),
+        ("Quá hạn", Model.SoPhieuQuaHan.ToString("N0"), "cần nhắc trả")
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+        <h1 class="h4 mb-1">Dashboard thư viện</h1>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-primary">Xem báo cáo thống kê</a>
+</div>
+
+<div class="row g-3">
+    @foreach (var card in cards)
+    {
+        <div class="col-6 col-xl-3 col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="small text-muted">@card.Item1</div>
+                    <div class="display-6 fw-semibold">@card.Item2</div>
+                    <div class="small text-muted">@card.Item3</div>
+                </div>
+            </div>
+        </div>
+    }
+    <div class="col-12 col-xl-6">
+        <div class="card h-100 border-warning">
+            <div class="card-body">
+                <div class="small text-muted">Tổng tiền phạt theo ngày trả trong tháng hiện tại</div>
+                <div class="display-6 fw-semibold">@Model.TienPhatThangNay.ToString("N0") đ</div>
+            </div>
+        </div>
+    </div>
+</div>

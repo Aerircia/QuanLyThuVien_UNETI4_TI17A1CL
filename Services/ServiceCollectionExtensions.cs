@@ -82,6 +82,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITraSachService, TraSachService>();
         services.AddScoped<ITienPhatTreHanService, TienPhatTreHanService>();
         services.AddScoped<ITienPhatTinhTrangSachService, TienPhatTinhTrangSachService>();
+
+        services.AddScoped<IThongKeService, ThongKeService>();
+
         return services;
     }
 }
