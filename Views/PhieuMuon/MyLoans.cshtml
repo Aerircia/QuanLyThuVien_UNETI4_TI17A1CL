@@ -56,7 +56,7 @@
         <a asp-action="MyLoans" asp-route-filter="active" class="btn btn-sm @(Model.Filter == "active" ? "btn-primary" : "btn-light border")">
             Đang xử lý &amp; mượn (@(Model.SoPhieuChoDuyet + Model.SoPhieuDaDuyet + Model.SoPhieuDangMuon))
         </a>
-        <a asp-action="MyLoans" asp-route-filter="overdue" class="btn btn-sm @(Model.Filter == "overdue" ? "btn-danger" : "btn-light border text-danger")">
+        <a asp-action="MyLoans" asp-route-filter="overdue" class="btn btn-sm @(Model.Filter == "overdue" ? "btn-danger text-white" : "btn-outline-danger")">
             Quá hạn (@Model.SoPhieuQuaHan)
         </a>
         <a asp-action="MyLoans" asp-route-filter="completed" class="btn btn-sm @(Model.Filter == "completed" ? "btn-primary" : "btn-light border")">
@@ -133,7 +133,7 @@
                                 </span>
                             </td>
                             <td class="text-end text-nowrap">
-                                <a asp-action="Details" asp-route-id="@item.MaPhieuMuon" class="btn btn-sm btn-outline-info">
+                                <a asp-action="Details" asp-route-id="@item.MaPhieuMuon" class="btn btn-sm btn-outline-primary">
                                     Chi tiết
                                 </a>
 

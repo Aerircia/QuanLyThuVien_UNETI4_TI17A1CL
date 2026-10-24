@@ -5,53 +5,40 @@
 @using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces
 @inject ICurrentUserService Current
 
-<ul class="navbar-nav ms-auto align-items-lg-center">
-    @if (Current.User is { } user)
-    {
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle fw-semibold" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-person-circle"></i> @user.HoTen <span class="badge bg-secondary ms-1">@user.VaiTro.GetDisplayName()</span>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                @if (user.VaiTro == VaiTro.BanDoc)
-                {
-                    <li>
-                        <a class="dropdown-item" asp-controller="BanDoc" asp-action="MyProfile">
-                            <i class="bi bi-person"></i> Thẻ &amp; Hồ sơ cá nhân
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" asp-controller="PhieuMuon" asp-action="MyLoans">
-                            <i class="bi bi-journal-bookmark"></i> Phiếu mượn của tôi
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" asp-controller="PhieuMuon" asp-action="MyFines">
-                            <i class="bi bi-receipt"></i> Tiền phạt của tôi
-                        </a>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                }
-                <li>
-                    <a class="dropdown-item" asp-controller="TaiKhoan" asp-action="ChangePassword">
-                        <i class="bi bi-key"></i> Đổi mật khẩu
-                    </a>
-                </li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                    <form asp-controller="TaiKhoan" asp-action="Logout" method="post" class="px-2">
-                        <button type="submit" class="btn btn-sm btn-outline-danger w-100">Đăng xuất</button>
-                    </form>
-                </li>
-            </ul>
-        </li>
-    }
-    else
-    {
-        <li class="nav-item">
-            <a class="nav-link btn btn-sm btn-outline-primary px-3 ms-2 text-primary" asp-controller="TaiKhoan" asp-action="Login">
-                Đăng nhập
-            </a>
-        </li>
-    }
-</ul>
+@if (Current.User is { } user)
+{
+    var avatarText = string.IsNullOrWhiteSpace(user.HoTen) ? "U" : user.HoTen.Trim().Substring(0, 1).ToUpperInvariant();
+    <div class="dropdown app-account">
+        <button class="app-account-trigger dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="app-avatar" aria-hidden="true">@avatarText</span>
+            <span class="app-account-meta">
+                <strong>@user.HoTen</strong>
+                <small>@user.VaiTro.GetDisplayName()</small>
+            </span>
+            <span class="app-account-chevron" aria-hidden="true">⌄</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end app-account-menu">
+            <li class="app-account-menu-heading">
+                <span class="app-avatar" aria-hidden="true">@avatarText</span>
+                <span><strong>@user.HoTen</strong><small>@user.VaiTro.GetDisplayName()</small></span>
+            </li>
+            @if (user.VaiTro == VaiTro.BanDoc)
+            {
+                <li><a class="dropdown-item" asp-controller="BanDoc" asp-action="MyProfile"><span aria-hidden="true">♙</span> Thẻ &amp; hồ sơ cá nhân</a></li>
+                <li><a class="dropdown-item" asp-controller="PhieuMuon" asp-action="MyLoans"><span aria-hidden="true">▣</span> Phiếu mượn của tôi</a></li>
+                <li><a class="dropdown-item" asp-controller="PhieuMuon" asp-action="MyFines"><span aria-hidden="true">₫</span> Tiền phạt của tôi</a></li>
+            }
+            <li><a class="dropdown-item" asp-controller="TaiKhoan" asp-action="ChangePassword"><span aria-hidden="true">⌑</span> Đổi mật khẩu</a></li>
+            <li><hr class="dropdown-divider" /></li>
+            <li class="px-2 pb-1">
+                <form asp-controller="TaiKhoan" asp-action="Logout" method="post">
+                    <button type="submit" class="btn btn-outline-danger w-100">Đăng xuất</button>
+                </form>
+            </li>
+        </ul>
+    </div>
+}
+else
+{
+    <a class="btn btn-primary app-login-button" asp-controller="TaiKhoan" asp-action="Login">Đăng nhập</a>
+}
