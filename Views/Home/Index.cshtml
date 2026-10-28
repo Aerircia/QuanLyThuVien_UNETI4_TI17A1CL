@@ -85,7 +85,7 @@
 
     <div class="d-flex gap-2">
         <a asp-action="Index" asp-route-maTheLoai="@Model.MaTheLoai" asp-route-search="@Model.Search" asp-route-conSach="@(Model.ConSach == true ? null : "true")"
-           class="btn btn-sm rounded-pill @(Model.ConSach == true ? "btn-success" : "btn-outline-secondary")">
+           class="btn btn-sm rounded-pill @(Model.ConSach == true ? "btn-success" : "btn-outline-primary")">
             @(Model.ConSach == true ? "✓ Đang lọc: Còn sách" : "Chỉ hiện sách còn")
         </a>
         @if (Model.MaTheLoai.HasValue || !string.IsNullOrWhiteSpace(Model.Search) || Model.ConSach.HasValue)
