@@ -1,18 +1,6 @@
 /* Họ và tên: Phùng Ngọc Bảo */
 /* Mã sinh viên: 23103100278 */
 /* Nội dung thực hiện: css dùng chung */
-:root {
-  --app-ac: #5b7f4d;
-  --app-acd: #47663b;
-  --app-ac2: #eaf1e4;
-  --app-ac3: #d5e4c9;
-  --app-bg: #f5f7f2;
-  --app-card: #ffffff;
-  --app-bd: #e1e8d6;
-  --app-tx: #1e261a;
-  --app-mu: #5a6652;
-}
-
 html {
   font-size: 14px;
   position: relative;
@@ -27,8 +15,8 @@ html {
 
 body {
   margin-bottom: 70px;
-  background-color: var(--app-bg);
-  color: var(--app-tx);
+  background-color: var(--app-page);
+  color: var(--app-text);
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
 }
 
@@ -39,8 +27,8 @@ body {
   color: #fff;
 }
 .btn-primary:hover, .btn-primary:focus {
-  background-color: var(--app-acd);
-  border-color: var(--app-acd);
+  background-color: var(--app-ac-hover);
+  border-color: var(--app-ac-hover);
 }
 .btn-outline-primary {
   color: var(--app-ac);
@@ -56,7 +44,7 @@ body {
 }
 
 .navbar {
-  border-bottom: 1px solid var(--app-bd) !important;
+  border-bottom: 1px solid var(--app-line) !important;
   box-shadow: 0 2px 12px rgba(91, 127, 77, 0.08);
 }
 .navbar-brand {
@@ -112,7 +100,7 @@ body {
 /* Card boxes */
 .app-card {
   background: #fff;
-  border: 1px solid var(--app-bd);
+  border: 1px solid var(--app-line);
   border-radius: 16px;
   padding: 20px 24px;
   box-shadow: 0 4px 14px rgba(91, 127, 77, 0.05);
@@ -157,7 +145,7 @@ body {
   position: relative;
   font-size: 12px;
   font-weight: 600;
-  color: var(--app-mu);
+  color: var(--app-muted);
 }
 .loan-steps .step-bar {
   height: 6px;
@@ -195,7 +183,7 @@ body {
   color: #4b5563;
 }
 .badge-soft-primary {
-  background-color: var(--app-ac2);
+  background-color: var(--app-ac-soft);
   color: var(--app-ac);
 }
 
@@ -211,7 +199,7 @@ body {
 .nav-pills .nav-link {
   border-radius: 99px;
   padding: 8px 18px;
-  color: var(--app-tx);
+  color: var(--app-text);
   font-weight: 500;
 }
 .nav-pills .nav-link.active {
@@ -314,15 +302,16 @@ body.app-body h3 { font-size: 1.1rem; }
 .app-footer-brand strong { font-size: 13px; }
 .app-footer-brand small { margin-top: 2px; color: var(--app-muted); font-size: 11px; }
 
-/* Menu quản trị và menu công khai dùng chung trạng thái active */
-.app-side-nav { display: flex; flex-direction: column; gap: 3px; }
+/* Menu quản trị */
+.app-side-nav { display: flex; flex-direction: column; gap: 4px; }
 .app-nav-heading { padding: 14px 10px 5px; color: #8a9583; font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
 .app-side-nav .app-nav-heading:first-child { padding-top: 3px; }
-.app-nav-link { display: flex; align-items: center; gap: 11px; min-height: 42px; padding: 9px 11px; border-radius: 11px; color: #4c5846 !important; text-decoration: none; font-size: 13px; font-weight: 600; transition: background-color .15s ease, color .15s ease, transform .15s ease; }
-.app-nav-link:hover { color: var(--app-ac) !important; background: #f6f8f3; }
-.app-nav-link.is-active { color: var(--app-ac-hover) !important; background: var(--app-ac-soft); font-weight: 800; }
-.app-nav-icon { display: inline-grid; place-items: center; flex: 0 0 25px; width: 25px; height: 25px; border-radius: 8px; color: var(--app-muted); background: #f2f5ee; font-size: 16px; line-height: 1; }
-.app-nav-link.is-active .app-nav-icon { color: #fff; background: var(--app-ac); }
+.app-nav-link { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 7px 10px; border: 1px solid transparent; border-radius: 12px; color: var(--app-text) !important; text-decoration: none; font-size: 13px; font-weight: 600; transition: background-color .18s ease, color .18s ease, border-color .18s ease, transform .18s ease; }
+.app-nav-link:hover { color: var(--app-ac) !important; background: var(--app-ac-soft); border-color: #e4ebdd; }
+.app-nav-link.is-active { color: var(--app-ac-hover) !important; background: var(--app-ac-soft); border-color: #dce8d3; font-weight: 800; }
+.app-nav-icon { display: inline-grid; place-items: center; flex: 0 0 34px; width: 34px; height: 34px; border: 1px solid #e4ebdd; border-radius: 10px; color: var(--app-ac); background: var(--app-ac-soft); font-size: 16px; line-height: 1; transition: color .18s ease, background-color .18s ease, border-color .18s ease, transform .18s ease; }
+.app-nav-link:hover .app-nav-icon, .app-nav-link:focus-visible .app-nav-icon, .app-nav-link.is-active .app-nav-icon { color: #fff; border-color: var(--app-ac); background: var(--app-ac); box-shadow: 0 3px 8px rgba(71,102,59,.16); }
+.app-nav-link:hover .app-nav-icon { transform: translateY(-1px); }
 .app-public-nav .nav-link { display: block; padding: 9px 13px; border-radius: 999px; color: #56624f; font-size: 13px; font-weight: 700; white-space: nowrap; transition: color .15s ease, background-color .15s ease; }
 .app-public-nav .nav-link:hover { color: var(--app-ac-hover); background: #f5f7f1; }
 .app-public-nav .nav-link.is-active { color: #fff; background: var(--app-ac); }
@@ -343,11 +332,45 @@ body.app-body h3 { font-size: 1.1rem; }
 .app-account-menu-heading strong { color: var(--app-text); font-size: 13px; }
 .app-account-menu-heading small { margin-top: 3px; color: var(--app-muted); font-size: 11px; }
 .app-account-menu .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: var(--app-text); font-size: 13px; }
-.app-account-menu .dropdown-item > span { display: inline-grid; place-items: center; width: 20px; color: var(--app-muted); }
+/* Icon đồng bộ cho các mục trong dropdown tài khoản */
+.app-account-menu .dropdown-item > .app-account-menu-icon {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    border: 1px solid #e4ebdd;
+    border-radius: 10px;
+    color: var(--app-ac);
+    background: var(--app-ac-soft);
+    transition: color .18s ease, background-color .18s ease, border-color .18s ease, transform .18s ease;
+}
+.app-account-menu-icon svg,
+.app-account-logout svg {
+    display: block;
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.app-account-menu .dropdown-item > .app-account-menu-label { display: block; min-width: 0; width: auto; color: inherit; }
+.app-account-menu .dropdown-item:hover > .app-account-menu-icon,
+.app-account-menu .dropdown-item:focus-visible > .app-account-menu-icon {
+    color: #fff;
+    border-color: var(--app-ac);
+    background: var(--app-ac);
+    transform: translateY(-1px);
+}
+.app-account-menu .dropdown-item:active > .app-account-menu-icon { color: #fff; border-color: transparent; background: transparent; }
+.app-account-logout { gap: 8px; }
+.app-account-logout svg { width: 16px; height: 16px; }
 .app-account-menu .dropdown-item:hover { color: var(--app-ac); background: var(--app-ac-soft); }
 .app-login-button { padding: 9px 18px; white-space: nowrap; }
 
-/* Chuẩn hóa các element Bootstrap mà nhiều Razor view đã dùng */
+/* Chuẩn hóa các element Bootstrap */
 body.app-body .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 8px 15px; border-radius: 999px; font-size: 13px; font-weight: 700; line-height: 1.25; transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
 body.app-body .btn:hover:not(:disabled) { transform: translateY(-1px); }
 body.app-body .btn:active:not(:disabled) { transform: translateY(0); }
@@ -521,7 +544,7 @@ body.app-body .library-card-widget { border-radius: 18px; box-shadow: 0 10px 26p
 body.app-body .loan-steps .step-bar { background: #e2e9da; }
 body.app-body .loan-steps .step-item.active .step-bar { background: var(--app-ac); }
 
-/* Đồng bộ trạng thái hover/focus/active cho nút và dropdown trên toàn hệ thống */
+/* Đồng bộ trạng thái hover/focus/active cho nút và dropdown */
 body.app-body .btn-success { color: #fff; background: var(--app-ac); border-color: var(--app-ac); box-shadow: 0 3px 9px rgba(91,127,77,.12); }
 body.app-body .btn-success:hover, body.app-body .btn-success:focus, body.app-body .btn-success:active { color: #fff; background: var(--app-ac-hover); border-color: var(--app-ac-hover); }
 body.app-body .btn-outline-info { color: var(--app-ac); background: #fff; border-color: #aac49b; }
@@ -536,6 +559,5 @@ body.app-body .dropdown-menu .dropdown-item:hover, body.app-body .dropdown-menu 
 body.app-body .dropdown-menu .dropdown-item:active, body.app-body .dropdown-menu .dropdown-item.active { color: #fff; background: var(--app-ac); }
 body.app-body .form-select option:checked { color: #fff; background: var(--app-ac); }
 .app-nav-icon svg { display: block; width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; fill: none; }
-.app-nav-link:hover .app-nav-icon { color: var(--app-ac); background: #e8f0e1; }
-.app-nav-link.is-active .app-nav-icon { color: #fff; background: var(--app-ac); box-shadow: 0 3px 8px rgba(71,102,59,.22); }
+/* Trạng thái icon sidebar đã được định nghĩa cùng nhóm .app-nav-link ở trên */
 .app-nav-link:focus-visible { outline: 3px solid rgba(91,127,77,.22); outline-offset: 2px; }
