@@ -86,22 +86,16 @@
                             <span asp-validation-for="LoaiBanDoc" class="text-danger small"></span>
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label asp-for="NgayCapThe" class="form-label fw-semibold"></label> <span class="text-danger">*</span>
                             <input asp-for="NgayCapThe" type="date" class="form-control" />
                             <span asp-validation-for="NgayCapThe" class="text-danger small"></span>
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label asp-for="NgayHetHanThe" class="form-label fw-semibold"></label> <span class="text-danger">*</span>
                             <input asp-for="NgayHetHanThe" type="date" class="form-control" />
                             <span asp-validation-for="NgayHetHanThe" class="text-danger small"></span>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label asp-for="TrangThai" class="form-label fw-semibold"></label>
-                            <select asp-for="TrangThai" class="form-select" asp-items="Html.GetEnumSelectList<TrangThaiBanDoc>()"></select>
-                            <span asp-validation-for="TrangThai" class="text-danger small"></span>
                         </div>
                     </div>
 

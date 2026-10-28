@@ -137,6 +137,16 @@
                                     Chi tiết
                                 </a>
 
+                                @if (item.TrangThai == TrangThaiPhieuMuon.DangMuon && !isOd)
+                                {
+                                    <form asp-controller="GiaHanMuon" asp-action="Create" asp-route-maPhieuMuon="@item.MaPhieuMuon" method="post" class="d-inline">
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <button type="submit" class="btn btn-sm btn-outline-success">
+                                            <i class="bi bi-arrow-repeat"></i> Gia hạn
+                                        </button>
+                                    </form>
+                                }
+
                                 @if (item.CanCancel)
                                 {
                                     <form asp-action="Cancel" asp-route-id="@item.MaPhieuMuon" method="post" class="d-inline">
