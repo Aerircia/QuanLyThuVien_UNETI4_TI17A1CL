@@ -1,6 +1,7 @@
 // Họ và tên: Lại Anh Quân
 // Mã sinh viên: 23103100255
 // Nội dung thực hiện: Xây dựng interface cho dịch vụ OTP
+// Thêm VerifyAsync (chỉ kiểm tra mã)
 
 namespace QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces;
 
@@ -29,6 +30,11 @@ public interface IOtpService
     /// Tạo mã OTP mới cho email (vô hiệu các mã cũ chưa dùng), có kiểm tra thời gian chờ và giới hạn mỗi giờ.
     /// </summary>
     Task<OtpIssueResult> IssueAsync(string email, CancellationToken ct = default);
+
+    /// <summary>
+    /// Chỉ kiểm tra mã, KHÔNG đánh dấu đã dùng. Nhập sai vẫn tính vào số lần thử tối đa.
+    /// </summary>
+    Task<OtpVerifyStatus> VerifyAsync(string email, string code, CancellationToken ct = default);
 
     /// <summary>
     /// Kiểm tra mã và đánh dấu đã dùng trong một lệnh UPDATE duy nhất (mã chỉ dùng được một lần).

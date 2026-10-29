@@ -1,6 +1,7 @@
 // Họ và tên: Lại Anh Quân
 // Mã sinh viên: 23103100255
 // Nội dung thực hiện: Xây dựng Service đặt lại mật khẩu
+// Thêm VerifyOtpAsync cho bước nhập OTP riêng
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -73,6 +74,24 @@ public class PasswordResetService : IPasswordResetService
         }
 
         return new RequestResetResult(RequestResetStatus.Sent);
+    }
+
+    public async Task<ResetPasswordStatus> VerifyOtpAsync(string email, string code, CancellationToken ct = default)
+    {
+        var tk = await FindByEmailAsync(email, ct);
+        if (tk is null)
+            return ResetPasswordStatus.EmailNotFound;
+
+        if (tk.TrangThai == TrangThaiTaiKhoan.BiKhoa)
+            return ResetPasswordStatus.AccountLocked;
+
+        var verify = await _otp.VerifyAsync(tk.Email, code, ct);
+        return verify switch
+        {
+            OtpVerifyStatus.Valid => ResetPasswordStatus.Success,
+            OtpVerifyStatus.TooManyAttempts => ResetPasswordStatus.TooManyAttempts,
+            _ => ResetPasswordStatus.InvalidOrExpiredCode
+        };
     }
 
     public async Task<ResetPasswordStatus> ResetAsync(
