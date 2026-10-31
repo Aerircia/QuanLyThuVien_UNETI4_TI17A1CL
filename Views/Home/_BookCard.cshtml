@@ -1,0 +1,13 @@
+@* Họ và tên: <điền tên> *@
+@* Mã sinh viên: <điền MSSV> *@
+@* Nội dung thực hiện: Thẻ sách dạng lưới dùng ở trang chủ, kho sách và sách cùng thể loại *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.BookCardItem
+<a class="bk-card" asp-controller="Home" asp-action="Book" asp-route-id="@Model.MaSach">
+    <partial name="_BookCover" model="Model" />
+    <h3 class="bk-title" title="@Model.TenSach">@Model.TenSach</h3>
+    <div class="bk-author">@Model.TacGia</div>
+    <div class="bk-meta">
+        <span class="badge @Model.BadgeClass">@Model.BadgeText</span>
+        <span class="bk-price">@Model.GiaBia.ToString("N0") ₫</span>
+    </div>
+</a>

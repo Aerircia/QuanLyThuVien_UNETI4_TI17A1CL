@@ -1,5 +1,5 @@
-// Họ và tên: <điền tên>
-// Mã sinh viên: <điền MSSV>
+// Họ và tên: Lại Anh Quân
+// Mã sinh viên: 23103100255
 // Nội dung thực hiện: 6 ô nhập OTP gộp vào một trường ẩn (MaOtp), dán mã, đếm ngược nút gửi lại mã
 (() => {
   'use strict';

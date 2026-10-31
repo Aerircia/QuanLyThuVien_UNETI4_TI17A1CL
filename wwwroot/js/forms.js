@@ -1,5 +1,5 @@
-// Họ và tên: <điền tên>
-// Mã sinh viên: <điền MSSV>
+// Họ và tên: Lại Anh Quân
+// Mã sinh viên: 23103100255
 // Nội dung thực hiện: Hiện/ẩn mật khẩu, chặn bấm gửi form nhiều lần, hộp thoại xác nhận (data-confirm-*)
 (() => {
   'use strict';

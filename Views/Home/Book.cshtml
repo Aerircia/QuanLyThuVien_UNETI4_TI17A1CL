@@ -1,0 +1,89 @@
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Chi tiết sách công khai, nút đăng ký mượn theo vai trò *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.BookDetailViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces
+@inject ICurrentUserService Current
+@{
+    var b = Model.Book;
+    ViewData["Title"] = b.TenSach;
+    string Row(string? v) => string.IsNullOrWhiteSpace(v) ? "—" : v;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/catalog.css" asp-append-version="true" />
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a asp-action="Catalog">Kho sách</a></li>
+        <li class="breadcrumb-item"><a asp-action="Catalog" asp-route-maTheLoai="@b.MaTheLoai">@b.TenTheLoai</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@b.TenSach</li>
+    </ol>
+</nav>
+
+<div class="bk-detail">
+    <div class="bk-detail-cover"><partial name="_BookCover" model="b" /></div>
+
+    <div class="bk-detail-info">
+        <h1>@b.TenSach</h1>
+        <p class="text-muted">Tác giả: @b.TacGia</p>
+
+        <dl class="bk-dl">
+            <dt>Thể loại</dt><dd>@b.TenTheLoai</dd>
+            <dt>Nhà xuất bản</dt><dd>@Row(Model.NhaXuatBan)</dd>
+            <dt>Năm xuất bản</dt><dd>@b.NamXuatBan</dd>
+            <dt>Vị trí kệ</dt><dd>@Row(b.ViTriKe)@(string.IsNullOrWhiteSpace(Model.KhuVucLuuTru) ? "" : " · " + Model.KhuVucLuuTru)</dd>
+            <dt>Giá bìa</dt><dd>@b.GiaBia.ToString("N0") ₫</dd>
+            <dt>Trạng thái</dt><dd>@b.TrangThai.GetDisplayName()</dd>
+        </dl>
+
+        <h2 class="h6">Mô tả</h2>
+        <p class="bk-desc">@(string.IsNullOrWhiteSpace(Model.MoTa) ? "Chưa có mô tả cho đầu sách này." : Model.MoTa)</p>
+    </div>
+
+    <aside class="app-card bk-borrow">
+        <span class="badge @b.BadgeClass mb-2">@b.BadgeText</span>
+        <h2 class="h5">@b.SoLuongConLai/@b.SoLuongTong bản còn lại</h2>
+        <p class="text-muted small">Mỗi phiếu mượn gồm một đầu sách. Thủ thư sẽ duyệt phiếu, sau đó bạn nhận sách tại quầy.</p>
+
+        @if (Current.IsInRole(VaiTro.BanDoc))
+        {
+            if (b.ConSach)
+            {
+                <a class="btn btn-primary btn-lg w-100" asp-controller="PhieuMuon" asp-action="Register" asp-route-id="@b.MaSach">Đăng ký mượn</a>
+            }
+            else
+            {
+                <button class="btn btn-secondary btn-lg w-100" type="button" disabled>
+                    @(b.TrangThai == TrangThaiSach.DangPhucVu ? "Tạm hết sách" : "Chưa thể mượn")
+                </button>
+            }
+        }
+        else if (!Current.IsAuthenticated)
+        {
+            <a class="btn btn-primary btn-lg w-100" asp-controller="TaiKhoan" asp-action="Login"
+               asp-route-returnUrl="@Url.Action("Register", "PhieuMuon", new { id = b.MaSach })">Đăng nhập để mượn</a>
+            <p class="small text-muted mt-2 mb-0">Chưa có tài khoản? <a asp-controller="TaiKhoan" asp-action="Register">Đăng ký</a></p>
+        }
+        else
+        {
+            <p class="small text-muted mb-0">Tài khoản nhân viên không đăng ký mượn sách.</p>
+        }
+    </aside>
+</div>
+
+@if (Model.CungTheLoai.Any())
+{
+    <section class="mt-5">
+        <h2 class="h5 mb-3">Cùng thể loại @b.TenTheLoai</h2>
+        <div class="bk-grid bk-grid-sm">
+            @foreach (var r in Model.CungTheLoai)
+            {
+                <partial name="_BookCard" model="r" />
+            }
+        </div>
+    </section>
+}

@@ -1,0 +1,100 @@
+/* Họ và tên: Lại Anh Quân */
+/* Mã sinh viên: 23103100255 */
+/* Nội dung thực hiện: CSS trang chủ (landing): hero, các bước mượn, thể loại, xếp hạng, tác giả, thống kê, FAQ */
+
+.lp-section { margin-top: 2.5rem; }
+.lp-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: .9rem; }
+body.app-body .lp-head h2 { margin: 0; }
+
+/* ---------- Hero ---------- */
+.lp-hero { display: grid; grid-template-columns: 1fr auto; gap: 2rem; align-items: center; padding: 2.5rem; border-radius: 24px; color: #fff; background: linear-gradient(135deg, #4d6e41 0%, #5b7f4d 60%, #7d9f6b 100%); box-shadow: 0 12px 30px rgba(91, 127, 77, .25); }
+body.app-body .lp-hero h1 { margin-bottom: .6rem; color: #fff; font-size: clamp(1.8rem, 3.4vw, 2.6rem); }
+.lp-hero p { max-width: 52ch; margin-bottom: 1.25rem; opacity: .92; }
+.lp-search { display: flex; gap: .5rem; max-width: 560px; }
+.lp-search .form-control { border: 0; border-radius: 999px; }
+.lp-chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; font-size: 13px; }
+body.app-body .lp-chips a { padding: .2rem .75rem; border-radius: 999px; background: rgba(255, 255, 255, .2); color: #fff; text-decoration: none; }
+body.app-body .lp-chips a:hover { background: rgba(255, 255, 255, .35); color: #fff; }
+.lp-hero-stats { display: grid; gap: .75rem; }
+.lp-hero-stats div { min-width: 150px; padding: 1rem 1.25rem; border-radius: 16px; background: rgba(255, 255, 255, .16); }
+.lp-hero-stats b { display: block; font-size: 1.9rem; line-height: 1.1; }
+.lp-hero-stats span { font-size: 13px; opacity: .9; }
+
+/* ---------- Các bước mượn sách (đây là một quy trình theo thứ tự) ---------- */
+.lp-how { margin-top: 1.5rem; }
+.lp-how ol { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; margin: 0; padding: 0; list-style: none; counter-reset: step; }
+.lp-how li { position: relative; padding: 1rem 1rem 1rem 3.4rem; border: 1px solid var(--app-line); border-radius: 16px; background: #fff; counter-increment: step; }
+.lp-how li::before { content: counter(step); position: absolute; top: 1rem; left: 1rem; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--app-ac-soft); color: var(--app-ac); font-weight: 800; }
+.lp-how b { display: block; }
+.lp-how span { color: var(--app-muted); font-size: 13px; }
+
+/* ---------- Thể loại ---------- */
+.lp-cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .75rem; }
+body.app-body .lp-cat { display: block; padding: 1rem 1.1rem; border: 1px solid var(--app-line); border-radius: 16px; background: #fff; color: var(--app-text); text-decoration: none; transition: border-color .2s ease, box-shadow .2s ease; }
+body.app-body .lp-cat:hover { border-color: var(--app-ac); box-shadow: var(--app-shadow-md); color: var(--app-text); }
+.lp-cat b { display: block; }
+.lp-cat span { color: var(--app-muted); font-size: 13px; }
+
+/* ---------- Xếp hạng + sách của ngày ---------- */
+.lp-duo { display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem; align-items: start; }
+.lp-rank { padding: .5rem; }
+body.app-body .lp-rank-item { display: grid; grid-template-columns: 28px 48px 1fr auto; align-items: center; gap: .9rem; padding: .6rem .7rem; border-radius: 12px; color: var(--app-text); text-decoration: none; }
+body.app-body .lp-rank-item:hover { background: #f5f8f1; color: var(--app-text); }
+.lp-rank-no { color: var(--app-ac); font-size: 1.2rem; font-weight: 800; text-align: center; }
+.lp-rank-cover .bk-cover { border-radius: 6px; }
+.lp-rank-cover .book-cover-mock { padding: 3px; }
+.lp-rank-cover .book-cover-mock > * { display: none; }
+.lp-rank-text b, .lp-rank-text small { display: block; }
+.lp-rank-text small, .lp-rank-count small { color: var(--app-muted); font-size: 12.5px; }
+.lp-rank-count { text-align: right; white-space: nowrap; }
+.lp-rank-count b { display: block; font-size: 1.05rem; }
+body.app-body .lp-day { display: grid; grid-template-columns: 130px 1fr; gap: 1.25rem; align-items: center; color: var(--app-text); text-decoration: none; }
+body.app-body .lp-day:hover { color: var(--app-text); box-shadow: var(--app-shadow-md); }
+body.app-body .lp-day h3 { font-size: 1.15rem; }
+
+/* ---------- Sách mới (cuộn ngang) ---------- */
+.lp-rail { display: flex; gap: 1rem; padding-bottom: .5rem; overflow-x: auto; scroll-snap-type: x proximity; }
+.lp-rail-item { flex: 0 0 160px; scroll-snap-align: start; }
+
+/* ---------- Tác giả ---------- */
+.lp-authors { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .75rem; }
+body.app-body .lp-author { display: grid; grid-template-columns: 44px 1fr; grid-template-rows: auto auto; column-gap: .8rem; align-items: center; padding: .8rem 1rem; border: 1px solid var(--app-line); border-radius: 16px; background: #fff; color: var(--app-text); text-decoration: none; }
+body.app-body .lp-author:hover { border-color: var(--app-ac); color: var(--app-text); }
+.lp-author-av { grid-row: 1 / 3; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(145deg, #b9d4a7, var(--app-ac)); color: #fff; font-weight: 800; }
+.lp-author b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lp-author small { color: var(--app-muted); font-size: 12.5px; }
+
+/* ---------- Dải thống kê ---------- */
+.lp-band { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 2.5rem; padding: 1.6rem .5rem; border-radius: 20px; color: #fff; background: linear-gradient(135deg, #4d6e41, #5b7f4d 60%, #7d9f6b); }
+.lp-band div { padding: 0 1rem; text-align: center; border-right: 1px solid rgba(255, 255, 255, .25); }
+.lp-band div:last-child { border-right: 0; }
+.lp-band b { display: block; font-size: 2rem; line-height: 1.1; }
+.lp-band span { font-size: 13.5px; opacity: .9; }
+
+/* ---------- FAQ + giờ mở cửa ---------- */
+.lp-info { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1.5rem; align-items: start; }
+.lp-faq .accordion-item { border-color: var(--app-line); }
+body.app-body .lp-faq .accordion-button { font-size: 14px; font-weight: 600; }
+body.app-body .lp-faq .accordion-button:not(.collapsed) { background: var(--app-ac-soft); color: var(--app-ac-hover); box-shadow: none; }
+.lp-hours { display: grid; grid-template-columns: 1fr auto; gap: .4rem 1rem; margin: 0 0 1rem; }
+.lp-hours dt { font-weight: 500; color: var(--app-muted); }
+.lp-hours dd { margin: 0; font-weight: 600; }
+.lp-cta { margin-top: 1rem; padding: 1.4rem; border-radius: 18px; color: #fff; background: linear-gradient(135deg, #a9c78f, #5b7f4d); }
+body.app-body .lp-cta h3 { color: #fff; }
+.lp-cta p { opacity: .94; }
+
+@media (max-width: 991px) {
+  .lp-hero { grid-template-columns: 1fr; padding: 1.75rem 1.4rem; }
+  .lp-hero-stats { grid-template-columns: 1fr 1fr; }
+  .lp-how ol { grid-template-columns: 1fr 1fr; }
+  .lp-duo, .lp-info { grid-template-columns: 1fr; }
+  .lp-band { grid-template-columns: 1fr 1fr; row-gap: 1.25rem; }
+  .lp-band div:nth-child(2) { border-right: 0; }
+}
+@media (max-width: 575px) {
+  .lp-how ol { grid-template-columns: 1fr; }
+  .lp-search { flex-direction: column; }
+  body.app-body .lp-rank-item { grid-template-columns: 24px 40px 1fr; }
+  .lp-rank-count { display: none; }
+  body.app-body .lp-day { grid-template-columns: 96px 1fr; }
+}
