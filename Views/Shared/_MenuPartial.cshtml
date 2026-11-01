@@ -76,8 +76,12 @@ else
 {
     <ul class="navbar-nav app-public-nav">
         <li class="nav-item">
-            <a class="nav-link @(controller == "Home" ? "is-active" : "")" asp-controller="Home" asp-action="Index"
-               aria-current="@(controller == "Home" ? "page" : null)">Kho sách</a>
+            <a class="nav-link @(controller == "Home" && action == "Index" ? "is-active" : "")" asp-controller="Home" asp-action="Index"
+               aria-current="@(controller == "Home" && action == "Index" ? "page" : null)">Trang chủ</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(controller == "Home" && (action == "Catalog" || action == "Book") ? "is-active" : "")" asp-controller="Home" asp-action="Catalog"
+               aria-current="@(controller == "Home" && action == "Catalog" ? "page" : null)">Kho sách</a>
         </li>
         @if (Current.IsInRole(VaiTro.BanDoc))
         {

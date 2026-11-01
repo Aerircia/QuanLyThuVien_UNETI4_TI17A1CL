@@ -1,0 +1,47 @@
+/* Họ và tên: Lại Anh Quân */
+/* Mã sinh viên: 23103100255 */
+/* Nội dung thực hiện: Lớp giao diện dùng chung nạp sau site.css (không sửa site.css): icon, hiệu ứng vào trang, hàng cuộn có nút mũi tên, thanh cuộn */
+
+/* ---------- Icon SVG (cùng kiểu nét với icon menu của site.css) ---------- */
+.ico { display: inline-block; flex: none; width: 1.15em; height: 1.15em; vertical-align: -0.2em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- Hiệu ứng vào trang: chỉ CSS, nhẹ, tắt khi người dùng chọn giảm chuyển động ---------- */
+@keyframes ui-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.reveal { animation: ui-rise .5s cubic-bezier(.22, .8, .24, 1) both; animation-delay: calc(var(--i, 0) * 70ms); }
+
+/* ---------- Trạng thái đang tải (AJAX) ---------- */
+.is-loading { opacity: .5; pointer-events: none; transition: opacity .15s ease; }
+
+/* ---------- Hàng cuộn ngang có nút trái/phải và kéo chuột ---------- */
+.rail-wrap { position: relative; min-width: 0; }
+.rail-track { display: flex; gap: 1rem; padding: 4px 2px 12px; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; -ms-overflow-style: none; cursor: grab; }
+.rail-track::-webkit-scrollbar { display: none; }
+.rail-track > * { flex: none; scroll-snap-align: start; -webkit-user-drag: none; }
+.rail-track.dragging { scroll-snap-type: none; cursor: grabbing; user-select: none; }
+.rail-arrow { position: absolute; top: 50%; z-index: 3; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: #fff; color: var(--app-text); box-shadow: 0 2px 10px rgba(31, 45, 26, .22); transform: translateY(-60%); transition: opacity .2s ease, background-color .2s ease, color .2s ease, transform .2s ease; cursor: pointer; }
+.rail-arrow .ico { width: 20px; height: 20px; stroke-width: 2.2; }
+.rail-arrow.prev { left: -14px; }
+.rail-arrow.next { right: -14px; }
+.rail-arrow:hover { background: var(--app-ac); color: #fff; }
+.rail-arrow:active { transform: translateY(-60%) scale(.9); }
+.rail-wrap.at-start .prev, .rail-wrap.at-end .next, .rail-wrap.no-scroll .rail-arrow { opacity: 0; pointer-events: none; }
+.rail-wrap.sm .rail-arrow { width: 32px; height: 32px; transform: translateY(-70%); }
+.rail-wrap.sm .rail-arrow:active { transform: translateY(-70%) scale(.9); }
+.rail-wrap.sm .rail-track { gap: .5rem; }
+@media (hover: none) { .rail-arrow { display: none; } }
+
+/* ---------- Thanh cuộn tuỳ biến (một thanh cuộn thật của trình duyệt, không vẽ lại bằng JS) ---------- */
+:root { --ui-sb: #c5d3b8; --ui-sb-hover: #9db88c; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { min-height: 40px; border: 3px solid transparent; border-radius: 99px; background: var(--ui-sb); background-clip: content-box; }
+*::-webkit-scrollbar-thumb:hover { background: var(--ui-sb-hover); background-clip: content-box; }
+*::-webkit-scrollbar-thumb:active { background: var(--app-ac); background-clip: content-box; }
+*::-webkit-scrollbar-corner { background: transparent; }
+@supports not selector(::-webkit-scrollbar) { * { scrollbar-width: thin; scrollbar-color: var(--ui-sb) transparent; } }
+.rail-track::-webkit-scrollbar { display: none; }
+
+/* ---------- Giảm chuyển động ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-delay: 0s !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+}

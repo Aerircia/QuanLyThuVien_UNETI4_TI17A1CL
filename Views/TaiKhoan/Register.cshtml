@@ -1,0 +1,71 @@
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Trang đăng ký tài khoản bạn đọc (chỉ tạo TaiKhoan, không OTP) *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.RegisterViewModel
+@{
+    ViewData["Title"] = "Đăng ký";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/accounts.css" asp-append-version="true" />
+}
+
+<div class="auth-wrap">
+    <div class="app-card auth-card">
+        <div class="auth-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4" /><path d="M2 21c0-4 3-7 7-7s7 3 7 7M19 8v6M16 11h6" /></svg>
+        </div>
+        <h1 class="auth-title">Tạo tài khoản</h1>
+        <p class="auth-sub">Đăng ký miễn phí để theo dõi và đăng ký mượn sách trực tuyến.</p>
+
+        <form asp-action="Register" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+
+            <div class="mb-3">
+                <label asp-for="HoTen" class="form-label"></label>
+                <input asp-for="HoTen" class="form-control" autocomplete="name" autofocus />
+                <span asp-validation-for="HoTen" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="TenDangNhap" class="form-label"></label>
+                <input asp-for="TenDangNhap" class="form-control" autocomplete="username" />
+                <span asp-validation-for="TenDangNhap" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" type="email" autocomplete="email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="MatKhau" class="form-label"></label>
+                <div class="input-group">
+                    <input asp-for="MatKhau" class="form-control" autocomplete="new-password" />
+                    <button type="button" class="btn btn-outline-secondary" data-toggle-password="#MatKhau" aria-label="Hiện mật khẩu">Hiện</button>
+                </div>
+                <span asp-validation-for="MatKhau" class="text-danger"></span>
+                <div class="form-text">Ít nhất 6 ký tự.</div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="XacNhanMatKhau" class="form-label"></label>
+                <div class="input-group">
+                    <input asp-for="XacNhanMatKhau" class="form-control" autocomplete="new-password" />
+                    <button type="button" class="btn btn-outline-secondary" data-toggle-password="#XacNhanMatKhau" aria-label="Hiện mật khẩu">Hiện</button>
+                </div>
+                <span asp-validation-for="XacNhanMatKhau" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100">Đăng ký</button>
+        </form>
+
+        <p class="auth-foot">Đã có tài khoản? <a asp-action="Login" class="fw-semibold">Đăng nhập</a></p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/forms.js" asp-append-version="true"></script>
+}
