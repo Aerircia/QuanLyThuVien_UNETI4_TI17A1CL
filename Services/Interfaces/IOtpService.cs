@@ -2,6 +2,7 @@
 // Mã sinh viên: 23103100255
 // Nội dung thực hiện: Xây dựng interface cho dịch vụ OTP
 // Thêm VerifyAsync (chỉ kiểm tra mã)
+// Thêm RevokeAsync (thu hồi mã khi gửi email thất bại)
 
 namespace QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces;
 
@@ -41,4 +42,10 @@ public interface IOtpService
     /// Chạy được bên trong transaction của người gọi.
     /// </summary>
     Task<OtpVerifyStatus> VerifyAndConsumeAsync(string email, string code, CancellationToken ct = default);
+
+    /// <summary>
+    /// Xóa mã vừa tạo mà chưa tới tay người dùng (gửi email thất bại) để lần yêu cầu hỏng đó
+    /// không bị tính vào thời gian chờ gửi lại và giới hạn số mã mỗi giờ.
+    /// </summary>
+    Task RevokeAsync(string email, string code, CancellationToken ct = default);
 }

@@ -2,6 +2,7 @@
 // Mã sinh viên: 23103100255
 // Nội dung thực hiện: Xây dựng Service tạo OTP.
 // Thêm VerifyAsync: kiểm tra OTP không tiêu thụ mã (bước 2 quên mật khẩu)
+// Thêm RevokeAsync: xóa mã vừa tạo khi gửi email thất bại
 
 using System.Globalization;
 using System.Security.Cryptography;
@@ -97,6 +98,17 @@ public class OtpService : IOtpService
 
     public Task<OtpVerifyStatus> VerifyAndConsumeAsync(string email, string code, CancellationToken ct = default) =>
         VerifyCoreAsync(email, code, consume: true, ct);
+
+    public async Task RevokeAsync(string email, string code, CancellationToken ct = default)
+    {
+        email = Normalize(email);
+        code = (code ?? string.Empty).Trim();
+
+        // Chỉ xóa đúng mã chưa dùng vừa tạo; mã đã dùng/đã vô hiệu được giữ lại để tính giới hạn.
+        await _db.Set<Otp>()
+            .Where(o => o.Email == email && o.OtpCode == code && !o.TinhTrangSuDung)
+            .ExecuteDeleteAsync(ct);
+    }
 
     private async Task<OtpVerifyStatus> VerifyCoreAsync(string email, string code, bool consume, CancellationToken ct)
     {

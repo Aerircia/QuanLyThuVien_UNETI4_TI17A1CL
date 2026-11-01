@@ -1,6 +1,7 @@
 // Họ và tên: Lại Anh Quân
 // Mã sinh viên: 23103100255
 // Nội dung thực hiện: Xây dựng TaiKhoanController để xử lý đăng nhập, đăng xuất, đổi mật khẩu, từ chối truy cập.
+// Quên mật khẩu: email đi giữa các bước bằng Session (không đưa lên URL), ResendOtp không nhận email từ form.
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -15,8 +16,8 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Controllers;
 public class TaiKhoanController : Controller
 {
     private const string KeyCooldown = "Cooldown";
-    private const string KeyResetEmail = "ResetEmail";
     private const string KeyResetOtp = "ResetOtp";
+    private const string ResetSessionExpired = "Phiên đặt lại mật khẩu đã hết hạn. Vui lòng bắt đầu lại.";
 
     private readonly IAuthService _auth;
     private readonly IPasswordResetService _passwordReset;
@@ -195,14 +196,24 @@ public class TaiKhoanController : Controller
     }
 
     // ---------- Quên mật khẩu, bước 1: nhập email để nhận OTP ----------
+    // Email đang đặt lại được giữ trong Session (HttpContext.Session.Set/Get/ClearResetEmail),
+    // các bước sau không còn nhận email qua URL.
 
     [HttpGet]
-    public IActionResult ForgotPassword() => View(new ForgotPasswordViewModel());
+    public IActionResult ForgotPassword()
+    {
+        // Còn phiên đặt lại dở dang: điền sẵn email và cho phép quay lại bước nhập mã.
+        var pending = HttpContext.Session.GetResetEmail();
+        ViewBag.PendingEmail = pending;
+        return View(new ForgotPasswordViewModel { Email = pending ?? string.Empty });
+    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
     {
+        ViewBag.PendingEmail = HttpContext.Session.GetResetEmail();
+
         if (!ModelState.IsValid)
             return View(model);
 
@@ -210,9 +221,11 @@ public class TaiKhoanController : Controller
 
         if (result.Status == RequestResetStatus.Sent)
         {
+            HttpContext.Session.SetResetEmail(model.Email.Trim());
+            TempData.Remove(KeyResetOtp); // bỏ mã của lần đặt lại trước (nếu còn)
             TempData["ThongBao"] = "Mã OTP đã được gửi tới email của bạn.";
             TempData[KeyCooldown] = _otp.ResendCooldownSeconds;
-            return RedirectToAction(nameof(VerifyOtp), new { email = model.Email.Trim() });
+            return RedirectToAction(nameof(VerifyOtp));
         }
 
         if (result.Status == RequestResetStatus.EmailNotFound)
@@ -226,14 +239,18 @@ public class TaiKhoanController : Controller
     // ---------- Quên mật khẩu, bước 2: nhập mã OTP (chỉ kiểm tra, chưa tiêu thụ mã) ----------
 
     [HttpGet]
-    public IActionResult VerifyOtp(string? email = null)
+    public IActionResult VerifyOtp()
     {
-        if (string.IsNullOrWhiteSpace(email))
+        var email = HttpContext.Session.GetResetEmail();
+        if (email is null)
+        {
+            TempData["Loi"] = "Vui lòng nhập email để nhận mã OTP.";
             return RedirectToAction(nameof(ForgotPassword));
+        }
 
         return View(new VerifyOtpViewModel
         {
-            Email = email.Trim(),
+            Email = email,
             CooldownSeconds = TempData[KeyCooldown] as int? ?? 0
         });
     }
@@ -242,6 +259,17 @@ public class TaiKhoanController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> VerifyOtp(VerifyOtpViewModel model)
     {
+        var email = HttpContext.Session.GetResetEmail();
+        if (email is null)
+        {
+            TempData["Loi"] = ResetSessionExpired;
+            return RedirectToAction(nameof(ForgotPassword));
+        }
+
+        // Email lấy từ Session, không tin giá trị gửi lên từ form.
+        model.Email = email;
+        ModelState.Remove(nameof(model.Email));
+
         model.CooldownSeconds = 0;
         model.MaOtp ??= string.Empty;
 
@@ -256,8 +284,7 @@ public class TaiKhoanController : Controller
         switch (status)
         {
             case ResetPasswordStatus.Success:
-                // Chuyển sang bước 3 qua TempData (cookie đã mã hóa), không đưa mã lên URL.
-                TempData[KeyResetEmail] = model.Email.Trim();
+                // Chuyển mã sang bước 3 qua TempData (cookie đã mã hóa); email đã nằm trong Session.
                 TempData[KeyResetOtp] = model.MaOtp;
                 return RedirectToAction(nameof(ResetPassword));
 
@@ -285,10 +312,14 @@ public class TaiKhoanController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ResendOtp(string? email)
+    public async Task<IActionResult> ResendOtp()
     {
-        if (string.IsNullOrWhiteSpace(email))
+        var email = HttpContext.Session.GetResetEmail();
+        if (email is null)
+        {
+            TempData["Loi"] = ResetSessionExpired;
             return RedirectToAction(nameof(ForgotPassword));
+        }
 
         var result = await _passwordReset.RequestAsync(email, HttpContext.RequestAborted);
 
@@ -304,7 +335,7 @@ public class TaiKhoanController : Controller
                 TempData[KeyCooldown] = result.RetryAfterSeconds;
         }
 
-        return RedirectToAction(nameof(VerifyOtp), new { email = email.Trim() });
+        return RedirectToAction(nameof(VerifyOtp));
     }
 
     // ---------- Quên mật khẩu, bước 3: đặt mật khẩu mới (kiểm tra lại và tiêu thụ OTP) ----------
@@ -312,12 +343,12 @@ public class TaiKhoanController : Controller
     [HttpGet]
     public IActionResult ResetPassword()
     {
-        var email = TempData.Peek(KeyResetEmail) as string;
+        var email = HttpContext.Session.GetResetEmail();
         var otp = TempData.Peek(KeyResetOtp) as string;
 
         if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(otp))
         {
-            TempData["Loi"] = "Phiên đặt lại mật khẩu đã hết hạn. Vui lòng bắt đầu lại.";
+            TempData["Loi"] = ResetSessionExpired;
             return RedirectToAction(nameof(ForgotPassword));
         }
 
@@ -328,6 +359,17 @@ public class TaiKhoanController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
     {
+        var email = HttpContext.Session.GetResetEmail();
+        if (email is null)
+        {
+            TempData["Loi"] = ResetSessionExpired;
+            return RedirectToAction(nameof(ForgotPassword));
+        }
+
+        // Email lấy từ Session, không tin giá trị gửi lên từ form.
+        model.Email = email;
+        ModelState.Remove(nameof(model.Email));
+
         if (!ModelState.IsValid)
         {
             model.MatKhauMoi = model.XacNhanMatKhauMoi = string.Empty;
@@ -340,7 +382,7 @@ public class TaiKhoanController : Controller
         switch (status)
         {
             case ResetPasswordStatus.Success:
-                TempData.Remove(KeyResetEmail);
+                HttpContext.Session.ClearResetEmail();
                 TempData.Remove(KeyResetOtp);
                 TempData["ThongBao"] = "Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.";
                 return RedirectToAction(nameof(Login));
@@ -354,13 +396,12 @@ public class TaiKhoanController : Controller
                 break;
 
             default:
-                // Mã hết hạn hoặc bị vô hiệu giữa bước 2 và bước 3: quay lại bước nhập mã.
-                TempData.Remove(KeyResetEmail);
+                // Mã hết hạn hoặc bị vô hiệu giữa bước 2 và bước 3: quay lại bước nhập mã (email vẫn nằm trong Session).
                 TempData.Remove(KeyResetOtp);
                 TempData["Loi"] = status == ResetPasswordStatus.TooManyAttempts
                     ? "Bạn đã nhập sai quá nhiều lần. Vui lòng nhận mã mới."
                     : "Mã OTP không đúng hoặc đã hết hạn. Vui lòng nhập lại hoặc nhận mã mới.";
-                return RedirectToAction(nameof(VerifyOtp), new { email = model.Email });
+                return RedirectToAction(nameof(VerifyOtp));
         }
 
         model.MatKhauMoi = model.XacNhanMatKhauMoi = string.Empty;

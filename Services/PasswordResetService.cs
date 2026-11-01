@@ -2,6 +2,7 @@
 // Mã sinh viên: 23103100255
 // Nội dung thực hiện: Xây dựng Service đặt lại mật khẩu
 // Thêm VerifyOtpAsync cho bước nhập OTP riêng
+// Gửi email thất bại thì thu hồi mã vừa tạo (không tính vào thời gian chờ / giới hạn mỗi giờ)
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -67,8 +68,15 @@ public class PasswordResetService : IPasswordResetService
         {
             await _email.SendAsync(tk.Email, "Mã OTP đặt lại mật khẩu", body, ct);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex)
         {
+            // Mã đã được lưu nhưng chưa tới tay người dùng: thu hồi để lần yêu cầu hỏng này
+            // không kích hoạt thời gian chờ gửi lại và không tính vào giới hạn mỗi giờ.
+            await RevokeQuietlyAsync(tk.Email, issue.Code!);
+
+            if (ex is OperationCanceledException)
+                throw; // người dùng hủy yêu cầu: không phải lỗi gửi email
+
             _logger.LogError(ex, "Không gửi được email OTP cho tài khoản {MaTaiKhoan}", tk.MaTaiKhoan);
             return new RequestResetResult(RequestResetStatus.EmailSendFailed);
         }
@@ -123,6 +131,19 @@ public class PasswordResetService : IPasswordResetService
         await tx.CommitAsync(ct);
 
         return ResetPasswordStatus.Success;
+    }
+
+    /// <summary>Thu hồi mã; lỗi khi thu hồi chỉ được ghi log để không che lỗi gốc là gửi email thất bại.</summary>
+    private async Task RevokeQuietlyAsync(string email, string code)
+    {
+        try
+        {
+            await _otp.RevokeAsync(email, code, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Không thu hồi được mã OTP sau khi gửi email thất bại.");
+        }
     }
 
     /// <summary>Tìm đúng MỘT tài khoản theo email; trùng email (dữ liệu cũ) thì coi như không tìm thấy.</summary>
