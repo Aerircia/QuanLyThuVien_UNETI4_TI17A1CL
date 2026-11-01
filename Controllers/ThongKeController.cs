@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Auth;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces;
+using QuanLyThuVien_UNETI4_TI17A1CL.ViewModels;
 
 namespace QuanLyThuVien_UNETI4_TI17A1CL.Controllers;
 
@@ -24,7 +25,16 @@ public sealed class ThongKeController : Controller
     [HttpGet]
     public async Task<IActionResult> Dashboard()
     {
-        var model = await _service.GetDashboardAsync(HttpContext.RequestAborted);
+        var ct = HttpContext.RequestAborted;
+
+        var summary = await _service.GetDashboardAsync(ct);
+        var report = await _service.GetReportAsync(ct);
+
+        var model = new ThongKeDashboardViewModel(
+            summary,
+            report
+        );
+
         return View(model);
     }
 
