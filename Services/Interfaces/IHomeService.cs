@@ -10,8 +10,11 @@ public interface IHomeService
 {
     Task<LandingViewModel> GetLandingAsync(CancellationToken ct = default);
 
-    /// <summary>Tìm kiếm + lọc + sắp xếp + phân trang chạy trong SQL (Skip/Take).</summary>
-    Task<CatalogViewModel> GetCatalogAsync(CatalogFilter filter, int page, int pageSize, CancellationToken ct = default);
+    /// <summary>
+    /// Tìm kiếm + lọc + sắp xếp + phân trang chạy trong SQL (Skip/Take).
+    /// includeSidebar = false (yêu cầu AJAX chỉ lấy phần kết quả) thì bỏ qua danh sách thể loại/tác giả của thanh bên.
+    /// </summary>
+    Task<CatalogViewModel> GetCatalogAsync(CatalogFilter filter, int page, int pageSize, bool includeSidebar = true, CancellationToken ct = default);
 
     Task<BookDetailViewModel?> GetBookAsync(int maSach, CancellationToken ct = default);
 }

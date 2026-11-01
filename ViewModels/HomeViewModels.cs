@@ -58,6 +58,9 @@ public sealed class AuthorItem
     public string TenTacGia { get; set; } = string.Empty;
     public int SoDauSach { get; set; }
     public int SoLuotMuon { get; set; }
+
+    /// <summary>Tối đa 3 đầu sách của tác giả, dùng cho thẻ bìa xếp chồng.</summary>
+    public List<BookCardItem> Books { get; set; } = new();
 }
 
 public sealed class RankedBookItem
@@ -72,6 +75,12 @@ public sealed class LandingViewModel
     public int TongBanSach { get; set; }
     public int TongBanDoc { get; set; }
     public int TongLuotMuon { get; set; }
+
+    /// <summary>Số đầu sách đang phục vụ và còn bản (hiển thị ở hero).</summary>
+    public int SoDauSachSanSang { get; set; }
+
+    /// <summary>3 bìa xếp quạt ở hero: ưu tiên sách được mượn nhiều.</summary>
+    public List<BookCardItem> HeroBooks { get; set; } = new();
 
     public List<CategoryItem> TheLoais { get; set; } = new();
     public List<RankedBookItem> MuonNhieu { get; set; } = new();

@@ -88,6 +88,10 @@ public sealed class HomeService : IHomeService
         // Sách mới về: Sach không có ngày tạo nên dùng MaSach giảm dần.
         vm.SachMoi = await Cards().OrderByDescending(b => b.MaSach).Take(8).ToListAsync(ct);
 
+        // Ba bìa xếp quạt ở hero: sách được mượn nhiều trước, thiếu thì lấy sách mới.
+        vm.HeroBooks = vm.MuonNhieu.Select(x => x.Book).Concat(vm.SachMoi)
+            .DistinctBy(b => b.MaSach).Take(3).ToList();
+
         // Tác giả nổi bật: nhiều lượt mượn nhất, rồi nhiều đầu sách nhất.
         var bookCounts = await _db.Sachs.AsNoTracking()
             .GroupBy(s => s.TacGia)
@@ -112,10 +116,32 @@ public sealed class HomeService : IHomeService
             .Take(8)
             .ToList();
 
+        // Mỗi tác giả nổi bật kèm tối đa 3 đầu sách (2 truy vấn: lấy mã sách, rồi lấy thẻ sách).
+        if (vm.TacGiaNoiBat.Count > 0)
+        {
+            var names = vm.TacGiaNoiBat.Select(a => a.TenTacGia).ToList();
+            var idRows = await _db.Sachs.AsNoTracking()
+                .Where(s => names.Contains(s.TacGia))
+                .OrderByDescending(s => s.MaSach)
+                .Select(s => new { s.MaSach, s.TacGia })
+                .ToListAsync(ct);
+            var pickedIds = idRows
+                .GroupBy(x => x.TacGia, StringComparer.OrdinalIgnoreCase)
+                .SelectMany(g => g.Take(3))
+                .Select(x => x.MaSach)
+                .ToList();
+            var picked = await Cards().Where(b => pickedIds.Contains(b.MaSach)).ToListAsync(ct);
+            foreach (var a in vm.TacGiaNoiBat)
+                a.Books = picked
+                    .Where(b => string.Equals(b.TacGia, a.TenTacGia, StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(b => b.MaSach).Take(3).ToList();
+        }
+
         // Sách của ngày: chọn cố định theo ngày trong số sách đang có thể mượn.
         var borrowable = Cards().Where(b =>
             b.TrangThai == TrangThaiSach.DangPhucVu && b.SoLuongTong - b.DangGiu - b.DaMat > 0);
         var count = await borrowable.CountAsync(ct);
+        vm.SoDauSachSanSang = count;
         if (count > 0)
         {
             var today = DateOnly.FromDateTime(_time.GetLocalNow().DateTime);
@@ -128,8 +154,7 @@ public sealed class HomeService : IHomeService
 
     // ------------------------------------------------------------------ Tra cứu
 
-    public async Task<CatalogViewModel> GetCatalogAsync(
-        CatalogFilter filter, int page, int pageSize, CancellationToken ct = default)
+    public async Task<CatalogViewModel> GetCatalogAsync(CatalogFilter filter, int page, int pageSize, bool includeSidebar = true, CancellationToken ct = default)
     {
         var q = Cards();
 
@@ -170,19 +195,32 @@ public sealed class HomeService : IHomeService
 
         var result = await PagedResult<BookCardItem>.CreateAsync(ordered, page, pageSize, ct);
 
-        return new CatalogViewModel
+        var vm = new CatalogViewModel
         {
             Filter = filter,
             Result = result,
-            Pager = PagerViewModel.From(result, "Home", "Catalog", filter.ToRouteValues()),
-            TheLoais = await _db.TheLoais.AsNoTracking()
+            Pager = PagerViewModel.From(result, "Home", "Catalog", filter.ToRouteValues())
+        };
+
+        // Chip thể loại cần tên: một truy vấn nhỏ, luôn có.
+        if (filter.MaTheLoai is { } maChon)
+            vm.TenTheLoaiChon = await _db.TheLoais.AsNoTracking()
+                .Where(t => t.MaTheLoai == maChon).Select(t => t.TenTheLoai).FirstOrDefaultAsync(ct);
+
+        // Thanh bên (danh sách thể loại, tác giả) chỉ cần khi tải cả trang; yêu cầu AJAX bỏ qua.
+        if (includeSidebar)
+        {
+            vm.TongDauSach = await _db.Sachs.CountAsync(ct);
+            vm.TheLoais = await _db.TheLoais.AsNoTracking()
                 .Where(t => t.TrangThai == TrangThaiTheLoai.HoatDong)
                 .OrderBy(t => t.TenTheLoai)
                 .Select(t => new CategoryItem { MaTheLoai = t.MaTheLoai, TenTheLoai = t.TenTheLoai, SoDauSach = t.Sachs.Count() })
-                .ToListAsync(ct),
-            TacGias = await _db.Sachs.AsNoTracking()
-                .Select(b => b.TacGia).Distinct().OrderBy(a => a).ToListAsync(ct)
-        };
+                .ToListAsync(ct);
+            vm.TacGias = await _db.Sachs.AsNoTracking()
+                .Select(b => b.TacGia).Distinct().OrderBy(a => a).ToListAsync(ct);
+        }
+
+        return vm;
     }
 
     // ------------------------------------------------------------------ Chi tiết

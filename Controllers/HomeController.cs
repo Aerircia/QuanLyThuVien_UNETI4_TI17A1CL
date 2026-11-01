@@ -45,7 +45,15 @@ public class HomeController : Controller
         int pageSize = PagingDefaults.DefaultPageSize)
     {
         filter.Normalize();
-        return View(await _home.GetCatalogAsync(filter, page, pageSize, HttpContext.RequestAborted));
+
+        // Yêu cầu AJAX (X-Requested-With) chỉ nhận phần kết quả; tải trang bình thường nhận cả trang.
+        var ajax = Request.Headers.XRequestedWith == "XMLHttpRequest";
+
+        // Cùng một URL có hai dạng trả về: Vary giúp nút Back không bao giờ hiện nhầm mảnh HTML trần.
+        Response.Headers.Append("Vary", "X-Requested-With");
+
+        var vm = await _home.GetCatalogAsync(filter, page, pageSize, includeSidebar: !ajax, HttpContext.RequestAborted);
+        return ajax ? PartialView("_CatalogResults", vm) : View(vm);
     }
 
     [HttpGet]

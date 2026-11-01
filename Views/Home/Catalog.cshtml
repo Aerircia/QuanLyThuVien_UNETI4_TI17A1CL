@@ -3,204 +3,129 @@
 @* Nội dung thực hiện: Tra cứu kho sách cho khách/bạn đọc: tìm kiếm, lọc, sắp xếp, phân trang, tìm nâng cao, xem lưới/danh sách *@
 @model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.CatalogViewModel
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Common
 @using QuanLyThuVien_UNETI4_TI17A1CL.ViewModels
 @{
     ViewData["Title"] = "Kho sách";
     var f = Model.Filter;
-    var pageSize = Model.Result.PageSize;
-    var baseRoute = f.ToRouteValues();
-    baseRoute["pageSize"] = pageSize.ToString();
-
-    Dictionary<string, string> Without(params string[] keys)
-    {
-        var d = new Dictionary<string, string>(baseRoute);
-        foreach (var k in keys) d.Remove(k);
-        return d;
-    }
-
-    Dictionary<string, string> With(string key, string value)
-    {
-        var d = new Dictionary<string, string>(baseRoute) { [key] = value };
-        return d;
-    }
-
-    // Các điều kiện đang dùng, mỗi điều kiện có link bỏ riêng nó.
-    var chips = new List<(string Label, Dictionary<string, string> Route)>();
-    if (f.Search is not null) chips.Add(($"Từ khóa: {f.Search}", Without("search")));
-    if (f.MaTheLoai is { } mtl)
-        chips.Add(($"Thể loại: {Model.TheLoais.FirstOrDefault(t => t.MaTheLoai == mtl)?.TenTheLoai ?? mtl.ToString()}", Without("maTheLoai")));
-    if (f.TacGia is not null) chips.Add(($"Tác giả: {f.TacGia}", Without("tacGia")));
-    if (f.NamTu.HasValue || f.NamDen.HasValue)
-        chips.Add(($"Năm {(f.NamTu?.ToString() ?? "…")} – {(f.NamDen?.ToString() ?? "…")}", Without("namTu", "namDen")));
-    if (f.GiaTu.HasValue || f.GiaDen.HasValue)
-        chips.Add(($"Giá {(f.GiaTu?.ToString("N0") ?? "0")} – {(f.GiaDen?.ToString("N0") ?? "không giới hạn")} ₫", Without("giaTu", "giaDen")));
-    if (f.TrangThai is { } tt) chips.Add(($"Trạng thái: {tt.GetDisplayName()}", Without("trangThai")));
-    if (f.TonKho is { } tk) chips.Add((tk == TonKhoFilter.ConSach ? "Còn sách" : "Hết sách", Without("tonKho")));
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/catalog.css" asp-append-version="true" />
 }
 
-<div class="cat-head">
-    <div>
-        <h1>Kho sách</h1>
-        <p class="text-muted mb-0">Tìm sách theo tên, tác giả, thể loại. Chỉ sách còn bản và đang phục vụ mới đăng ký mượn được.</p>
-    </div>
-</div>
+@* Một form duy nhất giữ toàn bộ trạng thái lọc. Không có JavaScript thì nó vẫn là form GET bình thường. *@
+<form id="catalogForm" asp-controller="Home" asp-action="Catalog" method="get">
+    <input type="hidden" name="view" value="@f.View" data-default="grid" />
+    <input type="hidden" name="pageSize" value="@Model.Result.PageSize" data-default="@PagingDefaults.DefaultPageSize" />
 
-<form id="catalogForm" asp-controller="Home" asp-action="Catalog" method="get" class="app-card cat-toolbar">
-    <input type="hidden" name="view" value="@f.View" />
-    <input type="hidden" name="pageSize" value="@pageSize" />
-
-    <div class="row g-2 align-items-end">
-        <div class="col-12 col-lg-4">
-            <label for="fSearch" class="form-label">Từ khóa</label>
-            <input id="fSearch" name="search" value="@f.Search" class="form-control" placeholder="Tên sách, tác giả, thể loại" />
+    <div class="ch2 reveal">
+        <div>
+            <h1>Kho sách</h1>
+            <p class="text-muted mb-0">@Model.TongDauSach đầu sách · @Model.TheLoais.Count thể loại</p>
         </div>
-        <div class="col-6 col-lg-3">
-            <label for="fCat" class="form-label">Thể loại</label>
-            <select id="fCat" name="maTheLoai" class="form-select" data-autosubmit>
-                <option value="">Tất cả thể loại</option>
-                @foreach (var c in Model.TheLoais)
-                {
-                    <option value="@c.MaTheLoai" selected="@(f.MaTheLoai == c.MaTheLoai)">@c.TenTheLoai (@c.SoDauSach)</option>
-                }
-            </select>
-        </div>
-        <div class="col-6 col-lg-3">
-            <label for="fSort" class="form-label">Sắp xếp</label>
-            <select id="fSort" name="sort" class="form-select" data-autosubmit>
-                @foreach (var o in CatalogFilter.SortOptions)
-                {
-                    <option value="@o.Value" selected="@(f.Sort == o.Value)">@o.Label</option>
-                }
-            </select>
-        </div>
-        <div class="col-12 col-lg-2 d-flex gap-2">
-            <button type="submit" class="btn btn-primary flex-fill">Tìm</button>
-            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#advModal">
-                Nâng cao@(f.AdvancedCount > 0 ? $" ({f.AdvancedCount})" : "")
+        <div class="sfx">
+            <div class="sbar">
+                <input id="fSearch" name="search" value="@f.Search" class="sbar-input" data-filter autocomplete="off"
+                       placeholder="Tìm tên sách, tác giả, thể loại…" aria-label="Từ khóa tìm kiếm" />
+                <button type="submit" class="btn btn-primary">Tìm</button>
+            </div>
+            <button type="button" class="btn btn-outline-primary filter-open d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#filterPanel" aria-controls="filterPanel">
+                <partial name="_Icon" model='"filter"' /> Bộ lọc
+                <span id="filterCount" class="badge badge-soft-primary" hidden="@(f.FilterCount == 0)">@f.FilterCount</span>
             </button>
         </div>
     </div>
 
-    <div class="modal fade" id="advModal" tabindex="-1" aria-labelledby="advTitle" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2 class="modal-title fs-5" id="advTitle">Tìm kiếm nâng cao</h2>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="text-muted small">Các điều kiện kết hợp với từ khóa, thể loại ở trên. Ô để trống thì không lọc.</p>
-                    <div class="mb-3">
-                        <label for="fAuthor" class="form-label">Tác giả</label>
-                        <select id="fAuthor" name="tacGia" class="form-select">
-                            <option value="">Tất cả tác giả</option>
-                            @foreach (var a in Model.TacGias)
-                            {
-                                <option value="@a" selected="@(f.TacGia == a)">@a</option>
-                            }
-                        </select>
+    <div class="rail-wrap sm d-lg-none" data-rail>
+        <button type="button" class="rail-arrow prev" aria-label="Cuộn trái"><partial name="_Icon" model='"chev-l"' /></button>
+        <div class="rail-track pills">
+            <a class="pill @(f.MaTheLoai is null ? "on" : "")" href="@Url.Action("Catalog", "Home")" data-pill data-cat="">Tất cả</a>
+            @foreach (var c in Model.TheLoais)
+            {
+                <a class="pill @(f.MaTheLoai == c.MaTheLoai ? "on" : "")" href="@Url.Action("Catalog", "Home", new { maTheLoai = c.MaTheLoai })"
+                   data-pill data-cat="@c.MaTheLoai"><partial name="_CategoryIcon" model="c.TenTheLoai" /> @c.TenTheLoai</a>
+            }
+        </div>
+        <button type="button" class="rail-arrow next" aria-label="Cuộn phải"><partial name="_Icon" model='"chev-r"' /></button>
+    </div>
+
+    <div class="cl">
+        <aside class="cl-side offcanvas-lg offcanvas-start" tabindex="-1" id="filterPanel" aria-labelledby="filterTitle">
+            <div class="offcanvas-header d-lg-none">
+                <h2 class="offcanvas-title fs-5" id="filterTitle">Bộ lọc</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#filterPanel" aria-label="Đóng"></button>
+            </div>
+            <div class="offcanvas-body">
+                <div class="cl-side-card">
+                    <h4>Thể loại</h4>
+                    <label class="opt">
+                        <input type="radio" name="maTheLoai" value="" data-filter checked="@(f.MaTheLoai is null)" />
+                        <span class="opt-l"><partial name="_Icon" model='"grid"' /> Tất cả</span>
+                        <span class="opt-c">@Model.TongDauSach</span>
+                    </label>
+                    @foreach (var c in Model.TheLoais)
+                    {
+                        <label class="opt">
+                            <input type="radio" name="maTheLoai" value="@c.MaTheLoai" data-filter checked="@(f.MaTheLoai == c.MaTheLoai)" />
+                            <span class="opt-l"><partial name="_CategoryIcon" model="c.TenTheLoai" /> @c.TenTheLoai</span>
+                            <span class="opt-c">@c.SoDauSach</span>
+                        </label>
+                    }
+
+                    <h4>Tác giả</h4>
+                    <select name="tacGia" class="form-select form-select-sm" data-filter aria-label="Tác giả">
+                        <option value="">Tất cả tác giả</option>
+                        @foreach (var a in Model.TacGias)
+                        {
+                            <option value="@a" selected="@(f.TacGia == a)">@a</option>
+                        }
+                    </select>
+
+                    <h4>Năm xuất bản</h4>
+                    <div class="yr">
+                        <input name="namTu" type="number" min="1900" inputmode="numeric" class="form-control form-control-sm" placeholder="Từ" value="@f.NamTu" data-filter aria-label="Từ năm" />
+                        <span aria-hidden="true">–</span>
+                        <input name="namDen" type="number" min="1900" inputmode="numeric" class="form-control form-control-sm" placeholder="Đến" value="@f.NamDen" data-filter aria-label="Đến năm" />
                     </div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-6">
-                            <label for="fStatus" class="form-label">Trạng thái sách</label>
-                            <select id="fStatus" name="trangThai" class="form-select">
-                                <option value="">Tất cả</option>
-                                @foreach (var s in Enum.GetValues<TrangThaiSach>())
-                                {
-                                    <option value="@s" selected="@(f.TrangThai == s)">@s.GetDisplayName()</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-6">
-                            <label for="fStock" class="form-label">Tồn kho</label>
-                            <select id="fStock" name="tonKho" class="form-select">
-                                <option value="">Tất cả</option>
-                                <option value="@TonKhoFilter.ConSach" selected="@(f.TonKho == TonKhoFilter.ConSach)">Còn sách</option>
-                                <option value="@TonKhoFilter.HetSach" selected="@(f.TonKho == TonKhoFilter.HetSach)">Hết sách</option>
-                            </select>
-                        </div>
+
+                    <h4>Giá bìa (₫)</h4>
+                    <div class="yr">
+                        <input name="giaTu" type="number" min="0" step="1000" inputmode="numeric" class="form-control form-control-sm" placeholder="Từ" value="@f.GiaTu" data-filter aria-label="Giá từ" />
+                        <span aria-hidden="true">–</span>
+                        <input name="giaDen" type="number" min="0" step="1000" inputmode="numeric" class="form-control form-control-sm" placeholder="Đến" value="@f.GiaDen" data-filter aria-label="Giá đến" />
                     </div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-6">
-                            <label for="fYearFrom" class="form-label">Năm xuất bản từ</label>
-                            <input id="fYearFrom" name="namTu" type="number" min="1900" class="form-control" value="@f.NamTu" />
-                        </div>
-                        <div class="col-6">
-                            <label for="fYearTo" class="form-label">đến năm</label>
-                            <input id="fYearTo" name="namDen" type="number" min="1900" class="form-control" value="@f.NamDen" />
-                        </div>
+
+                    <h4>Tồn kho</h4>
+                    <label class="opt">
+                        <input type="radio" name="tonKho" value="" data-filter checked="@(f.TonKho is null)" />
+                        <span class="opt-l">Tất cả</span>
+                    </label>
+                    <label class="opt">
+                        <input type="radio" name="tonKho" value="@TonKhoFilter.ConSach" data-filter checked="@(f.TonKho == TonKhoFilter.ConSach)" />
+                        <span class="opt-l">Còn sách</span>
+                    </label>
+                    <label class="opt">
+                        <input type="radio" name="tonKho" value="@TonKhoFilter.HetSach" data-filter checked="@(f.TonKho == TonKhoFilter.HetSach)" />
+                        <span class="opt-l">Hết sách</span>
+                    </label>
+
+                    <div class="cl-side-actions">
+                        <a id="clearFilters" href="@Url.Action("Catalog", "Home")" class="btn btn-outline-secondary btn-sm">Xóa bộ lọc</a>
+                        <button type="submit" class="btn btn-primary btn-sm no-js-only">Áp dụng</button>
                     </div>
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <label for="fPriceFrom" class="form-label">Giá bìa từ (₫)</label>
-                            <input id="fPriceFrom" name="giaTu" type="number" min="0" step="1000" class="form-control" value="@f.GiaTu" />
-                        </div>
-                        <div class="col-6">
-                            <label for="fPriceTo" class="form-label">đến (₫)</label>
-                            <input id="fPriceTo" name="giaDen" type="number" min="0" step="1000" class="form-control" value="@f.GiaDen" />
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer justify-content-between">
-                    <button type="button" id="advReset" class="btn btn-outline-secondary">Xóa điều kiện</button>
-                    <button type="submit" class="btn btn-primary">Áp dụng</button>
+                    <button type="button" class="btn btn-primary w-100 mt-3 d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#filterPanel">Xem kết quả</button>
                 </div>
             </div>
-        </div>
+        </aside>
+
+        <section id="catalogResults" class="cl-main" aria-live="polite" tabindex="-1">
+            <partial name="_CatalogResults" model="Model" />
+        </section>
     </div>
 </form>
 
-<div class="cat-bar">
-    <div class="cat-count">
-        <strong>@Model.Result.TotalCount</strong> đầu sách
-        @foreach (var c in chips)
-        {
-            <a class="cat-chip" asp-action="Catalog" asp-all-route-data="c.Route" title="Bỏ điều kiện này">@c.Label <span aria-hidden="true">×</span></a>
-        }
-        @if (f.HasAny)
-        {
-            <a asp-action="Catalog" asp-route-pageSize="@pageSize" class="small ms-1">Xóa tất cả</a>
-        }
-    </div>
-    <div class="btn-group btn-group-sm" role="group" aria-label="Kiểu hiển thị">
-        <a class="btn @(f.View == "grid" ? "btn-primary" : "btn-outline-secondary")" asp-action="Catalog" asp-all-route-data='Without("view")'>Lưới</a>
-        <a class="btn @(f.View == "list" ? "btn-primary" : "btn-outline-secondary")" asp-action="Catalog" asp-all-route-data='With("view", "list")'>Danh sách</a>
-    </div>
-</div>
-
-@if (!Model.Result.Items.Any())
-{
-    <div class="app-card text-center py-5">
-        <h2 class="h5">Không tìm thấy đầu sách phù hợp</h2>
-        <p class="text-muted">Thử bỏ bớt điều kiện lọc hoặc đổi từ khóa.</p>
-        <div><a asp-action="Catalog" class="btn btn-outline-primary">Xem toàn bộ kho sách</a></div>
-    </div>
-}
-else if (f.View == "list")
-{
-    <div class="bk-list">
-        @foreach (var b in Model.Result.Items)
-        {
-            <partial name="_BookRow" model="b" />
-        }
-    </div>
-}
-else
-{
-    <div class="bk-grid">
-        @foreach (var b in Model.Result.Items)
-        {
-            <partial name="_BookCard" model="b" />
-        }
-    </div>
-}
-
-<partial name="_PagerPartial" model="Model.Pager" />
-
 @section Scripts {
+    <script src="~/js/rows.js" asp-append-version="true"></script>
     <script src="~/js/catalog.js" asp-append-version="true"></script>
 }

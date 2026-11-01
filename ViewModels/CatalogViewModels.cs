@@ -50,6 +50,9 @@ public sealed class CatalogFilter
 
     public bool HasAny => Search is not null || MaTheLoai.HasValue || AdvancedCount > 0;
 
+    /// <summary>Số bộ lọc đang bật trong thanh bên (thể loại, tác giả, năm, giá, tồn kho, trạng thái).</summary>
+    public int FilterCount => AdvancedCount + (MaTheLoai.HasValue ? 1 : 0);
+
     /// <summary>Làm sạch dữ liệu người dùng nhập (không tin query string).</summary>
     public void Normalize()
     {
@@ -94,6 +97,12 @@ public sealed class CatalogViewModel
     public PagerViewModel Pager { get; set; } = default!;
     public List<CategoryItem> TheLoais { get; set; } = new();
     public List<string> TacGias { get; set; } = new();
+
+    /// <summary>Tên thể loại đang chọn (cho chip), luôn có kể cả khi chỉ trả về phần kết quả.</summary>
+    public string? TenTheLoaiChon { get; set; }
+
+    /// <summary>Tổng số đầu sách (tiêu đề trang); chỉ nạp khi trả về cả thanh bên.</summary>
+    public int TongDauSach { get; set; }
 }
 
 public sealed class BookDetailViewModel

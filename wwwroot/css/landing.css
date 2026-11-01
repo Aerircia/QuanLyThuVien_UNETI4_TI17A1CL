@@ -2,45 +2,66 @@
 /* Mã sinh viên: 23103100255 */
 /* Nội dung thực hiện: CSS trang chủ (landing): hero, các bước mượn, thể loại, xếp hạng, tác giả, thống kê, FAQ */
 
-.lp-section { margin-top: 2.5rem; }
-.lp-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: .9rem; }
-body.app-body .lp-head h2 { margin: 0; }
+.lp-section { margin-top: 2.75rem; }
+.lp-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+body.app-body .lp-head h2 { margin: 0 0 .1rem; }
+.lp-head .text-muted { font-size: 13px; }
 
 /* ---------- Hero ---------- */
-.lp-hero { display: grid; grid-template-columns: 1fr auto; gap: 2rem; align-items: center; padding: 2.5rem; border-radius: 24px; color: #fff; background: linear-gradient(135deg, #4d6e41 0%, #5b7f4d 60%, #7d9f6b 100%); box-shadow: 0 12px 30px rgba(91, 127, 77, .25); }
-body.app-body .lp-hero h1 { margin-bottom: .6rem; color: #fff; font-size: clamp(1.8rem, 3.4vw, 2.6rem); }
+.lp-hero { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 2rem; align-items: center; padding: 2.75rem 3rem; overflow: hidden; border-radius: 28px; color: #fff; background: linear-gradient(135deg, #4d6e41 0%, #5b7f4d 55%, #8fb27a 100%); box-shadow: 0 16px 36px rgba(91, 127, 77, .3); }
+.lp-hero::before, .lp-hero::after { content: ''; position: absolute; border-radius: 50%; background: rgba(255, 255, 255, .1); pointer-events: none; }
+.lp-hero::before { top: -130px; right: -60px; width: 320px; height: 320px; }
+.lp-hero::after { bottom: -110px; left: 40%; width: 200px; height: 200px; }
+.lp-hero > * { position: relative; z-index: 1; }
+body.app-body .lp-hero h1 { margin-bottom: .6rem; color: #fff; font-size: clamp(1.9rem, 3.6vw, 2.8rem); line-height: 1.15; }
 .lp-hero p { max-width: 52ch; margin-bottom: 1.25rem; opacity: .92; }
-.lp-search { display: flex; gap: .5rem; max-width: 560px; }
-.lp-search .form-control { border: 0; border-radius: 999px; }
-.lp-chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; font-size: 13px; }
-body.app-body .lp-chips a { padding: .2rem .75rem; border-radius: 999px; background: rgba(255, 255, 255, .2); color: #fff; text-decoration: none; }
-body.app-body .lp-chips a:hover { background: rgba(255, 255, 255, .35); color: #fff; }
-.lp-hero-stats { display: grid; gap: .75rem; }
-.lp-hero-stats div { min-width: 150px; padding: 1rem 1.25rem; border-radius: 16px; background: rgba(255, 255, 255, .16); }
-.lp-hero-stats b { display: block; font-size: 1.9rem; line-height: 1.1; }
-.lp-hero-stats span { font-size: 13px; opacity: .9; }
+.lp-search { display: flex; max-width: 560px; padding: 5px; border-radius: 999px; background: #fff; box-shadow: 0 10px 28px rgba(31, 45, 26, .25); }
+body.app-body .lp-search-input { flex: 1; min-width: 0; padding: 0 1.1rem; border: 0; outline: 0; background: transparent; color: var(--app-text); font-size: 15px; }
+.lp-chips { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: 1rem; font-size: 13px; }
+body.app-body .lp-chips a { padding: .22rem .8rem; border-radius: 999px; background: rgba(255, 255, 255, .2); color: #fff; text-decoration: none; transition: background-color .15s ease, transform .15s ease; }
+body.app-body .lp-chips a:hover { background: rgba(255, 255, 255, .38); color: #fff; transform: translateY(-1px); }
+.lp-facts { display: flex; flex-wrap: wrap; gap: .4rem 1.4rem; margin-top: 1.25rem; font-size: 14px; opacity: .95; }
+.lp-facts b { margin-right: .2rem; font-size: 1.25rem; }
 
-/* ---------- Các bước mượn sách (đây là một quy trình theo thứ tự) ---------- */
+/* Bìa xếp quạt: rộng ra khi rê chuột */
+.lp-fan { position: relative; width: 370px; height: 290px; }
+body.app-body .lp-fan-item { position: absolute; width: 150px; transition: transform .45s cubic-bezier(.22, .8, .24, 1); }
+.lp-fan-item .bk-cover { border: 0; border-radius: 12px; box-shadow: 0 16px 32px rgba(15, 28, 12, .4); }
+.lp-fan-item.f0 { left: 0; top: 46px; transform: rotate(-9deg); }
+.lp-fan-item.f1 { left: 110px; top: 0; z-index: 2; }
+.lp-fan-item.f2 { left: 220px; top: 46px; transform: rotate(9deg); }
+.lp-fan:hover .f0 { transform: rotate(-15deg) translateX(-16px); }
+.lp-fan:hover .f1 { transform: translateY(-10px) scale(1.04); }
+.lp-fan:hover .f2 { transform: rotate(15deg) translateX(16px); }
+
+/* ---------- Bốn bước (quy trình theo thứ tự nên giữ <ol>) ---------- */
 .lp-how { margin-top: 1.5rem; }
-.lp-how ol { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; margin: 0; padding: 0; list-style: none; counter-reset: step; }
-.lp-how li { position: relative; padding: 1rem 1rem 1rem 3.4rem; border: 1px solid var(--app-line); border-radius: 16px; background: #fff; counter-increment: step; }
-.lp-how li::before { content: counter(step); position: absolute; top: 1rem; left: 1rem; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--app-ac-soft); color: var(--app-ac); font-weight: 800; }
-.lp-how b { display: block; }
-.lp-how span { color: var(--app-muted); font-size: 13px; }
+.lp-how ol { display: grid; grid-template-columns: repeat(4, 1fr); gap: .9rem; margin: 0; padding: 0; list-style: none; }
+.lp-how li { display: flex; flex-direction: column; gap: .2rem; padding: 1.1rem 1.2rem; border: 1px solid var(--app-line); border-radius: 18px; background: #fff; box-shadow: var(--app-shadow-sm); transition: transform .25s ease, box-shadow .25s ease; }
+.lp-how li:hover { transform: translateY(-5px); box-shadow: 0 14px 26px rgba(55, 83, 42, .16); }
+.lp-ic { display: grid; place-items: center; width: 46px; height: 46px; margin-bottom: .45rem; border-radius: 14px; background: var(--app-ac-soft); color: var(--app-ac); transition: background-color .25s ease, color .25s ease, transform .25s ease; }
+.lp-ic .ico { width: 22px; height: 22px; }
+.lp-how li:hover .lp-ic { background: var(--app-ac); color: #fff; transform: rotate(-6deg) scale(1.06); }
+.lp-how-text { color: var(--app-muted); font-size: 13px; }
 
-/* ---------- Thể loại ---------- */
-.lp-cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .75rem; }
-body.app-body .lp-cat { display: block; padding: 1rem 1.1rem; border: 1px solid var(--app-line); border-radius: 16px; background: #fff; color: var(--app-text); text-decoration: none; transition: border-color .2s ease, box-shadow .2s ease; }
-body.app-body .lp-cat:hover { border-color: var(--app-ac); box-shadow: var(--app-shadow-md); color: var(--app-text); }
-.lp-cat b { display: block; }
-.lp-cat span { color: var(--app-muted); font-size: 13px; }
+/* ---------- Thể loại (hàng cuộn) ---------- */
+body.app-body .lp-cat { position: relative; display: flex; flex-direction: column; gap: .2rem; flex: 0 0 190px; padding: 1.2rem 1.25rem; overflow: hidden; border: 0; border-radius: 20px; background: #fff; box-shadow: var(--app-shadow-sm); color: var(--app-text); text-decoration: none; transition: transform .25s ease, box-shadow .25s ease; }
+.lp-cat::before { content: ''; position: absolute; top: -26px; right: -26px; width: 96px; height: 96px; border-radius: 50%; background: var(--app-ac-soft); transition: transform .35s ease; }
+body.app-body .lp-cat:hover { transform: translateY(-4px); box-shadow: 0 14px 26px rgba(55, 83, 42, .2); color: var(--app-text); }
+.lp-cat:hover::before { transform: scale(1.35); }
+.lp-cat-ic { position: relative; display: grid; place-items: center; width: 46px; height: 46px; margin-bottom: .55rem; border-radius: 14px; background: var(--app-ac-soft); color: var(--app-ac); transition: background-color .25s ease, color .25s ease, transform .25s ease; }
+.lp-cat-ic .ico { width: 22px; height: 22px; }
+.lp-cat:hover .lp-cat-ic { background: var(--app-ac); color: #fff; transform: rotate(-6deg) scale(1.08); }
+.lp-cat b, .lp-cat small { position: relative; }
+.lp-cat small { color: var(--app-muted); }
 
 /* ---------- Xếp hạng + sách của ngày ---------- */
-.lp-duo { display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem; align-items: start; }
+.lp-duo { display: grid; grid-template-columns: 1.15fr 1fr; gap: 1.5rem; align-items: stretch; }
 .lp-rank { padding: .5rem; }
-body.app-body .lp-rank-item { display: grid; grid-template-columns: 28px 48px 1fr auto; align-items: center; gap: .9rem; padding: .6rem .7rem; border-radius: 12px; color: var(--app-text); text-decoration: none; }
-body.app-body .lp-rank-item:hover { background: #f5f8f1; color: var(--app-text); }
-.lp-rank-no { color: var(--app-ac); font-size: 1.2rem; font-weight: 800; text-align: center; }
+body.app-body .lp-rank-item { display: grid; grid-template-columns: 30px 50px 1fr auto; align-items: center; gap: .9rem; padding: .6rem .75rem; border-radius: 14px; color: var(--app-text); text-decoration: none; transition: background-color .15s ease, transform .2s ease; }
+body.app-body .lp-rank-item:hover { background: #f4f8ef; transform: translateX(4px); color: var(--app-text); }
+.lp-rank-no { color: var(--app-ac-soft-2); font-size: 1.35rem; font-weight: 800; text-align: center; }
+.lp-rank-no.top { color: var(--app-ac); }
 .lp-rank-cover .bk-cover { border-radius: 6px; }
 .lp-rank-cover .book-cover-mock { padding: 3px; }
 .lp-rank-cover .book-cover-mock > * { display: none; }
@@ -48,53 +69,69 @@ body.app-body .lp-rank-item:hover { background: #f5f8f1; color: var(--app-text);
 .lp-rank-text small, .lp-rank-count small { color: var(--app-muted); font-size: 12.5px; }
 .lp-rank-count { text-align: right; white-space: nowrap; }
 .lp-rank-count b { display: block; font-size: 1.05rem; }
-body.app-body .lp-day { display: grid; grid-template-columns: 130px 1fr; gap: 1.25rem; align-items: center; color: var(--app-text); text-decoration: none; }
-body.app-body .lp-day:hover { color: var(--app-text); box-shadow: var(--app-shadow-md); }
-body.app-body .lp-day h3 { font-size: 1.15rem; }
 
-/* ---------- Sách mới (cuộn ngang) ---------- */
-.lp-rail { display: flex; gap: 1rem; padding-bottom: .5rem; overflow-x: auto; scroll-snap-type: x proximity; }
-.lp-rail-item { flex: 0 0 160px; scroll-snap-align: start; }
+body.app-body .lp-feat { display: grid; grid-template-columns: 140px 1fr; gap: 1.5rem; align-items: center; height: calc(100% - 2.6rem); padding: 1.4rem 1.6rem; border-radius: 22px; background: linear-gradient(145deg, #eef5e8, #d5e4c9); color: var(--app-text); text-decoration: none; transition: transform .25s ease, box-shadow .25s ease; }
+body.app-body .lp-feat:hover { transform: translateY(-4px); box-shadow: 0 16px 30px rgba(55, 83, 42, .22); color: var(--app-text); }
+.lp-feat-cover .bk-cover { box-shadow: 0 10px 22px rgba(31, 45, 26, .28); transition: transform .3s ease; }
+.lp-feat:hover .lp-feat-cover .bk-cover { transform: rotate(-3deg) scale(1.03); }
+.lp-tag { display: inline-flex; align-items: center; gap: .35rem; margin-bottom: .6rem; padding: 3px 12px; border-radius: 999px; background: #fff; color: var(--app-ac); font-size: 12px; font-weight: 700; }
+body.app-body .lp-feat h3 { margin-bottom: .25rem; font-size: 1.3rem; }
 
-/* ---------- Tác giả ---------- */
-.lp-authors { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .75rem; }
-body.app-body .lp-author { display: grid; grid-template-columns: 44px 1fr; grid-template-rows: auto auto; column-gap: .8rem; align-items: center; padding: .8rem 1rem; border: 1px solid var(--app-line); border-radius: 16px; background: #fff; color: var(--app-text); text-decoration: none; }
-body.app-body .lp-author:hover { border-color: var(--app-ac); color: var(--app-text); }
-.lp-author-av { grid-row: 1 / 3; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(145deg, #b9d4a7, var(--app-ac)); color: #fff; font-weight: 800; }
-.lp-author b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lp-author small { color: var(--app-muted); font-size: 12.5px; }
+/* ---------- Sách mới (hàng cuộn) ---------- */
+.lp-rail-item { flex: 0 0 160px; }
+
+/* ---------- Tác giả: bìa xếp chồng, xòe ra khi rê chuột ---------- */
+body.app-body .au { display: flex; flex-direction: column; gap: .15rem; flex: 0 0 220px; min-height: 210px; padding: 1.1rem 1.2rem; overflow: hidden; border-radius: 22px; color: var(--app-text); text-decoration: none; transition: transform .3s ease, box-shadow .3s ease; }
+body.app-body .au:nth-child(4n + 1) { background: linear-gradient(160deg, #eef5e8, #d5e4c9); }
+body.app-body .au:nth-child(4n + 2) { background: linear-gradient(160deg, #fdf6e1, #f3e2b2); }
+body.app-body .au:nth-child(4n + 3) { background: linear-gradient(160deg, #e9f3f4, #cfe3e7); }
+body.app-body .au:nth-child(4n + 4) { background: linear-gradient(160deg, #f8ebee, #ecd2da); }
+body.app-body .au:hover { transform: translateY(-6px); box-shadow: 0 16px 30px rgba(55, 83, 42, .22); color: var(--app-text); }
+.au-st { display: flex; align-items: flex-end; height: 116px; margin-bottom: .7rem; padding-left: 22px; }
+.au-cv { width: 72px; margin-left: -22px; transition: transform .4s cubic-bezier(.22, .8, .24, 1); }
+.au-cv .bk-cover { border: 0; border-radius: 6px; box-shadow: 0 6px 14px rgba(15, 28, 12, .3); }
+.au-cv .book-cover-mock { padding: 4px; }
+.au-cv .book-cover-mock > * { display: none; }
+.au-cv:nth-child(1) { transform: rotate(-7deg) translateY(6px); }
+.au-cv:nth-child(3) { transform: rotate(7deg) translateY(6px); }
+.au:hover .au-cv:nth-child(1) { transform: rotate(-12deg) translate(-6px, 2px); }
+.au:hover .au-cv:nth-child(2) { transform: translateY(-8px); }
+.au:hover .au-cv:nth-child(3) { transform: rotate(12deg) translate(6px, 2px); }
+.au b { font-size: 15.5px; line-height: 1.3; }
+.au small { color: var(--app-muted); font-size: 12.5px; }
 
 /* ---------- Dải thống kê ---------- */
-.lp-band { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 2.5rem; padding: 1.6rem .5rem; border-radius: 20px; color: #fff; background: linear-gradient(135deg, #4d6e41, #5b7f4d 60%, #7d9f6b); }
+.lp-band { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 2.75rem; padding: 1.7rem .5rem; border-radius: 22px; color: #fff; background: linear-gradient(135deg, #4d6e41, #5b7f4d 60%, #7d9f6b); box-shadow: 0 12px 28px rgba(91, 127, 77, .25); }
 .lp-band div { padding: 0 1rem; text-align: center; border-right: 1px solid rgba(255, 255, 255, .25); }
 .lp-band div:last-child { border-right: 0; }
-.lp-band b { display: block; font-size: 2rem; line-height: 1.1; }
+.lp-band b { display: block; font-size: 2.1rem; line-height: 1.1; }
 .lp-band span { font-size: 13.5px; opacity: .9; }
 
 /* ---------- FAQ + giờ mở cửa ---------- */
 .lp-info { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1.5rem; align-items: start; }
-.lp-faq .accordion-item { border-color: var(--app-line); }
+.lp-faq .accordion-item { margin-bottom: .5rem; overflow: hidden; border: 1px solid var(--app-line); border-radius: 14px !important; }
 body.app-body .lp-faq .accordion-button { font-size: 14px; font-weight: 600; }
 body.app-body .lp-faq .accordion-button:not(.collapsed) { background: var(--app-ac-soft); color: var(--app-ac-hover); box-shadow: none; }
 .lp-hours { display: grid; grid-template-columns: 1fr auto; gap: .4rem 1rem; margin: 0 0 1rem; }
-.lp-hours dt { font-weight: 500; color: var(--app-muted); }
+.lp-hours dt { color: var(--app-muted); font-weight: 500; }
 .lp-hours dd { margin: 0; font-weight: 600; }
-.lp-cta { margin-top: 1rem; padding: 1.4rem; border-radius: 18px; color: #fff; background: linear-gradient(135deg, #a9c78f, #5b7f4d); }
+.lp-cta { margin-top: 1rem; padding: 1.5rem; border-radius: 20px; color: #fff; background: linear-gradient(135deg, #a9c78f, #5b7f4d); }
 body.app-body .lp-cta h3 { color: #fff; }
 .lp-cta p { opacity: .94; }
 
 @media (max-width: 991px) {
-  .lp-hero { grid-template-columns: 1fr; padding: 1.75rem 1.4rem; }
-  .lp-hero-stats { grid-template-columns: 1fr 1fr; }
+  .lp-hero { grid-template-columns: 1fr; padding: 1.9rem 1.5rem; }
+  .lp-fan { display: none; }
   .lp-how ol { grid-template-columns: 1fr 1fr; }
   .lp-duo, .lp-info { grid-template-columns: 1fr; }
+  body.app-body .lp-feat { height: auto; }
   .lp-band { grid-template-columns: 1fr 1fr; row-gap: 1.25rem; }
   .lp-band div:nth-child(2) { border-right: 0; }
 }
 @media (max-width: 575px) {
   .lp-how ol { grid-template-columns: 1fr; }
-  .lp-search { flex-direction: column; }
-  body.app-body .lp-rank-item { grid-template-columns: 24px 40px 1fr; }
+  .lp-search { padding: 4px; }
+  body.app-body .lp-rank-item { grid-template-columns: 24px 42px 1fr; }
   .lp-rank-count { display: none; }
-  body.app-body .lp-day { grid-template-columns: 96px 1fr; }
+  body.app-body .lp-feat { grid-template-columns: 100px 1fr; padding: 1.1rem; }
 }

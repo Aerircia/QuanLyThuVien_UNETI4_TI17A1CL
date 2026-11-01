@@ -1,0 +1,22 @@
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Chọn icon theo tên thể loại (bỏ dấu, khớp từ khóa); thể loại lạ dùng icon sách mặc định *@
+@using System.Globalization
+@using System.Text
+@model string
+@{
+    var folded = new string((Model ?? string.Empty).Normalize(NormalizationForm.FormD)
+            .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark).ToArray())
+        .Replace('đ', 'd').Replace('Đ', 'D').ToLowerInvariant();
+
+    bool Has(params string[] words) => words.Any(w => folded.Contains(w));
+
+    var key = Has("lap trinh", "cong nghe", "tin hoc", "may tinh") ? "code"
+            : Has("khoa hoc") ? "science"
+            : Has("van hoc", "tieu thuyet") ? "literature"
+            : Has("lich su") ? "history"
+            : Has("kinh te", "tai chinh", "kinh doanh") ? "economy"
+            : Has("thieu nhi", "tre em") ? "kids"
+            : "book";
+}
+<partial name="_Icon" model="key" />
