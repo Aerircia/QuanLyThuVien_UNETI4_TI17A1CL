@@ -4,31 +4,54 @@
 @model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.PhieuChoTraListViewModel
 @{
     ViewData["Title"] = "Phiếu chờ nhận trả";
+    var dangLoc = !string.IsNullOrWhiteSpace(Model.Search) || Model.ChiQuaHan;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0">Phiếu đang mượn chờ nhận trả</h1>
-    <a asp-action="Index" class="btn btn-outline-secondary">Lịch sử trả sách</a>
+<div class="mb-3">
+    <h1 class="mb-1">Trả sách và tiền phạt</h1>
+    <p class="text-muted mb-0">Chọn phiếu đang mượn để nhận sách trả. Phiếu quá hạn được tô nổi bật.</p>
 </div>
 
-<form method="get" asp-action="ChoTra" class="row g-2 mb-3 align-items-center">
-    <input type="hidden" name="pageSize" value="@Model.PageSize" />
-    <div class="col-md-6">
-        <input name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo họ tên, mã số thẻ bạn đọc hoặc tên sách" />
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item"><a class="nav-link active" asp-action="ChoTra">Chờ nhận trả</a></li>
+    <li class="nav-item"><a class="nav-link" asp-action="Index">Lịch sử trả sách</a></li>
+</ul>
+
+@if (TempData["ThongBao"] is string thongBao)
+{
+    <div class="alert alert-success" role="status">@thongBao</div>
+}
+@if (TempData["Loi"] is string loi)
+{
+    <div class="alert alert-danger" role="alert">@loi</div>
+}
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" asp-action="ChoTra" class="row g-2 align-items-center">
+            <input type="hidden" name="pageSize" value="@Model.PageSize" />
+            <div class="col-lg-6">
+                <input name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo họ tên, mã số thẻ bạn đọc hoặc tên sách" />
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="form-check mb-0">
+                    <input class="form-check-input" type="checkbox" id="chiQuaHan" name="chiQuaHan" value="true"
+                           checked="@Model.ChiQuaHan" onchange="this.form.requestSubmit()" />
+                    <label class="form-check-label" for="chiQuaHan">Chỉ phiếu quá hạn</label>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Tìm</button>
+                @if (dangLoc)
+                {
+                    <a asp-action="ChoTra" asp-route-pageSize="@Model.PageSize" class="btn btn-outline-secondary">Xóa lọc</a>
+                }
+            </div>
+        </form>
     </div>
-    <div class="col-md-3">
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="chiQuaHan" name="chiQuaHan" value="true" checked="@Model.ChiQuaHan" />
-            <label class="form-check-label" for="chiQuaHan">Chỉ phiếu quá hạn</label>
-        </div>
-    </div>
-    <div class="col-md-3 d-grid">
-        <button type="submit" class="btn btn-outline-primary">Lọc</button>
-    </div>
-</form>
+</div>
 
 <div class="table-responsive">
-    <table class="table table-hover align-middle">
+    <table class="table align-middle">
         <thead>
             <tr>
                 <th>Phiếu</th>
@@ -43,8 +66,9 @@
         <tbody>
             @foreach (var item in Model.Result.Items)
             {
-                <tr>
-                    <td>#@item.MaPhieuMuon</td>
+                var quaHan = item.SoNgayTre > 0;
+                <tr class="@(quaHan ? "table-danger" : "")">
+                    <td class="fw-semibold">#@item.MaPhieuMuon</td>
                     <td>
                         @item.TenBanDoc
                         @if (!string.IsNullOrEmpty(item.MaSoThe))
@@ -54,15 +78,15 @@
                     </td>
                     <td>@item.TenSach</td>
                     <td>@(item.NgayMuon?.ToString("dd/MM/yyyy") ?? "—")</td>
-                    <td>@(item.HanTra?.ToString("dd/MM/yyyy") ?? "—")</td>
+                    <td class="@(quaHan ? "text-danger fw-semibold" : "")">@(item.HanTra?.ToString("dd/MM/yyyy") ?? "—")</td>
                     <td>
-                        @if (item.SoNgayTre > 0)
+                        @if (quaHan)
                         {
-                            <span class="badge bg-danger">Quá hạn @item.SoNgayTre ngày</span>
+                            <span class="badge badge-soft-danger">Quá hạn @item.SoNgayTre ngày</span>
                         }
                         else
                         {
-                            <span class="badge bg-success">Còn hạn</span>
+                            <span class="badge badge-soft-success">Còn hạn</span>
                         }
                     </td>
                     <td class="text-end">
