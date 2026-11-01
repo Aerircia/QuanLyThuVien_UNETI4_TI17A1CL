@@ -41,9 +41,13 @@
            asp-controller="Sach" asp-action="Index" aria-current="@(controller == "Sach" ? "page" : null)">
             <span class="app-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM8 4v16M12 4v16M16 4v16"/></svg></span><span>Quản lý sách</span>
         </a>
-        <a class="app-nav-link @(controller == "BanDoc" ? "is-active" : "")"
-           asp-controller="BanDoc" asp-action="Index" aria-current="@(controller == "BanDoc" ? "page" : null)">
+        <a class="app-nav-link @(controller == "BanDoc" && action != "DuyetThe" ? "is-active" : "")"
+           asp-controller="BanDoc" asp-action="Index" aria-current="@(controller == "BanDoc" && action != "DuyetThe" ? "page" : null)">
             <span class="app-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span>Quản lý bạn đọc</span>
+        </a>
+        <a class="app-nav-link @(controller == "BanDoc" && action == "DuyetThe" ? "is-active" : "")"
+           asp-controller="BanDoc" asp-action="DuyetThe" aria-current="@(controller == "BanDoc" && action == "DuyetThe" ? "page" : null)">
+            <span class="app-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg></span><span>Duyệt thẻ bạn đọc</span>
         </a>
         <a class="app-nav-link @(controller == "GiaHanMuon" ? "is-active" : "")"
            asp-controller="GiaHanMuon" asp-action="Index" aria-current="@(controller == "GiaHanMuon" ? "page" : null)">
@@ -74,24 +78,28 @@
 }
 else
 {
+    var hasActiveCard = await Current.HasActiveBanDocAsync();
     <ul class="navbar-nav app-public-nav">
         <li class="nav-item">
             <a class="nav-link @(controller == "Home" ? "is-active" : "")" asp-controller="Home" asp-action="Index"
-               aria-current="@(controller == "Home" ? "page" : null)">Kho sách</a>
+               aria-current="@(controller == "Home" ? "page" : null)">Trang chủ</a>
         </li>
         @if (Current.IsInRole(VaiTro.BanDoc))
         {
-            <li class="nav-item">
-                <a class="nav-link @(controller == "PhieuMuon" && action == "MyLoans" ? "is-active" : "")"
-                   asp-controller="PhieuMuon" asp-action="MyLoans" aria-current="@(controller == "PhieuMuon" && action == "MyLoans" ? "page" : null)">Phiếu mượn của tôi</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link @(controller == "PhieuMuon" && action == "MyFines" ? "is-active" : "")"
-                   asp-controller="PhieuMuon" asp-action="MyFines" aria-current="@(controller == "PhieuMuon" && action == "MyFines" ? "page" : null)">Tiền phạt</a>
-            </li>
+            if (hasActiveCard)
+            {
+                <li class="nav-item">
+                    <a class="nav-link @(controller == "PhieuMuon" && action == "MyLoans" ? "is-active" : "")"
+                       asp-controller="PhieuMuon" asp-action="MyLoans" aria-current="@(controller == "PhieuMuon" && action == "MyLoans" ? "page" : null)">Phiếu mượn của tôi</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(controller == "PhieuMuon" && action == "MyFines" ? "is-active" : "")"
+                       asp-controller="PhieuMuon" asp-action="MyFines" aria-current="@(controller == "PhieuMuon" && action == "MyFines" ? "page" : null)">Tiền phạt</a>
+                </li>
+            }
             <li class="nav-item">
                 <a class="nav-link @(controller == "BanDoc" ? "is-active" : "")"
-                   asp-controller="BanDoc" asp-action="MyProfile" aria-current="@(controller == "BanDoc" ? "page" : null)">Thẻ &amp; hồ sơ</a>
+                   asp-controller="BanDoc" asp-action="MyProfile" aria-current="@(controller == "BanDoc" ? "page" : null)">Thẻ hồ sơ</a>
             </li>
         }
     </ul>

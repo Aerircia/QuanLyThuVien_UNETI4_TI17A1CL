@@ -1,9 +1,11 @@
 // Họ và tên: Lại Anh Quân
 // Mã sinh viên: 23103100255
-// Nội dung thực hiện: Xây dựng TaiKhoanController để xử lý đăng nhập, đăng xuất, đổi mật khẩu, từ chối truy cập.
+// Nội dung thực hiện: Xây dựng TaiKhoanController để xử lý đăng nhập, đăng xuất, đổi mật khẩu, từ chối truy cập và đăng ký tài khoản.
 
 using Microsoft.AspNetCore.Mvc;
+using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Auth;
+using QuanLyThuVien_UNETI4_TI17A1CL.Services.Common;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces;
 using QuanLyThuVien_UNETI4_TI17A1CL.ViewModels;
 
@@ -14,12 +16,18 @@ public class TaiKhoanController : Controller
     private readonly IAuthService _auth;
     private readonly IPasswordResetService _passwordReset;
     private readonly ICurrentUserService _current;
+    private readonly ITaiKhoanService _taiKhoanService;
 
-    public TaiKhoanController(IAuthService auth, IPasswordResetService passwordReset, ICurrentUserService current)
+    public TaiKhoanController(
+        IAuthService auth,
+        IPasswordResetService passwordReset,
+        ICurrentUserService current,
+        ITaiKhoanService taiKhoanService)
     {
         _auth = auth;
         _passwordReset = passwordReset;
         _current = current;
+        _taiKhoanService = taiKhoanService;
     }
 
     // ---------- Đăng nhập ----------
@@ -68,6 +76,48 @@ public class TaiKhoanController : Controller
             return LocalRedirect(model.ReturnUrl);
 
         return RedirectToAction("Index", "Home");
+    }
+
+    // ---------- Đăng ký tài khoản (Người dùng tự đăng ký) ----------
+
+    [HttpGet]
+    public IActionResult Register()
+    {
+        if (_current.IsAuthenticated)
+            return RedirectToAction("Index", "Home");
+
+        return View(new RegisterViewModel());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Register(RegisterViewModel model)
+    {
+        if (_current.IsAuthenticated)
+            return RedirectToAction("Index", "Home");
+
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var result = await _taiKhoanService.CreateAsync(
+            new CreateTaiKhoanInput(
+                model.TenDangNhap.Trim(),
+                model.MatKhau,
+                model.HoTen.Trim(),
+                model.Email.Trim(),
+                VaiTro.BanDoc,
+                TrangThaiTaiKhoan.HoatDong),
+            HttpContext.RequestAborted);
+
+        if (!result.Succeeded)
+        {
+            result.AddTo(ModelState);
+            model.MatKhau = model.XacNhanMatKhau = string.Empty;
+            return View(model);
+        }
+
+        TempData["ThongBao"] = "Đăng ký tài khoản thành công! Vui lòng đăng nhập, sau đó vào mục 'Thẻ & hồ sơ cá nhân' để đăng ký thẻ bạn đọc.";
+        return RedirectToAction(nameof(Login));
     }
 
     // ---------- Đăng xuất ----------

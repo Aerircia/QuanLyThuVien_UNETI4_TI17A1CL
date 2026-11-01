@@ -1,11 +1,12 @@
 @* Họ và tên: Nguyễn Hữu Tuấn *@
 @* Mã sinh viên: 23103100136 *@
-@* Nội dung thực hiện: View chi tiết thông tin bạn đọc và lịch sử mượn trả (Thủ thư & Admin) *@
+@* Nội dung thực hiện: View chi tiết thông tin bạn đọc, duyệt thẻ và lịch sử mượn trả (Thủ thư & Admin) *@
 @model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.BanDocDetail
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
 @{
     ViewData["Title"] = "Chi tiết bạn đọc - " + Model.HoTen;
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var isChoDuyet = Model.TrangThai == TrangThaiBanDoc.ChoDuyet;
     var locked = Model.TrangThai == TrangThaiBanDoc.NgungHoatDong;
 }
 
@@ -16,17 +17,20 @@
             <span class="text-muted small font-monospace">Mã bạn đọc #@Model.MaBanDoc · Mã số thẻ: @(Model.MaSoThe ?? "Chưa cấp")</span>
         </div>
         <div class="d-flex gap-2">
-            <a asp-action="Index" class="btn btn-outline-secondary">← Danh sách</a>
-            <a asp-action="Edit" asp-route-id="@Model.MaBanDoc" class="btn btn-outline-primary">Sửa hồ sơ</a>
-            <form asp-action="SetStatus" method="post" class="d-inline">
-                <input type="hidden" name="id" value="@Model.MaBanDoc" />
-                <input type="hidden" name="trangThai" value="@(locked ? nameof(TrangThaiBanDoc.HoatDong) : nameof(TrangThaiBanDoc.NgungHoatDong))" />
-                <input type="hidden" name="returnUrl" value="@returnUrl" />
-                <button type="submit" class="btn @(locked ? "btn-outline-success" : "btn-outline-warning")"
-                        onclick="return confirm('Bạn có chắc muốn @(locked ? "mở khóa" : "tạm khóa") bạn đọc này?');">
-                    @(locked ? "Mở khóa" : "Tạm khóa")
-                </button>
-            </form>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm">← Danh sách</a>
+            <a asp-action="Edit" asp-route-id="@Model.MaBanDoc" class="btn btn-outline-primary btn-sm">Sửa hồ sơ</a>
+            @if (!isChoDuyet)
+            {
+                <form asp-action="SetStatus" method="post" class="d-inline">
+                    <input type="hidden" name="id" value="@Model.MaBanDoc" />
+                    <input type="hidden" name="trangThai" value="@(locked ? nameof(TrangThaiBanDoc.HoatDong) : nameof(TrangThaiBanDoc.NgungHoatDong))" />
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <button type="submit" class="btn btn-sm @(locked ? "btn-outline-primary" : "btn-outline-danger")"
+                            onclick="return confirm('Bạn có chắc muốn @(locked ? "kích hoạt lại" : "tạm khóa") bạn đọc này?');">
+                        @(locked ? "Mở khóa" : "Tạm khóa")
+                    </button>
+                </form>
+            }
         </div>
     </div>
 
@@ -35,6 +39,46 @@
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <strong>Thành công!</strong> @thongBao
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Loi"] is string loi)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Lỗi!</strong> @loi
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Banner hành động khi hồ sơ đang Chờ duyệt -->
+    @if (isChoDuyet)
+    {
+        <div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4" role="alert">
+            <div>
+                <h6 class="alert-heading fw-bold mb-1">
+                    <span class="badge badge-soft-warning me-2">Chờ duyệt</span> Hồ sơ đăng ký thẻ bạn đọc đang chờ xét duyệt
+                </h6>
+                <div class="small">
+                    Bạn đọc đã hoàn tất điền thông tin đăng ký cấp thẻ thư viện. Hãy kiểm tra thông tin và thực hiện phê duyệt để kích hoạt thẻ.
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <form asp-action="Duyet" method="post" class="d-inline">
+                    <input type="hidden" name="id" value="@Model.MaBanDoc" />
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <button type="submit" class="btn btn-primary"
+                            onclick="return confirm('Xác nhận duyệt cấp thẻ thư viện cho bạn đọc @Model.HoTen?');">
+                        Duyệt cấp thẻ
+                    </button>
+                </form>
+                <form asp-action="TuChoi" method="post" class="d-inline">
+                    <input type="hidden" name="id" value="@Model.MaBanDoc" />
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <button type="submit" class="btn btn-outline-danger"
+                            onclick="return confirm('Xác nhận từ chối yêu cầu cấp thẻ của bạn đọc @Model.HoTen?');">
+                        Từ chối
+                    </button>
+                </form>
+            </div>
         </div>
     }
 
@@ -51,31 +95,39 @@
                 </div>
             </div>
 
-            <div class="app-card">
-                <h6 class="fw-bold text-muted text-uppercase small mb-3">Tóm tắt tình trạng</h6>
-                <div class="list-group list-group-flush small">
-                    <div class="list-group-item d-flex justify-content-between px-0">
-                        <span>Trạng thái tài khoản:</span>
-                        <span class="badge @(locked ? "bg-danger" : "bg-success")">@Model.TrangThai.GetDisplayName()</span>
-                    </div>
-                    <div class="list-group-item d-flex justify-content-between px-0">
-                        <span>Hạn thẻ thư viện:</span>
-                        <span class="@(Model.TheHetHan ? "text-danger fw-bold" : "text-dark")">
-                            @Model.NgayHetHanThe.ToString("dd/MM/yyyy")
-                            @(Model.TheHetHan ? "(Hết hạn)" : "")
-                        </span>
-                    </div>
-                    <div class="list-group-item d-flex justify-content-between px-0">
-                        <span>Số sách đang mượn:</span>
-                        <span class="fw-bold text-primary">@Model.SoPhieuDangMuon</span>
-                    </div>
-                    <div class="list-group-item d-flex justify-content-between px-0">
-                        <span>Số phiếu quá hạn:</span>
-                        <span class="fw-bold @(Model.SoPhieuQuaHan > 0 ? "text-danger" : "text-muted")">@Model.SoPhieuQuaHan</span>
-                    </div>
-                    <div class="list-group-item d-flex justify-content-between px-0">
-                        <span>Tiền phạt chưa nộp:</span>
-                        <span class="fw-bold @(Model.TongTienPhatChuaNop > 0 ? "text-danger" : "text-muted")">@Model.TongTienPhatChuaNop.ToString("N0") ₫</span>
+            <div class="card">
+                <div class="card-header fw-bold">Tóm tắt tình trạng</div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush small">
+                        <div class="list-group-item d-flex justify-content-between px-0">
+                            <span>Trạng thái hồ sơ:</span>
+                            <span class="badge @(Model.TrangThai switch {
+                                TrangThaiBanDoc.HoatDong => "badge-soft-success",
+                                TrangThaiBanDoc.ChoDuyet => "badge-soft-warning",
+                                TrangThaiBanDoc.TuChoi => "badge-soft-danger",
+                                TrangThaiBanDoc.NgungHoatDong => "badge-soft-danger",
+                                _ => "badge-soft-secondary"
+                            })">@Model.TrangThai.GetDisplayName()</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between px-0">
+                            <span>Hạn thẻ thư viện:</span>
+                            <span class="@(Model.TheHetHan ? "text-danger fw-bold" : "text-dark")">
+                                @Model.NgayHetHanThe.ToString("dd/MM/yyyy")
+                                @(Model.TheHetHan ? "(Hết hạn)" : "")
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between px-0">
+                            <span>Số sách đang mượn:</span>
+                            <span class="fw-bold text-primary">@Model.SoPhieuDangMuon</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between px-0">
+                            <span>Số phiếu quá hạn:</span>
+                            <span class="fw-bold @(Model.SoPhieuQuaHan > 0 ? "text-danger" : "text-muted")">@Model.SoPhieuQuaHan</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between px-0">
+                            <span>Tiền phạt chưa nộp:</span>
+                            <span class="fw-bold @(Model.TongTienPhatChuaNop > 0 ? "text-danger" : "text-muted")">@Model.TongTienPhatChuaNop.ToString("N0") ₫</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -83,44 +135,46 @@
 
         <!-- Chi tiết thông tin cá nhân -->
         <div class="col-lg-8">
-            <div class="app-card h-100">
-                <h6 class="fw-bold text-muted text-uppercase small mb-3">Thông tin chi tiết</h6>
-                <div class="row g-2">
-                    <div class="col-sm-6">
-                        <small class="text-muted d-block">Họ và tên</small>
-                        <span class="fw-semibold">@Model.HoTen</span>
-                    </div>
-                    <div class="col-sm-6">
-                        <small class="text-muted d-block">Tên đăng nhập hệ thống</small>
-                        <span>@(Model.TenDangNhap ?? "—")</span>
-                    </div>
-                    <div class="col-sm-6">
-                        <small class="text-muted d-block">Ngày sinh</small>
-                        <span>@Model.NgaySinh.ToString("dd/MM/yyyy")</span>
-                    </div>
-                    <div class="col-sm-6">
-                        <small class="text-muted d-block">Giới tính</small>
-                        <span>@Model.GioiTinh.GetDisplayName()</span>
-                    </div>
-                    <div class="col-sm-6">
-                        <small class="text-muted d-block">Số điện thoại</small>
-                        <span>@(Model.SoDienThoai ?? "—")</span>
-                    </div>
-                    <div class="col-sm-6">
-                        <small class="text-muted d-block">Email</small>
-                        <span>@(Model.Email ?? "—")</span>
-                    </div>
-                    <div class="col-12">
-                        <small class="text-muted d-block">Địa chỉ</small>
-                        <span>@(Model.DiaChi ?? "—")</span>
-                    </div>
-                    <div class="col-sm-6">
-                        <small class="text-muted d-block">Ngày cấp thẻ</small>
-                        <span>@Model.NgayCapThe.ToString("dd/MM/yyyy")</span>
-                    </div>
-                    <div class="col-sm-6">
-                        <small class="text-muted d-block">Ngày hết hạn thẻ</small>
-                        <span>@Model.NgayHetHanThe.ToString("dd/MM/yyyy")</span>
+            <div class="card h-100">
+                <div class="card-header fw-bold">Thông tin chi tiết</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Họ và tên</small>
+                            <span class="fw-semibold">@Model.HoTen</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Tên đăng nhập hệ thống</small>
+                            <span>@(Model.TenDangNhap ?? "—")</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Ngày sinh</small>
+                            <span>@Model.NgaySinh.ToString("dd/MM/yyyy")</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Giới tính</small>
+                            <span>@Model.GioiTinh.GetDisplayName()</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Số điện thoại</small>
+                            <span>@(Model.SoDienThoai ?? "—")</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Email</small>
+                            <span>@(Model.Email ?? "—")</span>
+                        </div>
+                        <div class="col-12">
+                            <small class="text-muted d-block">Địa chỉ</small>
+                            <span>@(Model.DiaChi ?? "—")</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Ngày cấp thẻ</small>
+                            <span>@Model.NgayCapThe.ToString("dd/MM/yyyy")</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Ngày hết hạn thẻ</small>
+                            <span>@Model.NgayHetHanThe.ToString("dd/MM/yyyy")</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -128,26 +182,28 @@
     </div>
 
     <!-- Lịch sử phiếu mượn & phạt -->
-    <div class="app-card p-0 overflow-hidden">
-        <ul class="nav nav-tabs nav-fill bg-light border-bottom" role="tablist">
-            <li class="nav-item">
-                <button class="nav-link active fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-loans" type="button">
-                    Lịch sử phiếu mượn (@Model.PhieuMuons.Count)
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-fines" type="button">
-                    Lịch sử phạt (@Model.KhoanPhats.Count)
-                </button>
-            </li>
-        </ul>
+    <div class="card">
+        <div class="card-header p-0">
+            <ul class="nav nav-tabs nav-fill border-bottom-0" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-loans" type="button">
+                        Lịch sử phiếu mượn (@Model.PhieuMuons.Count)
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-fines" type="button">
+                        Lịch sử phạt (@Model.KhoanPhats.Count)
+                    </button>
+                </li>
+            </ul>
+        </div>
 
         <div class="tab-content p-3">
             <!-- Tab phiếu mượn -->
             <div class="tab-pane fade show active" id="tab-loans" role="tabpanel">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+                    <table class="table table-striped align-middle mb-0">
+                        <thead>
                             <tr>
                                 <th>#</th>
                                 <th>Tên sách</th>
@@ -179,7 +235,7 @@
                                             </span>
                                             @if (p.IsOverdue)
                                             {
-                                                <span class="badge bg-danger ms-1">Trễ @p.SoNgayQuaHan ngày</span>
+                                                <span class="badge badge-soft-danger ms-1">Trễ @p.SoNgayQuaHan ngày</span>
                                             }
                                         }
                                         else
@@ -189,18 +245,18 @@
                                     </td>
                                     <td>
                                         <span class="badge @(p.TrangThai switch {
-                                            TrangThaiPhieuMuon.ChoDuyet => "bg-warning text-dark",
-                                            TrangThaiPhieuMuon.DaDuyet => "bg-info text-dark",
-                                            TrangThaiPhieuMuon.DangMuon => p.IsOverdue ? "bg-danger" : "bg-primary",
-                                            TrangThaiPhieuMuon.DaTra => "bg-success",
-                                            TrangThaiPhieuMuon.TuChoi => "bg-danger",
-                                            _ => "bg-secondary"
+                                            TrangThaiPhieuMuon.ChoDuyet => "badge-soft-warning",
+                                            TrangThaiPhieuMuon.DaDuyet  => "badge-soft-info",
+                                            TrangThaiPhieuMuon.DangMuon => p.IsOverdue ? "badge-soft-danger" : "badge-soft-primary",
+                                            TrangThaiPhieuMuon.DaTra    => "badge-soft-success",
+                                            TrangThaiPhieuMuon.TuChoi   => "badge-soft-danger",
+                                            _                           => "badge-soft-secondary"
                                         })">
                                             @p.TrangThai.GetDisplayName()
                                         </span>
                                     </td>
                                     <td class="text-end">
-                                        <a asp-controller="PhieuMuon" asp-action="Details" asp-route-id="@p.MaPhieuMuon" class="btn btn-sm btn-outline-info">
+                                        <a asp-controller="PhieuMuon" asp-action="Details" asp-route-id="@p.MaPhieuMuon" class="btn btn-sm btn-outline-primary">
                                             Xem
                                         </a>
                                     </td>
@@ -221,8 +277,8 @@
             <!-- Tab tiền phạt -->
             <div class="tab-pane fade" id="tab-fines" role="tabpanel">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+                    <table class="table table-striped align-middle mb-0">
+                        <thead>
                             <tr>
                                 <th>Phiếu mượn</th>
                                 <th>Sách</th>
@@ -244,7 +300,7 @@
                                     <td>@f.SoNgayTre ngày</td>
                                     <td class="text-end fw-bold text-danger">@f.TienPhat.ToString("N0") ₫</td>
                                     <td>
-                                        <span class="badge @(f.TrangThaiPhat == TrangThaiPhat.DaNop ? "bg-success" : "bg-danger")">
+                                        <span class="badge @(f.TrangThaiPhat == TrangThaiPhat.DaNop ? "badge-soft-success" : "badge-soft-danger")">
                                             @f.TrangThaiPhat.GetDisplayName()
                                         </span>
                                     </td>

@@ -23,4 +23,9 @@ public interface ICurrentUserService
     /// Dùng cho quy tắc sở hữu: truy vấn theo id VÀ chủ sở hữu.
     /// </summary>
     Task<int?> GetMaBanDocAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Kiểm tra người dùng hiện tại có hồ sơ bạn đọc ở trạng thái Hoạt động hay không.
+    /// </summary>
+    Task<bool> HasActiveBanDocAsync(CancellationToken ct = default);
 }

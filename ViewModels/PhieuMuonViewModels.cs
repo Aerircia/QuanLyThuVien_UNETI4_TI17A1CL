@@ -162,15 +162,51 @@ public sealed class PhieuMuonLichSuItemViewModel
 
 public sealed class MyLoansViewModel
 {
+    private int? _tongSoPhieu;
+    private int? _soPhieuChoDuyet;
+    private int? _soPhieuDaDuyet;
+    private int? _soPhieuDangMuon;
+    private int? _soPhieuQuaHan;
+    private int? _soPhieuDaTra;
+
     public List<PhieuMuonItemViewModel> Loans { get; set; } = new();
     public string Filter { get; set; } = "all";
 
-    public int TongSoPhieu => Loans.Count;
-    public int SoPhieuChoDuyet => Loans.Count(l => l.TrangThai == TrangThaiPhieuMuon.ChoDuyet);
-    public int SoPhieuDaDuyet => Loans.Count(l => l.TrangThai == TrangThaiPhieuMuon.DaDuyet);
-    public int SoPhieuDangMuon => Loans.Count(l => l.TrangThai == TrangThaiPhieuMuon.DangMuon);
-    public int SoPhieuQuaHan => Loans.Count(l => l.IsOverdue);
-    public int SoPhieuDaTra => Loans.Count(l => l.TrangThai == TrangThaiPhieuMuon.DaTra);
+    public int TongSoPhieu
+    {
+        get => _tongSoPhieu ?? Loans.Count;
+        set => _tongSoPhieu = value;
+    }
+
+    public int SoPhieuChoDuyet
+    {
+        get => _soPhieuChoDuyet ?? Loans.Count(l => l.TrangThai == TrangThaiPhieuMuon.ChoDuyet);
+        set => _soPhieuChoDuyet = value;
+    }
+
+    public int SoPhieuDaDuyet
+    {
+        get => _soPhieuDaDuyet ?? Loans.Count(l => l.TrangThai == TrangThaiPhieuMuon.DaDuyet);
+        set => _soPhieuDaDuyet = value;
+    }
+
+    public int SoPhieuDangMuon
+    {
+        get => _soPhieuDangMuon ?? Loans.Count(l => l.TrangThai == TrangThaiPhieuMuon.DangMuon);
+        set => _soPhieuDangMuon = value;
+    }
+
+    public int SoPhieuQuaHan
+    {
+        get => _soPhieuQuaHan ?? Loans.Count(l => l.IsOverdue);
+        set => _soPhieuQuaHan = value;
+    }
+
+    public int SoPhieuDaTra
+    {
+        get => _soPhieuDaTra ?? Loans.Count(l => l.TrangThai == TrangThaiPhieuMuon.DaTra);
+        set => _soPhieuDaTra = value;
+    }
 
     public decimal TongTienPhatChuaNop { get; set; }
 }

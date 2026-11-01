@@ -3,6 +3,8 @@
 // Nội dung thực hiện: Controller xử lý quản lý bạn đọc và hồ sơ cá nhân của bạn đọc (Module 3)
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using QuanLyThuVien_UNETI4_TI17A1CL.Data;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Auth;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Common;
@@ -15,11 +17,13 @@ public class BanDocController : Controller
 {
     private readonly IBanDocService _banDocService;
     private readonly ICurrentUserService _current;
+    private readonly AppDbContext _db;
 
-    public BanDocController(IBanDocService banDocService, ICurrentUserService current)
+    public BanDocController(IBanDocService banDocService, ICurrentUserService current, AppDbContext db)
     {
         _banDocService = banDocService;
         _current = current;
+        _db = db;
     }
 
     // 1. Dành cho BẠN ĐỌC: Xem và cập nhật thông tin cá nhân của chính mình
@@ -32,9 +36,19 @@ public class BanDocController : Controller
 
         if (detail is null)
         {
-            // Tài khoản chưa có hồ sơ bạn đọc liên kết
-            ViewBag.ThongBaoChuaCoHoSo = "Tài khoản của bạn chưa được liên kết với hồ sơ bạn đọc nào. Vui lòng liên hệ thủ thư để được cấp thẻ thư viện.";
-            return View((BanDocProfileViewModel?)null);
+            // Tài khoản chưa có hồ sơ bạn đọc: mở form đăng ký thẻ bạn đọc
+            var emptyModel = new BanDocProfileViewModel
+            {
+                HoTen = user.HoTen,
+                TenDangNhap = user.TenDangNhap,
+                Email = user.Email,
+                DangKyForm = new DangKyTheBanDocViewModel
+                {
+                    HoTen = user.HoTen,
+                    Email = user.Email
+                }
+            };
+            return View(emptyModel);
         }
 
         var model = new BanDocProfileViewModel
@@ -54,10 +68,110 @@ public class BanDocController : Controller
             TrangThai = detail.TrangThai,
             SoPhieuDangMuon = detail.SoPhieuDangMuon,
             SoPhieuQuaHan = detail.SoPhieuQuaHan,
-            TongTienPhatChuaNop = detail.TongTienPhatChuaNop
+            TongTienPhatChuaNop = detail.TongTienPhatChuaNop,
+            DangKyForm = detail.TrangThai == TrangThaiBanDoc.TuChoi ? new DangKyTheBanDocViewModel
+            {
+                HoTen = detail.HoTen,
+                NgaySinh = detail.NgaySinh,
+                GioiTinh = detail.GioiTinh,
+                SoDienThoai = detail.SoDienThoai ?? string.Empty,
+                Email = detail.Email ?? string.Empty,
+                DiaChi = detail.DiaChi ?? string.Empty,
+                LoaiBanDoc = detail.LoaiBanDoc
+            } : null
         };
 
         return View(model);
+    }
+
+    [AuthorizeRole(VaiTro.BanDoc)]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DangKyThe(DangKyTheBanDocViewModel? model)
+    {
+        var user = _current.User!;
+        var form = model ?? new DangKyTheBanDocViewModel();
+
+        // Đảm bảo không bị thiếu trường do đặt tên form
+        var hoTen = Request.Form["HoTen"].FirstOrDefault() ?? Request.Form["DangKyForm.HoTen"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(hoTen)) form.HoTen = hoTen.Trim();
+
+        var email = Request.Form["Email"].FirstOrDefault() ?? Request.Form["DangKyForm.Email"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(email)) form.Email = email.Trim();
+
+        var soDienThoai = Request.Form["SoDienThoai"].FirstOrDefault() ?? Request.Form["DangKyForm.SoDienThoai"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(soDienThoai)) form.SoDienThoai = soDienThoai.Trim();
+
+        var diaChi = Request.Form["DiaChi"].FirstOrDefault() ?? Request.Form["DangKyForm.DiaChi"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(diaChi)) form.DiaChi = diaChi.Trim();
+
+        var ngaySinhStr = Request.Form["NgaySinh"].FirstOrDefault() ?? Request.Form["DangKyForm.NgaySinh"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(ngaySinhStr) && DateOnly.TryParse(ngaySinhStr, out var ns))
+            form.NgaySinh = ns;
+
+        var gioiTinhStr = Request.Form["GioiTinh"].FirstOrDefault() ?? Request.Form["DangKyForm.GioiTinh"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(gioiTinhStr) && Enum.TryParse<GioiTinh>(gioiTinhStr, out var gt))
+            form.GioiTinh = gt;
+
+        var loaiBanDocStr = Request.Form["LoaiBanDoc"].FirstOrDefault() ?? Request.Form["DangKyForm.LoaiBanDoc"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(loaiBanDocStr) && Enum.TryParse<LoaiBanDoc>(loaiBanDocStr, out var lbd))
+            form.LoaiBanDoc = lbd;
+
+        ModelState.Clear();
+        TryValidateModel(form);
+
+        if (!ModelState.IsValid)
+        {
+            var profileModel = new BanDocProfileViewModel
+            {
+                HoTen = user.HoTen,
+                TenDangNhap = user.TenDangNhap,
+                Email = user.Email,
+                DangKyForm = form
+            };
+            return View(nameof(MyProfile), profileModel);
+        }
+
+        var input = new DangKyTheBanDocInput(
+            form.HoTen,
+            form.NgaySinh,
+            form.GioiTinh,
+            form.SoDienThoai,
+            form.Email,
+            form.DiaChi,
+            form.LoaiBanDoc);
+
+        var result = await _banDocService.DangKyTheAsync(input, user.MaTaiKhoan, HttpContext.RequestAborted);
+        if (!result.Succeeded)
+        {
+            result.AddTo(ModelState);
+            var profileModel = new BanDocProfileViewModel
+            {
+                HoTen = user.HoTen,
+                TenDangNhap = user.TenDangNhap,
+                Email = user.Email,
+                DangKyForm = form
+            };
+            return View(nameof(MyProfile), profileModel);
+        }
+
+        TempData["ThongBao"] = "Đăng ký thẻ bạn đọc thành công! Hồ sơ của bạn đã được gửi và đang chờ thủ thư duyệt thẻ.";
+        return RedirectToAction(nameof(MyProfile));
+    }
+
+    [AuthorizeRole(VaiTro.BanDoc)]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> HuyDangKyThe()
+    {
+        var user = _current.User!;
+        var result = await _banDocService.HuyDangKyTheAsync(user.MaTaiKhoan, HttpContext.RequestAborted);
+        if (result.Succeeded)
+            TempData["ThongBao"] = "Đã hủy yêu cầu đăng ký thẻ bạn đọc.";
+        else
+            TempData["Loi"] = result.FirstError;
+
+        return RedirectToAction(nameof(MyProfile));
     }
 
     [AuthorizeRole]
@@ -147,6 +261,11 @@ public class BanDocController : Controller
         if (loaiBanDoc.HasValue) routeValues["loaiBanDoc"] = loaiBanDoc.Value.ToString();
         if (trangThai.HasValue) routeValues["trangThai"] = trangThai.Value.ToString();
 
+        var tongSo = await _db.BanDocs.CountAsync(HttpContext.RequestAborted);
+        var choDuyet = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.ChoDuyet, HttpContext.RequestAborted);
+        var hoatDong = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.HoatDong, HttpContext.RequestAborted);
+        var ngungHoatDong = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.NgungHoatDong || b.TrangThai == TrangThaiBanDoc.TuChoi, HttpContext.RequestAborted);
+
         return View(new BanDocListViewModel
         {
             Search = search,
@@ -154,8 +273,81 @@ public class BanDocController : Controller
             TrangThai = trangThai,
             PageSize = result.PageSize,
             Result = result,
-            Pager = PagerViewModel.From(result, "BanDoc", nameof(Index), routeValues)
+            Pager = PagerViewModel.From(result, "BanDoc", nameof(Index), routeValues),
+            TongSoBanDoc = tongSo,
+            SoBanDocChoDuyet = choDuyet,
+            SoBanDocHoatDong = hoatDong,
+            SoBanDocNgungHoatDong = ngungHoatDong
         });
+    }
+
+    [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
+    [HttpGet]
+    public async Task<IActionResult> DuyetThe(
+        string? search,
+        int page = 1,
+        int pageSize = PagingDefaults.DefaultPageSize)
+    {
+        search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+
+        var result = await _banDocService.GetListAsync(
+            new BanDocFilter(search, null, TrangThaiBanDoc.ChoDuyet, page, pageSize), HttpContext.RequestAborted);
+
+        var routeValues = new Dictionary<string, string>();
+        if (search is not null) routeValues["search"] = search;
+
+        var tongSo = await _db.BanDocs.CountAsync(HttpContext.RequestAborted);
+        var choDuyet = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.ChoDuyet, HttpContext.RequestAborted);
+        var hoatDong = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.HoatDong, HttpContext.RequestAborted);
+        var ngungHoatDong = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.NgungHoatDong || b.TrangThai == TrangThaiBanDoc.TuChoi, HttpContext.RequestAborted);
+
+        return View(new BanDocListViewModel
+        {
+            Search = search,
+            LoaiBanDoc = null,
+            TrangThai = TrangThaiBanDoc.ChoDuyet,
+            PageSize = result.PageSize,
+            Result = result,
+            Pager = PagerViewModel.From(result, "BanDoc", nameof(DuyetThe), routeValues),
+            TongSoBanDoc = tongSo,
+            SoBanDocChoDuyet = choDuyet,
+            SoBanDocHoatDong = hoatDong,
+            SoBanDocNgungHoatDong = ngungHoatDong
+        });
+    }
+
+    [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Duyet(int id, string? returnUrl)
+    {
+        var result = await _banDocService.DuyetTheAsync(id, HttpContext.RequestAborted);
+        if (result.Succeeded)
+            TempData["ThongBao"] = "Đã phê duyệt và kích hoạt thẻ bạn đọc thành công.";
+        else
+            TempData["Loi"] = result.FirstError;
+
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            return LocalRedirect(returnUrl);
+
+        return RedirectToAction(nameof(DuyetThe));
+    }
+
+    [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> TuChoi(int id, string? returnUrl)
+    {
+        var result = await _banDocService.TuChoiTheAsync(id, null, HttpContext.RequestAborted);
+        if (result.Succeeded)
+            TempData["ThongBao"] = "Đã từ chối yêu cầu đăng ký thẻ bạn đọc.";
+        else
+            TempData["Loi"] = result.FirstError;
+
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            return LocalRedirect(returnUrl);
+
+        return RedirectToAction(nameof(DuyetThe));
     }
 
     [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]

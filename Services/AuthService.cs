@@ -49,7 +49,7 @@ public class AuthService : IAuthService
             await _db.SaveChangesAsync(ct);
         }
 
-        return LoginResult.Success(new CurrentUser(tk.MaTaiKhoan, tk.HoTen, tk.VaiTro));
+        return LoginResult.Success(new CurrentUser(tk.MaTaiKhoan, tk.HoTen, tk.VaiTro, tk.TenDangNhap, tk.Email));
     }
 
     public async Task<LoginResult> ValidateAsync(int maTaiKhoan, CancellationToken ct = default)
@@ -57,7 +57,7 @@ public class AuthService : IAuthService
         var tk = await _db.Set<TaiKhoan>()
             .AsNoTracking()
             .Where(t => t.MaTaiKhoan == maTaiKhoan)
-            .Select(t => new { t.MaTaiKhoan, t.HoTen, t.VaiTro, t.TrangThai })
+            .Select(t => new { t.MaTaiKhoan, t.HoTen, t.VaiTro, t.TrangThai, t.TenDangNhap, t.Email })
             .FirstOrDefaultAsync(ct);
 
         if (tk is null)
@@ -66,7 +66,7 @@ public class AuthService : IAuthService
         if (tk.TrangThai == TrangThaiTaiKhoan.BiKhoa)
             return LoginResult.Fail(LoginFailure.AccountLocked);
 
-        return LoginResult.Success(new CurrentUser(tk.MaTaiKhoan, tk.HoTen, tk.VaiTro));
+        return LoginResult.Success(new CurrentUser(tk.MaTaiKhoan, tk.HoTen, tk.VaiTro, tk.TenDangNhap, tk.Email));
     }
 
     public async Task<ChangePasswordResult> ChangePasswordAsync(

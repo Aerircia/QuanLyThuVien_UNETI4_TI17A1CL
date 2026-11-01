@@ -1,0 +1,154 @@
+@* Họ và tên: Nguyễn Hữu Tuấn *@
+@* Mã sinh viên: 23103100136 *@
+@* Nội dung thực hiện: Trang duyệt yêu cầu đăng ký thẻ bạn đọc cho Thủ thư & Admin *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.BanDocListViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Duyệt thẻ bạn đọc";
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+}
+
+<div class="container-fluid py-2">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <h1 class="h4 mb-0">Duyệt thẻ bạn đọc</h1>
+                <span class="badge badge-soft-warning">@Model.Result.TotalCount yêu cầu chờ duyệt</span>
+            </div>
+            <p class="text-muted small mb-0">Phê duyệt cấp mã số thẻ thư viện hoặc từ chối các yêu cầu mở thẻ mới từ bạn đọc.</p>
+        </div>
+        <div>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                ← Danh sách tất cả bạn đọc
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["ThongBao"] is string thongBao)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>Thành công!</strong> @thongBao
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Loi"] is string loi)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Lỗi!</strong> @loi
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Search bar -->
+    <div class="card mb-3">
+        <div class="card-body py-2">
+            <form method="get" asp-action="DuyetThe" class="row g-2 align-items-center">
+                <div class="col-md-9 col-lg-10">
+                    <input name="search" value="@Model.Search" class="form-control form-control-sm"
+                           placeholder="Tìm kiếm theo họ tên, tên đăng nhập, số điện thoại, email..." />
+                </div>
+                <div class="col-md-3 col-lg-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-grow-1">Tìm kiếm</button>
+                    @if (!string.IsNullOrWhiteSpace(Model.Search))
+                    {
+                        <a asp-action="DuyetThe" class="btn btn-outline-secondary btn-sm">Xóa</a>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (!Model.Result.Items.Any())
+    {
+        <div class="alert alert-info py-4 text-center my-4" role="status">
+            <h5 class="fw-bold mb-1">Hiện không có yêu cầu đăng ký thẻ nào đang chờ duyệt</h5>
+            <p class="text-muted mb-0">Khi bạn đọc gửi yêu cầu mở thẻ mới, thông tin sẽ được cập nhật và hiển thị tại đây để bạn phê duyệt.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th>Họ và tên</th>
+                        <th>Tên đăng nhập</th>
+                        <th>Thông tin cá nhân</th>
+                        <th>Liên hệ &amp; Địa chỉ</th>
+                        <th>Đối tượng</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end" style="min-width: 220px;">Hành động duyệt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var stt = (Model.Result.Page - 1) * Model.Result.PageSize;
+                    }
+                    @foreach (var item in Model.Result.Items)
+                    {
+                        stt++;
+                        <tr>
+                            <td class="text-muted">@stt</td>
+                            <td>
+                                <div class="fw-bold">@item.HoTen</div>
+                                <small class="text-muted">Mã bạn đọc: #@item.MaBanDoc</small>
+                            </td>
+                            <td>
+                                <code>@(item.TenDangNhap ?? "Chưa liên kết")</code>
+                            </td>
+                            <td>
+                                <div>@item.NgaySinh.ToString("dd/MM/yyyy")</div>
+                                <small class="text-muted">Giới tính: @item.GioiTinh.GetDisplayName()</small>
+                            </td>
+                            <td>
+                                <div><i class="bi bi-telephone"></i> @(item.SoDienThoai ?? "Chưa có SĐT")</div>
+                                <div class="small text-muted"><i class="bi bi-envelope"></i> @(item.Email ?? "Chưa có email")</div>
+                                @if (!string.IsNullOrWhiteSpace(item.DiaChi))
+                                {
+                                    <div class="small text-muted text-truncate" style="max-width: 220px;" title="@item.DiaChi">
+                                        <i class="bi bi-geo-alt"></i> @item.DiaChi
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge badge-soft-info">@item.LoaiBanDoc.GetDisplayName()</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-soft-warning">@item.TrangThai.GetDisplayName()</span>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <form asp-action="Duyet" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@item.MaBanDoc" />
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <button type="submit" class="btn btn-primary btn-sm"
+                                                onclick="return confirm('Xác nhận duyệt và cấp mã số thẻ thư viện cho bạn đọc @item.HoTen?');">
+                                            Duyệt cấp thẻ
+                                        </button>
+                                    </form>
+
+                                    <form asp-action="TuChoi" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@item.MaBanDoc" />
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm"
+                                                onclick="return confirm('Bạn có chắc muốn từ chối yêu cầu cấp thẻ của @item.HoTen?');">
+                                            Từ chối
+                                        </button>
+                                    </form>
+
+                                    <a asp-action="Details" asp-route-id="@item.MaBanDoc" class="btn btn-outline-secondary btn-sm" title="Xem chi tiết hồ sơ">
+                                        Chi tiết
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <partial name="_PagerPartial" model="Model.Pager" />
+    }
+</div>
+
