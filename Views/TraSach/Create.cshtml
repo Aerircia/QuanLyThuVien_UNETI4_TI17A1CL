@@ -14,65 +14,86 @@
         _ => p.TongBinhThuong
     };
 }
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div>
+        <h1 class="mb-1">Nhận trả sách</h1>
+        <p class="text-muted mb-0">Phiếu mượn #@p.MaPhieuMuon</p>
+    </div>
+    <a asp-action="ChoTra" class="btn btn-outline-secondary">Quay lại</a>
+</div>
 
-<div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <h1 class="h4 mb-3">Nhận trả sách - phiếu #@p.MaPhieuMuon</h1>
+@if (p.SoNgayTre > 0)
+{
+    <div class="alert alert-overdue" role="alert">
+        Phiếu này trả trễ <strong>@p.SoNgayTre ngày</strong>, phạt trễ <strong>@p.TienPhatTre.ToString("N0") đ</strong>.
+    </div>
+}
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card mb-3">
+            <div class="card-header">Thông tin phiếu mượn</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Bạn đọc</dt>
+                    <dd class="col-sm-8">@p.TenBanDoc @(p.MaSoThe is null ? "" : $"({p.MaSoThe})")</dd>
+                    <dt class="col-sm-4">Sách</dt>
+                    <dd class="col-sm-8">@p.TenSach</dd>
+                    <dt class="col-sm-4">Giá bìa</dt>
+                    <dd class="col-sm-8">@p.GiaBia.ToString("N0") đ</dd>
+                    <dt class="col-sm-4">Ngày mượn</dt>
+                    <dd class="col-sm-8">@(p.NgayMuon?.ToString("dd/MM/yyyy"))</dd>
+                    <dt class="col-sm-4">Hạn trả</dt>
+                    <dd class="col-sm-8">@(p.HanTra?.ToString("dd/MM/yyyy"))</dd>
+                    <dt class="col-sm-4">Ngày trả (hôm nay)</dt>
+                    <dd class="col-sm-8">@p.NgayTra.ToString("dd/MM/yyyy")</dd>
+                    <dt class="col-sm-4">Số ngày trễ</dt>
+                    <dd class="col-sm-8">
+                        @if (p.SoNgayTre > 0)
+                        {
+                            <span class="badge badge-soft-danger">Trễ @p.SoNgayTre ngày</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-soft-success">Đúng hạn</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
 
-        <dl class="row">
-            <dt class="col-sm-5">Bạn đọc</dt>
-            <dd class="col-sm-7">@p.TenBanDoc @(p.MaSoThe is null ? "" : $"({p.MaSoThe})")</dd>
-            <dt class="col-sm-5">Sách</dt>
-            <dd class="col-sm-7">@p.TenSach</dd>
-            <dt class="col-sm-5">Giá bìa</dt>
-            <dd class="col-sm-7">@p.GiaBia.ToString("N0") đ</dd>
-            <dt class="col-sm-5">Ngày mượn</dt>
-            <dd class="col-sm-7">@(p.NgayMuon?.ToString("dd/MM/yyyy"))</dd>
-            <dt class="col-sm-5">Hạn trả</dt>
-            <dd class="col-sm-7">@(p.HanTra?.ToString("dd/MM/yyyy"))</dd>
-            <dt class="col-sm-5">Ngày trả (hôm nay)</dt>
-            <dd class="col-sm-7">@p.NgayTra.ToString("dd/MM/yyyy")</dd>
-            <dt class="col-sm-5">Số ngày trễ</dt>
-            <dd class="col-sm-7">
-                @if (p.SoNgayTre > 0)
-                {
-                    <span class="badge bg-danger">Trễ @p.SoNgayTre ngày</span>
-                    <span class="ms-1">(phạt trễ @p.TienPhatTre.ToString("N0") đ)</span>
-                }
-                else
-                {
-                    <span>Đúng hạn</span>
-                }
-            </dd>
-        </dl>
+        <div class="card">
+            <div class="card-header">Tiền phạt theo tình trạng sách</div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr><th>Khoản phạt</th><th class="text-end">Bình thường</th><th class="text-end">Hư hỏng</th><th class="text-end">Mất</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Phạt trả trễ (@p.SoNgayTre ngày)</td>
+                            <td class="text-end">@p.TienPhatTre.ToString("N0") đ</td>
+                            <td class="text-end">@p.TienPhatTre.ToString("N0") đ</td>
+                            <td class="text-end">@p.TienPhatTre.ToString("N0") đ</td>
+                        </tr>
+                        <tr>
+                            <td>Phạt tình trạng sách</td>
+                            <td class="text-end">0 đ</td>
+                            <td class="text-end">@p.PhatHuHong.ToString("N0") đ</td>
+                            <td class="text-end">@p.PhatMat.ToString("N0") đ</td>
+                        </tr>
+                        <tr class="fw-bold">
+                            <td>Tổng</td>
+                            <td class="text-end">@p.TongBinhThuong.ToString("N0") đ</td>
+                            <td class="text-end">@p.TongHuHong.ToString("N0") đ</td>
+                            <td class="text-end">@p.TongMat.ToString("N0") đ</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-        @{ var pv = Model.Preview!; }
-        <table class="table table-sm">
-            <thead>
-                <tr><th>Khoản phạt</th><th class="text-end">Bình thường</th><th class="text-end">Hư hỏng</th><th class="text-end">Mất</th></tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>1. Trả trễ @pv.SoNgayTre ngày <small class="text-muted">(TienPhatTreHanService)</small></td>
-                    <td class="text-end">@pv.TienPhatTre.ToString("N0") đ</td>
-                    <td class="text-end">@pv.TienPhatTre.ToString("N0") đ</td>
-                    <td class="text-end">@pv.TienPhatTre.ToString("N0") đ</td>
-                </tr>
-                <tr>
-                    <td>2. Tình trạng sách <small class="text-muted">(TienPhatTinhTrangSachService)</small></td>
-                    <td class="text-end">0 đ</td>
-                    <td class="text-end">@pv.PhatHuHong.ToString("N0") đ</td>
-                    <td class="text-end">@pv.PhatMat.ToString("N0") đ</td>
-                </tr>
-                <tr class="fw-bold">
-                    <td>Tổng</td>
-                    <td class="text-end">@pv.TongBinhThuong.ToString("N0") đ</td>
-                    <td class="text-end">@pv.TongHuHong.ToString("N0") đ</td>
-                    <td class="text-end">@pv.TongMat.ToString("N0") đ</td>
-                </tr>
-            </tbody>
-        </table>
-
+    <div class="col-lg-5">
         @if (!p.DuocTra)
         {
             <div class="alert alert-warning" role="alert">
@@ -84,38 +105,46 @@
                     }
                 </ul>
             </div>
-            <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+        <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
         }
         else
         {
-            <form asp-action="Create" asp-route-maPhieuMuon="@p.MaPhieuMuon" method="post">
-                <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+            <div class="card">
+                <div class="card-header">Xác nhận trả sách</div>
+                <div class="card-body">
+                    <form asp-action="Create" asp-route-maPhieuMuon="@p.MaPhieuMuon" method="post">
+                        <div asp-validation-summary="ModelOnly" class="mb-2"></div>
 
-                <div class="mb-3">
-                    <label class="form-label">@Html.DisplayNameFor(m => m.TinhTrang)</label>
-                    @foreach (var tt in Enum.GetValues<TinhTrangSach>())
-                    {
-                        var radioId = $"tinhTrang_{tt}";
-                        <div class="form-check">
-                            <input type="radio" asp-for="TinhTrang" value="@tt" class="form-check-input" id="@radioId" />
-                            <label class="form-check-label" for="@radioId">
-                                @tt.GetDisplayName() - tiền phạt <strong>@TongTheo(tt).ToString("N0") đ</strong>
-                            </label>
+                        <div class="mb-3">
+                            <label class="form-label">@Html.DisplayNameFor(m => m.TinhTrang)</label>
+                            <div class="list-group">
+                                @foreach (var tt in Enum.GetValues<TinhTrangSach>())
+                                {
+                                    var radioId = $"tinhTrang_{tt}";
+                                    <label class="list-group-item d-flex align-items-center gap-3" for="@radioId">
+                                        <input type="radio" asp-for="TinhTrang" value="@tt" class="form-check-input mt-0" id="@radioId" />
+                                        <span class="flex-grow-1">@tt.GetDisplayName()</span>
+                                        <span class="fw-semibold">@TongTheo(tt).ToString("N0") đ</span>
+                                    </label>
+                                }
+                            </div>
+                            <span asp-validation-for="TinhTrang" class="field-validation-error"></span>
+                            <div class="form-text">Số tiền bên phải là tiền phạt nếu chọn tình trạng đó. Hệ thống tính lại khi lưu, Thủ thư không nhập tay.</div>
                         </div>
-                    }
-                    <span asp-validation-for="TinhTrang" class="text-danger"></span>
-                    <div class="form-text">Tiền phạt do hệ thống tính lại khi lưu; Thủ thư không nhập tay.</div>
-                </div>
 
-                <div class="mb-3">
-                    <label asp-for="GhiChu" class="form-label"></label>
-                    <textarea asp-for="GhiChu" class="form-control" rows="3" maxlength="100"></textarea>
-                    <span asp-validation-for="GhiChu" class="text-danger"></span>
-                </div>
+                        <div class="mb-3">
+                            <label asp-for="GhiChu" class="form-label"></label>
+                            <textarea asp-for="GhiChu" class="form-control" rows="3" maxlength="100"></textarea>
+                            <span asp-validation-for="GhiChu" class="field-validation-error"></span>
+                        </div>
 
-                <button type="submit" class="btn btn-primary">Xác nhận trả sách</button>
-                <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
-            </form>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Xác nhận trả sách</button>
+                            <a asp-action="ChoTra" class="btn btn-outline-secondary">Hủy</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
         }
     </div>
 </div>

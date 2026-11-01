@@ -1,0 +1,14 @@
+@* Họ và tên: Vũ Ngọc Hương Giang *@
+@* Mã sinh viên: 23103100280 *@
+@* Nội dung thực hiện: hiển thị tình trạng sách khi trả  *@
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@model TinhTrangSach
+@{
+    var cls = Model switch
+    {
+        TinhTrangSach.HuHong => "badge-soft-warning",
+        TinhTrangSach.Mat => "badge-soft-danger",
+        _ => "badge-soft-secondary"
+    };
+}
+<span class="badge @cls">@Model.GetDisplayName()</span>
