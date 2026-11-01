@@ -9,9 +9,13 @@
     var trangThaiItems = Html.GetEnumSelectList<TrangThaiGiaHan>().ToList();
     foreach (var item in trangThaiItems)
         item.Selected = Model.TrangThai is { } t && item.Value == ((int)t).ToString();
+
+    var dangLoc = !string.IsNullOrWhiteSpace(Model.Search) || Model.TrangThai.HasValue;
 }
 
-<h1 class="h4 mb-3">Yêu cầu gia hạn</h1>
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="mb-0">Yêu cầu gia hạn</h1>
+</div>
 
 @if (TempData["ThongBao"] is string thongBao)
 {
@@ -22,23 +26,31 @@
     <div class="alert alert-danger" role="alert">@loi</div>
 }
 
-<form method="get" asp-action="Index" class="row g-2 mb-3">
-    <input type="hidden" name="pageSize" value="@Model.PageSize" />
-    <div class="col-md-6">
-        <input name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo họ tên bạn đọc hoặc tên sách" />
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <input type="hidden" name="pageSize" value="@Model.PageSize" />
+            <div class="col-lg-6">
+                <input name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo họ tên bạn đọc hoặc tên sách" />
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <select name="trangThai" class="form-select" asp-items="trangThaiItems" onchange="this.form.requestSubmit()">
+                    <option value="">Tất cả trạng thái</option>
+                </select>
+            </div>
+            <div class="col-md-6 col-lg-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Tìm</button>
+                @if (dangLoc)
+                {
+                    <a asp-action="Index" asp-route-pageSize="@Model.PageSize" class="btn btn-outline-secondary">Xóa lọc</a>
+                }
+            </div>
+        </form>
     </div>
-    <div class="col-md-4">
-        <select name="trangThai" class="form-select" asp-items="trangThaiItems">
-            <option value="">Tất cả trạng thái</option>
-        </select>
-    </div>
-    <div class="col-md-2 d-grid">
-        <button type="submit" class="btn btn-outline-primary">Lọc</button>
-    </div>
-</form>
+</div>
 
 <div class="table-responsive">
-    <table class="table table-hover align-middle">
+    <table class="table table-striped align-middle">
         <thead>
             <tr>
                 <th>Phiếu</th>
@@ -55,12 +67,6 @@
         <tbody>
             @foreach (var item in Model.Result.Items)
             {
-                var badge = item.TrangThai switch
-                {
-                    TrangThaiGiaHan.ChoDuyet => "bg-warning text-dark",
-                    TrangThaiGiaHan.DaDuyet => "bg-success",
-                    _ => "bg-danger"
-                };
                 <tr>
                     <td>#@item.MaPhieuMuon</td>
                     <td>@item.TenBanDoc</td>
@@ -69,7 +75,7 @@
                     <td>@item.HanTraMoi.ToString("dd/MM/yyyy")</td>
                     <td>@item.LyDo</td>
                     <td>@item.NgayYeuCau.ToString("dd/MM/yyyy")</td>
-                    <td><span class="badge @badge">@item.TrangThai.GetDisplayName()</span></td>
+                    <td><partial name="_TrangThaiGiaHanBadge" model="item.TrangThai" /></td>
                     <td class="text-end text-nowrap">
                         @if (item.TrangThai == TrangThaiGiaHan.ChoDuyet)
                         {

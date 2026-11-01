@@ -1,0 +1,14 @@
+@* Họ và tên: Vũ Ngọc Hương Giang *@
+@* Mã sinh viên: 23103100280 *@
+@* Nội dung thực hiện: partial huy hiệu trạng thái yêu cầu gia hạn *@
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@model TrangThaiGiaHan
+@{
+    var cls = Model switch
+    {
+        TrangThaiGiaHan.ChoDuyet => "badge-soft-warning",
+        TrangThaiGiaHan.DaDuyet => "badge-soft-success",
+        _ => "badge-soft-danger"
+    };
+}
+<span class="badge @cls">@Model.GetDisplayName()</span>

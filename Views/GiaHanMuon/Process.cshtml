@@ -11,35 +11,41 @@
 
 <div class="row justify-content-center">
     <div class="col-lg-8">
-        <h1 class="h4 mb-3">Yêu cầu gia hạn #@d.MaGiaHan</h1>
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <h1 class="mb-0">Yêu cầu gia hạn #@d.MaGiaHan</h1>
+            <partial name="_TrangThaiGiaHanBadge" model="d.TrangThai" />
+        </div>
 
-        <dl class="row">
-            <dt class="col-sm-4">Bạn đọc</dt>
-            <dd class="col-sm-8">@d.TenBanDoc</dd>
-            <dt class="col-sm-4">Sách</dt>
-            <dd class="col-sm-8">@d.TenSach (phiếu #@d.MaPhieuMuon - @d.TrangThaiPhieu.GetDisplayName())</dd>
-            <dt class="col-sm-4">Số bản còn lại</dt>
-            <dd class="col-sm-8">@d.SoLuongConLai</dd>
-            <dt class="col-sm-4">Số lần đã gia hạn</dt>
-            <dd class="col-sm-8">@d.SoLanDaGiaHan / @d.SoLanToiDa</dd>
-            <dt class="col-sm-4">Hạn trả hiện tại</dt>
-            <dd class="col-sm-8">@(d.HanTraHienTai?.ToString("dd/MM/yyyy"))</dd>
-            <dt class="col-sm-4">Hạn trả cũ -> mới</dt>
-            <dd class="col-sm-8">@d.HanTraCu.ToString("dd/MM/yyyy") -> <strong>@d.HanTraMoi.ToString("dd/MM/yyyy")</strong></dd>
-            <dt class="col-sm-4">Lý do</dt>
-            <dd class="col-sm-8">@d.LyDo</dd>
-            <dt class="col-sm-4">Ngày yêu cầu</dt>
-            <dd class="col-sm-8">@d.NgayYeuCau.ToString("dd/MM/yyyy")</dd>
-            <dt class="col-sm-4">Trạng thái</dt>
-            <dd class="col-sm-8">@d.TrangThai.GetDisplayName()</dd>
-            @if (!choDuyet)
-            {
-                <dt class="col-sm-4">Ngày xử lý</dt>
-                <dd class="col-sm-8">@(d.NgayXuLy?.ToString("dd/MM/yyyy"))</dd>
-                <dt class="col-sm-4">Nhận xét</dt>
-                <dd class="col-sm-8">@d.NhanXet</dd>
-            }
-        </dl>
+        <div class="card mb-3">
+            <div class="card-header">Thông tin yêu cầu</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Bạn đọc</dt>
+                    <dd class="col-sm-8">@d.TenBanDoc</dd>
+                    <dt class="col-sm-4">Sách</dt>
+                    <dd class="col-sm-8">@d.TenSach (phiếu #@d.MaPhieuMuon - @d.TrangThaiPhieu.GetDisplayName())</dd>
+                    <dt class="col-sm-4">Số bản còn lại</dt>
+                    <dd class="col-sm-8">@d.SoLuongConLai</dd>
+                    <dt class="col-sm-4">Số lần đã gia hạn</dt>
+                    <dd class="col-sm-8">@d.SoLanDaGiaHan / @d.SoLanToiDa</dd>
+                    <dt class="col-sm-4">Hạn trả hiện tại</dt>
+                    <dd class="col-sm-8">@(d.HanTraHienTai?.ToString("dd/MM/yyyy"))</dd>
+                    <dt class="col-sm-4">Hạn trả cũ -> mới</dt>
+                    <dd class="col-sm-8">@d.HanTraCu.ToString("dd/MM/yyyy") -> <strong>@d.HanTraMoi.ToString("dd/MM/yyyy")</strong></dd>
+                    <dt class="col-sm-4">Lý do</dt>
+                    <dd class="col-sm-8">@d.LyDo</dd>
+                    <dt class="col-sm-4">Ngày yêu cầu</dt>
+                    <dd class="col-sm-8">@d.NgayYeuCau.ToString("dd/MM/yyyy")</dd>
+                    @if (!choDuyet)
+                    {
+                        <dt class="col-sm-4">Ngày xử lý</dt>
+                        <dd class="col-sm-8">@(d.NgayXuLy?.ToString("dd/MM/yyyy"))</dd>
+                        <dt class="col-sm-4">Nhận xét</dt>
+                        <dd class="col-sm-8">@d.NhanXet</dd>
+                    }
+                </dl>
+            </div>
+        </div>
 
         @if (choDuyet)
         {
@@ -56,22 +62,27 @@
                 </div>
             }
 
-            <form asp-action="Process" asp-route-id="@d.MaGiaHan" method="post">
-                <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+            <div class="card">
+                <div class="card-header">Kết quả xử lý</div>
+                <div class="card-body">
+                    <form asp-action="Process" asp-route-id="@d.MaGiaHan" method="post">
+                        <div asp-validation-summary="ModelOnly" class="mb-2"></div>
 
-                <div class="mb-3">
-                    <label asp-for="NhanXet" class="form-label"></label>
-                    <textarea asp-for="NhanXet" class="form-control" rows="3" maxlength="100"></textarea>
-                    <div class="form-text">Bắt buộc nhập khi từ chối.</div>
-                    <span asp-validation-for="NhanXet" class="text-danger"></span>
+                        <div class="mb-3">
+                            <label asp-for="NhanXet" class="form-label"></label>
+                            <textarea asp-for="NhanXet" class="form-control" rows="3" maxlength="100"></textarea>
+                            <div class="form-text">Bắt buộc nhập khi từ chối.</div>
+                            <span asp-validation-for="NhanXet" class="field-validation-error"></span>
+                        </div>
+                        @if (d.DuDieuKienDuyet)
+                        {
+                            <button type="submit" name="duyet" value="true" class="btn btn-primary">Duyệt</button>
+                        }
+                        <button type="submit" name="duyet" value="false" class="btn btn-outline-danger">Từ chối</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+                    </form>
                 </div>
-                @if (d.DuDieuKienDuyet)
-                {
-                    <button type="submit" name="duyet" value="true" class="btn btn-success">Duyệt</button>
-                }
-                <button type="submit" name="duyet" value="false" class="btn btn-danger">Từ chối</button>
-                <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
-            </form>
+            </div>
         }
         else
         {

@@ -8,26 +8,30 @@
     var min = info.HanTraHienTai?.AddDays(1).ToString("yyyy-MM-dd");
     var max = info.HanTraMoiToiDa?.ToString("yyyy-MM-dd");
 }
-
 <div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <h1 class="h4 mb-3">Yêu cầu gia hạn phiếu mượn #@info.MaPhieuMuon</h1>
+    <div class="col-md-10 col-lg-7">
+        <h1 class="mb-3">Yêu cầu gia hạn phiếu mượn #@info.MaPhieuMuon</h1>
 
         @if (TempData["ThongBao"] is string thongBao)
         {
             <div class="alert alert-success" role="status">@thongBao</div>
         }
 
-        <dl class="row">
-            <dt class="col-sm-5">Sách</dt>
-            <dd class="col-sm-7">@info.TenSach</dd>
-            <dt class="col-sm-5">Hạn trả hiện tại</dt>
-            <dd class="col-sm-7">@(info.HanTraHienTai?.ToString("dd/MM/yyyy"))</dd>
-            <dt class="col-sm-5">Số lần đã gia hạn</dt>
-            <dd class="col-sm-7">@info.SoLanDaGiaHan / @info.SoLanToiDa</dd>
-            <dt class="col-sm-5">Mỗi lần tối đa</dt>
-            <dd class="col-sm-7">@info.SoNgayToiDa ngày</dd>
-        </dl>
+        <div class="card mb-3">
+            <div class="card-header">Thông tin phiếu</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Sách</dt>
+                    <dd class="col-sm-7">@info.TenSach</dd>
+                    <dt class="col-sm-5">Hạn trả hiện tại</dt>
+                    <dd class="col-sm-7">@(info.HanTraHienTai?.ToString("dd/MM/yyyy"))</dd>
+                    <dt class="col-sm-5">Số lần đã gia hạn</dt>
+                    <dd class="col-sm-7">@info.SoLanDaGiaHan / @info.SoLanToiDa</dd>
+                    <dt class="col-sm-5">Mỗi lần tối đa</dt>
+                    <dd class="col-sm-7">@info.SoNgayToiDa ngày</dd>
+                </dl>
+            </div>
+        </div>
 
         @if (!info.DuocGiaHan)
         {
@@ -43,24 +47,29 @@
         }
         else
         {
-            <form asp-action="Create" asp-route-maPhieuMuon="@info.MaPhieuMuon" method="post">
-                <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+            <div class="card">
+                <div class="card-header">Gửi yêu cầu gia hạn</div>
+                <div class="card-body">
+                    <form asp-action="Create" asp-route-maPhieuMuon="@info.MaPhieuMuon" method="post">
+                        <div asp-validation-summary="ModelOnly" class="mb-2"></div>
 
-                <div class="mb-3">
-                    <label asp-for="HanTraMoi" class="form-label"></label>
-                    <input asp-for="HanTraMoi" class="form-control" type="date" min="@min" max="@max" />
-                    <div class="form-text">Chọn hạn trả mới trong khoảng đến @(info.HanTraMoiToiDa?.ToString("dd/MM/yyyy")).</div>
-                    <span asp-validation-for="HanTraMoi" class="text-danger"></span>
+                        <div class="mb-3">
+                            <label asp-for="HanTraMoi" class="form-label"></label>
+                            <input asp-for="HanTraMoi" class="form-control" type="date" min="@min" max="@max" />
+                            <div class="form-text">Chọn hạn trả mới trong khoảng đến @(info.HanTraMoiToiDa?.ToString("dd/MM/yyyy")).</div>
+                            <span asp-validation-for="HanTraMoi" class="field-validation-error"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="LyDo" class="form-label"></label>
+                            <textarea asp-for="LyDo" class="form-control" rows="3" maxlength="100"></textarea>
+                            <span asp-validation-for="LyDo" class="field-validation-error"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Gửi yêu cầu</button>
+                    </form>
                 </div>
-
-                <div class="mb-3">
-                    <label asp-for="LyDo" class="form-label"></label>
-                    <textarea asp-for="LyDo" class="form-control" rows="3" maxlength="100"></textarea>
-                    <span asp-validation-for="LyDo" class="text-danger"></span>
-                </div>
-
-                <button type="submit" class="btn btn-primary">Gửi yêu cầu</button>
-            </form>
+            </div>
         }
     </div>
 </div>
