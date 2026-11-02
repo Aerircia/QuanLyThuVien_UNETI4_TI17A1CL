@@ -1,0 +1,40 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100257 *@
+@* Nội dung thực hiện: Partial bảng + phân trang thể loại, dùng cho render thường và AJAX lọc/tìm kiếm *@
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.Services.Common.PagedResult<QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.TheLoaiListItem>
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@using QuanLyThuVien_UNETI4_TI17A1CL.ViewModels
+@{
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+<div class="surface-card admin-table-card table-responsive">
+    <table class="table table-hover align-middle">
+        <thead><tr><th>Mã</th><th>Tên thể loại</th><th>Khu vực lưu trữ</th><th class="text-end">Số đầu sách</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var category in Model.Items)
+        {
+            <tr>
+                <td class="text-muted">TL@(category.MaTheLoai.ToString("D2"))</td>
+                <td><a asp-action="Details" asp-route-id="@category.MaTheLoai" class="fw-semibold text-decoration-none">@category.TenTheLoai</a></td>
+                <td>@(category.KhuVucLuuTru ?? "—")</td>
+                <td class="text-end">@category.SoLuongSach</td>
+                <td><span class="badge @(category.TrangThai == TrangThaiTheLoai.HoatDong ? "badge-soft-success" : "badge-soft-secondary")">@category.TrangThai.GetDisplayName()</span></td>
+                <td class="text-end text-nowrap">
+                    <a asp-action="Edit" asp-route-id="@category.MaTheLoai" class="btn btn-sm btn-outline-primary">Sửa</a>
+                    <form asp-action="ToggleTrangThai" asp-route-id="@category.MaTheLoai" asp-route-returnUrl="@returnUrl" method="post" class="d-inline"
+                          onsubmit="return confirm('@(category.TrangThai == TrangThaiTheLoai.HoatDong ? "Ngưng hoạt động thể loại này?" : "Kích hoạt lại thể loại này?")');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">Đổi trạng thái</button>
+                    </form>
+                    <a asp-action="Delete" asp-route-id="@category.MaTheLoai" class="btn btn-sm btn-outline-danger">Xóa</a>
+                </td>
+            </tr>
+        }
+        @if (!Model.Items.Any()) { <tr><td colspan="6" class="text-center text-muted py-4">Không tìm thấy thể loại phù hợp.</td></tr> }
+        </tbody>
+    </table>
+</div>
+<div class="phan-trang">
+    <partial name="_PagerPartial" model="(PagerViewModel)ViewBag.Pager" />
+</div>

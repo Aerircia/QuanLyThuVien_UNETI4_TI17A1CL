@@ -1,14 +1,25 @@
 @* Họ và tên: Vũ Tiến Thành *@
 @* Mã sinh viên: 23103100257 *@
-@* Nội dung thực hiện: Xây dựng view cho việc xóa thể loại (Admin) *@
+@* Nội dung thực hiện: Xác nhận xóa thể loại theo mẫu library_demo *@
 
 @model QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.TheLoaiDetail
 @{
     ViewData["Title"] = "Xóa thể loại";
 }
-<h1 class="h4 mb-3">Xóa thể loại</h1>
-<div class="alert alert-warning">Bạn có chắc muốn xóa thể loại <strong>@Model.TenTheLoai</strong> không? Thể loại đang có sách sẽ không thể xóa.</div>
-<form asp-action="Delete" asp-route-id="@Model.MaTheLoai" method="post">
-    <button type="submit" class="btn btn-danger">Xóa</button>
-    <a asp-action="Details" asp-route-id="@Model.MaTheLoai" class="btn btn-outline-secondary">Hủy</a>
-</form>
+<div class="app-form-card">
+    <div class="app-form-header">
+        <h1>Xóa thể loại</h1>
+        <a asp-action="Details" asp-route-id="@Model.MaTheLoai" class="btn app-btn-soft">← Quay lại</a>
+    </div>
+    <div class="alert alert-warning">
+        Bạn có chắc muốn xóa thể loại <strong>@Model.TenTheLoai</strong> không?
+        Thể loại đang có sách sẽ không thể xóa — hãy chuyển thể loại sang <em>Ngừng hoạt động</em> thay vì xóa.
+    </div>
+    <div class="app-form-footer">
+        <a asp-action="Details" asp-route-id="@Model.MaTheLoai" class="btn app-btn-soft">Hủy</a>
+        <form asp-action="Delete" asp-route-id="@Model.MaTheLoai" method="post" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-danger">Xóa</button>
+        </form>
+    </div>
+</div>

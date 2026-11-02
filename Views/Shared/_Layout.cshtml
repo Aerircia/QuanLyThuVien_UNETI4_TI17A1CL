@@ -1,5 +1,15 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100257 *@
+@* Nội dung thực hiện: Layout hai khung theo tài liệu site.css - nhân viên (sidebar) và công khai (header ngang) *@
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces
+@inject ICurrentUserService Current
+@{
+    // Nhân viên (Admin, Thủ thư) dùng khung sidebar; khách và bạn đọc dùng khung header ngang.
+    var isStaff = Current.IsAuthenticated && (Current.IsInRole(VaiTro.Admin) || Current.IsInRole(VaiTro.ThuThu));
+}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,36 +17,79 @@
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/QuanLyThuVien_UNETI4_TI17A1CL.styles.css" asp-append-version="true" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">QuanLyThuVien_UNETI4_TI17A1CL</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                        @* Menu theo vai trò (mỗi module thêm liên kết vào _MenuPartial) và khu vực đăng nhập *@
-                        <partial name="_MenuPartial" />
-                        <partial name="_LoginPartial" />
-                </div>
+<body class="app-body">
+@if (isStaff)
+{
+    <div class="app-shell">
+        <aside class="app-sidebar" id="appSidebar">
+            <a class="app-brand app-brand--sidebar" asp-controller="Home" asp-action="Index">
+                <span class="app-brand-mark">U</span>
+                <span class="app-brand-copy"><strong>UNETI Library</strong><small>Quản lý mượn trả</small></span>
+            </a>
+            <div class="app-sidebar-content">
+                <partial name="_MenuPartial" />
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+            <div class="app-sidebar-footer"><span class="app-status-dot"></span> Hệ thống hoạt động</div>
+        </aside>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - Quản lý thư viện - QuanLyThuVien_UNETI4_TI17A1CL
+        <div class="app-sidebar-backdrop" data-app-sidebar-close></div>
+
+        <div class="app-main">
+            <header class="app-topbar">
+                <div class="app-topbar-heading">
+                    <button type="button" class="btn btn-light app-sidebar-toggle"
+                            data-app-sidebar-toggle aria-expanded="false" aria-label="Mở menu điều hướng">☰</button>
+                    <div>
+                        <span class="app-eyebrow">Quản lý thư viện</span>
+                        <span class="app-topbar-context">@ViewData["Title"]</span>
+                    </div>
+                </div>
+                <partial name="_LoginPartial" />
+            </header>
+
+            <main class="app-content" role="main">
+                <div class="app-page-container">@RenderBody()</div>
+            </main>
+
+            <footer class="app-footer app-footer--staff">
+                <span>&copy; 2026 Thư viện UNETI</span>
+                <span>Phiên bản 1.0</span>
+            </footer>
         </div>
-    </footer>
+    </div>
+}
+else
+{
+    <div class="app-public-shell">
+        <header class="app-public-header">
+            <div class="app-public-header-inner">
+                <a class="app-brand app-brand--public" asp-controller="Home" asp-action="Index">
+                    <span class="app-brand-mark">U</span>
+                    <span class="app-brand-copy"><strong>UNETI Library</strong><small>Thư viện thông minh</small></span>
+                </a>
+                <button type="button" class="app-public-menu-toggle"
+                        data-app-nav-toggle aria-expanded="false" aria-label="Mở menu">☰</button>
+                <div class="app-public-nav-container" id="appPublicNav">
+                    <nav class="app-public-nav" aria-label="Menu chính">
+                        <partial name="_MenuPartial" />
+                    </nav>
+                </div>
+                <partial name="_LoginPartial" />
+            </div>
+        </header>
+        <main class="app-public-main" role="main">
+            <div class="app-page-container">@RenderBody()</div>
+        </main>
+        <footer class="app-public-footer">
+            <span>© 2026 Thư viện UNETI</span>
+            <span>Học tập · Khám phá · Kết nối</span>
+        </footer>
+    </div>
+}
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

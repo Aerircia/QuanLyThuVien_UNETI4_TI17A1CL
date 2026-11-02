@@ -1,0 +1,47 @@
+@model IEnumerable<QuanLyThuVien_UNETI4_TI17A1CL.Models.PhieuMuon>
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Quản lý phiếu mượn";
+}
+<div class="page-heading">
+    <div><span class="text-uppercase text-muted small fw-bold">Nghiệp vụ thư viện</span><h1>Phiếu mượn</h1><p>Xác nhận yêu cầu và giao sách cho bạn đọc.</p></div>
+</div>
+@if (TempData["ThongBao"] is string notice) { <div class="alert alert-success">@notice</div> }
+@if (TempData["Loi"] is string error) { <div class="alert alert-danger">@error</div> }
+<form method="get" class="surface-card filter-card">
+    <select name="trangThai" class="form-select" onchange="this.form.submit()">
+        <option value="">Tất cả trạng thái</option>
+        @foreach (TrangThaiPhieuMuon status in Enum.GetValues<TrangThaiPhieuMuon>())
+        {
+            <option value="@status" selected="@(ViewBag.TrangThai is TrangThaiPhieuMuon current && current == status)">@status.GetDisplayName()</option>
+        }
+    </select>
+</form>
+<div class="surface-card admin-table-card table-responsive">
+<table class="table table-hover align-middle">
+    <thead><tr><th>Mã phiếu</th><th>Bạn đọc</th><th>Sách</th><th>Ngày đăng ký</th><th>Trạng thái</th><th class="text-end">Thao tác</th></tr></thead>
+    <tbody>
+    @foreach (var loan in Model)
+    {
+        <tr>
+            <td>#@loan.MaPhieuMuon.ToString("D5")</td>
+            <td>@loan.BanDoc?.HoTen</td>
+            <td><strong>@loan.Sach?.TenSach</strong></td>
+            <td>@loan.NgayDangKy.ToString("dd/MM/yyyy")</td>
+            <td><span class="status-badge">@loan.TrangThai.GetDisplayName()</span></td>
+            <td class="text-end text-nowrap">
+            @if (loan.TrangThai == TrangThaiPhieuMuon.ChoDuyet)
+            {
+                <form asp-action="Approve" method="post" class="d-inline">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@loan.MaPhieuMuon" /><button name="accept" value="true" class="btn btn-sm btn-primary">Xác nhận</button><button name="accept" value="false" class="btn btn-sm btn-outline-danger">Từ chối</button></form>
+            }
+            else if (loan.TrangThai == TrangThaiPhieuMuon.DaDuyet)
+            {
+                <form asp-action="Complete" method="post" class="d-inline">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@loan.MaPhieuMuon" /><button class="btn btn-sm btn-primary">Hoàn tất giao sách</button></form>
+            }
+            </td>
+        </tr>
+    }
+    @if (!Model.Any()) { <tr><td colspan="6" class="text-center text-muted py-5">Chưa có phiếu mượn phù hợp.</td></tr> }
+    </tbody>
+</table>
+</div>

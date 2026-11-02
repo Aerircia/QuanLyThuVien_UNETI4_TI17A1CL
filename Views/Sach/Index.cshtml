@@ -1,7 +1,6 @@
-\@* Họ và tên: Vũ Tiến Thành *@
+@* Họ và tên: Vũ Tiến Thành *@
 @* Mã sinh viên: 23103100257 *@
-@* Nội dung thực hiện: Xây dựng view cho việc liệt kê sách (Admin, Thủ thư) *@
-
+@* Nội dung thực hiện: Xây dựng view cho việc liệt kê sách (Admin, Thủ thư)*@
 
 @model QuanLyThuVien_UNETI4_TI17A1CL.Services.Common.PagedResult<QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.SachListItem>
 @using Microsoft.AspNetCore.Mvc.Rendering
@@ -13,47 +12,101 @@
     foreach (var option in statuses)
         option.Selected = ViewBag.TrangThai is TrangThaiSach selected && option.Value == ((int)selected).ToString();
 }
-
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0">Quản lý sách</h1>
-    <a asp-action="Create" class="btn btn-primary">Thêm sách</a>
+<div class="page-heading">
+    <div><span class="text-uppercase text-muted small fw-bold">Danh mục thư viện</span><h1>Quản lý sách</h1><p>Thêm, cập nhật và theo dõi tình trạng đầu sách.</p></div>
+    <a asp-action="Create" class="btn btn-primary">+ Thêm sách</a>
 </div>
-@if (TempData["ThongBao"] is string notice) { <div class="alert alert-success">@notice</div> }
-@if (TempData["Loi"] is string error) { <div class="alert alert-danger">@error</div> }
+<partial name="_AlertsPartial" />
 
-<form method="get" asp-action="Index" class="row g-2 mb-3">
+<form id="bo-loc-sach" method="get" asp-action="Index" class="surface-card filter-card row g-2 align-items-end">
     <input type="hidden" name="pageSize" value="@Model.PageSize" />
-    <div class="col-md-4"><input name="search" value="@ViewBag.Search" class="form-control" placeholder="Tên sách, tác giả, nhà xuất bản" /></div>
-    <div class="col-md-3">
+    <div class="col-lg-3 col-md-6">
+        <label class="form-label small fw-semibold">Tìm kiếm (sách, tác giả, NXB)</label>
+        <input name="search" value="@ViewBag.Search" class="form-control" placeholder="Nhập từ khóa" />
+    </div>
+    <div class="col-lg-2 col-md-6">
+        <label class="form-label small fw-semibold">Thể loại</label>
         <select name="maTheLoai" class="form-select" asp-items="(IEnumerable<SelectListItem>)ViewBag.TheLoaiOptions">
-            <option value="">Mọi thể loại</option>
+            <option value="">Tất cả</option>
         </select>
     </div>
-    <div class="col-md-3">
-        <select name="trangThai" class="form-select" asp-items="statuses"><option value="">Mọi trạng thái</option></select>
+    <div class="col-lg-2 col-md-6">
+        <label class="form-label small fw-semibold">Tác giả</label>
+        <select name="tacGia" class="form-select">
+            <option value="">Tất cả</option>
+            @foreach (var tacGia in (IEnumerable<string>)ViewBag.TacGiaOptions)
+            {
+                <option value="@tacGia" selected="@(ViewBag.TacGia as string == tacGia)">@tacGia</option>
+            }
+        </select>
     </div>
-    <div class="col-md-2 d-grid"><button type="submit" class="btn btn-outline-primary">Lọc</button></div>
+    <div class="col-lg-2 col-md-6">
+        <label class="form-label small fw-semibold">Trạng thái sách</label>
+        <select name="trangThai" class="form-select" asp-items="statuses"><option value="">Tất cả</option></select>
+    </div>
+    <div class="col-lg-2 col-md-6">
+        <label class="form-label small fw-semibold">Năm xuất bản</label>
+        <div class="d-flex gap-2">
+            <input type="number" name="namTu" value="@ViewBag.NamTu" class="form-control" placeholder="Từ" min="1900" max="2100" />
+            <input type="number" name="namDen" value="@ViewBag.NamDen" class="form-control" placeholder="Đến" min="1900" max="2100" />
+        </div>
+    </div>
+    <div class="col-lg-1 col-md-6 d-grid gap-2">
+        <button type="submit" class="btn btn-primary">Lọc</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Xóa bộ lọc</a>
+    </div>
 </form>
 
-<div class="table-responsive">
-    <table class="table table-hover align-middle">
-        <thead><tr><th>Tên sách</th><th>Tác giả</th><th>Thể loại</th><th>Năm XB</th><th class="text-end">Số lượng</th><th>Trạng thái</th><th></th></tr></thead>
-        <tbody>
-        @foreach (var book in Model.Items)
-        {
-            <tr>
-                <td>@book.TenSach</td><td>@book.TacGia</td><td>@book.TenTheLoai</td>
-                <td>@book.NamXuatBan</td><td class="text-end">@book.SoLuongTong</td>
-                <td>@book.TrangThai.GetDisplayName()</td>
-                <td class="text-end text-nowrap">
-                    <a asp-action="Details" asp-route-id="@book.MaSach" class="btn btn-sm btn-outline-secondary">Chi tiết</a>
-                    <a asp-action="Edit" asp-route-id="@book.MaSach" class="btn btn-sm btn-outline-primary">Sửa</a>
-                    <a asp-action="Delete" asp-route-id="@book.MaSach" class="btn btn-sm btn-outline-danger">Xóa</a>
-                </td>
-            </tr>
-        }
-        @if (!Model.Items.Any()) { <tr><td colspan="7" class="text-center text-muted py-4">Không tìm thấy sách phù hợp.</td></tr> }
-        </tbody>
-    </table>
+@* Vùng kết quả được thay bằng partial _BangSach khi lọc/tìm kiếm/phân trang qua AJAX *@
+<div id="vung-ket-qua-sach">
+    <partial name="_BangSach" model="Model" />
 </div>
-<partial name="_PagerPartial" model="(PagerViewModel)ViewBag.Pager" />
+
+@section Scripts {
+<script>
+    // Lọc/tìm kiếm/phân trang bằng AJAX: server trả về partial _BangSach (header X-Requested-With),
+    // JS chỉ thay vùng kết quả; URL vẫn cập nhật để chia sẻ và nút Back hoạt động.
+    (function () {
+        var vung = document.getElementById('vung-ket-qua-sach');
+        var form = document.getElementById('bo-loc-sach');
+        if (!vung || !form) return;
+
+        function nap(url, push) {
+            vung.style.opacity = '0.55';
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.text(); })
+                .then(function (html) {
+                    vung.innerHTML = html;
+                    vung.style.opacity = '1';
+                    if (push) history.pushState(null, '', url);
+                })
+                .catch(function () { vung.style.opacity = '1'; });
+        }
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var qs = new URLSearchParams(new FormData(form)).toString();
+            nap(form.getAttribute('action') + '?' + qs, true);
+        });
+
+        // Nút "Xóa bộ lọc" nằm trong form cũng đi qua AJAX.
+        form.addEventListener('click', function (e) {
+            var a = e.target.closest('a[href]');
+            if (!a) return;
+            e.preventDefault();
+            nap(a.getAttribute('href'), true);
+        });
+
+        // Phân trang + đổi số dòng/trang nằm trong vùng kết quả.
+        vung.addEventListener('click', function (e) {
+            var a = e.target.closest('a[href]');
+            if (!a || !a.closest('.phan-trang')) return;
+            e.preventDefault();
+            nap(a.getAttribute('href'), true);
+        });
+
+        // Nút Back/Forward của trình duyệt vẫn hoạt động.
+        window.addEventListener('popstate', function () { nap(location.href, false); });
+    })();
+</script>
+}

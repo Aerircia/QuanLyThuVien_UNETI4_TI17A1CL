@@ -1,0 +1,59 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100257 *@
+@* Nội dung thực hiện: Partial bảng + phân trang sách, dùng cho render thường và AJAX lọc/tìm kiếm *@
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.Services.Common.PagedResult<QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.SachListItem>
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@using QuanLyThuVien_UNETI4_TI17A1CL.ViewModels
+@{
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+    string BadgeClass(TrangThaiSach trangThai) => trangThai switch
+    {
+        TrangThaiSach.DangPhucVu => "badge-soft-success",
+        TrangThaiSach.TamNgung => "badge-soft-warning",
+        _ => "badge-soft-secondary"
+    };
+}
+<div class="surface-card admin-table-card table-responsive">
+    <table class="table table-hover align-middle">
+        <thead><tr><th>Bìa</th><th>Tên sách</th><th>Tác giả</th><th>Thể loại</th><th>Nhà xuất bản</th><th>Năm</th><th class="text-end">Tổng</th><th class="text-end">Còn</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var book in Model.Items)
+        {
+            <tr>
+                <td>
+                    @if (!string.IsNullOrWhiteSpace(book.ImgPath))
+                    { <img src="@book.ImgPath" alt="Bìa @book.TenSach" class="page-book-thumb" /> }
+                    else
+                    { <div class="page-book-thumb page-book-thumb--empty"><span>📚</span></div> }
+                </td>
+                <td><a asp-action="Details" asp-route-id="@book.MaSach" class="fw-semibold text-decoration-none">@book.TenSach</a></td>
+                <td>@book.TacGia</td>
+                <td>@book.TenTheLoai</td>
+                <td>@(book.NhaXuatBan ?? "—")</td>
+                <td>@book.NamXuatBan</td>
+                <td class="text-end">@book.SoLuongTong</td>
+                <td class="text-end fw-semibold @(book.SoLuongConLai <= 0 ? "text-danger" : "")">@book.SoLuongConLai</td>
+                <td><span class="badge @BadgeClass(book.TrangThai)">@book.TrangThai.GetDisplayName()</span></td>
+                <td class="text-end text-nowrap">
+                    <a asp-action="Edit" asp-route-id="@book.MaSach" class="btn btn-sm btn-outline-primary">Sửa</a>
+                    @if (book.TrangThai is TrangThaiSach.DangPhucVu or TrangThaiSach.TamNgung)
+                    {
+                        <form asp-action="ToggleTrangThai" asp-route-id="@book.MaSach" asp-route-returnUrl="@returnUrl" method="post" class="d-inline"
+                              onsubmit="return confirm('Đổi trạng thái phục vụ của sách này?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">@(book.TrangThai == TrangThaiSach.DangPhucVu ? "Tạm ngưng" : "Mở lại")</button>
+                        </form>
+                    }
+                    <a asp-action="Delete" asp-route-id="@book.MaSach" class="btn btn-sm btn-outline-danger">Xóa</a>
+                </td>
+            </tr>
+        }
+        @if (!Model.Items.Any()) { <tr><td colspan="10" class="text-center text-muted py-4">Không có sách phù hợp.</td></tr> }
+        </tbody>
+    </table>
+</div>
+<p class="text-muted small mt-2">@Model.TotalCount đầu sách</p>
+<div class="phan-trang">
+    <partial name="_PagerPartial" model="(PagerViewModel)ViewBag.Pager" />
+</div>

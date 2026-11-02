@@ -1,0 +1,5 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100257 *@
+@* Nội dung thực hiện: Partial hiển thị thông báo TempData dùng chung (ThongBao = thành công, Loi = lỗi) *@
+@if (TempData["ThongBao"] is string thongBao) { <div class="alert alert-success">@thongBao</div> }
+@if (TempData["Loi"] is string loi) { <div class="alert alert-danger">@loi</div> }

@@ -11,36 +11,58 @@
     foreach (var option in statuses)
         option.Selected = ViewBag.TrangThai is TrangThaiTheLoai selected && option.Value == ((int)selected).ToString();
 }
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0">Quản lý thể loại</h1>
-    <a asp-action="Create" class="btn btn-primary">Thêm thể loại</a>
+<div class="page-heading">
+    <div><span class="text-uppercase text-muted small fw-bold">Danh mục thư viện</span><h1>Quản lý thể loại</h1><p>Phân loại sách và khu vực lưu trữ trên giá.</p></div>
+    <a asp-action="Create" class="btn btn-primary">+ Thêm thể loại</a>
 </div>
-@if (TempData["ThongBao"] is string notice) { <div class="alert alert-success">@notice</div> }
-@if (TempData["Loi"] is string error) { <div class="alert alert-danger">@error</div> }
-<form method="get" asp-action="Index" class="row g-2 mb-3">
+<partial name="_AlertsPartial" />
+<form id="bo-loc-the-loai" method="get" asp-action="Index" class="surface-card filter-card row g-2">
     <input type="hidden" name="pageSize" value="@Model.PageSize" />
     <div class="col-md-6"><input name="search" value="@ViewBag.Search" class="form-control" placeholder="Tên, mô tả hoặc khu vực lưu trữ" /></div>
     <div class="col-md-4"><select name="trangThai" class="form-select" asp-items="statuses"><option value="">Mọi trạng thái</option></select></div>
     <div class="col-md-2 d-grid"><button type="submit" class="btn btn-outline-primary">Lọc</button></div>
 </form>
-<div class="table-responsive">
-    <table class="table table-hover align-middle">
-        <thead><tr><th>Tên thể loại</th><th>Khu vực</th><th>Số sách</th><th>Trạng thái</th><th></th></tr></thead>
-        <tbody>
-        @foreach (var category in Model.Items)
-        {
-            <tr>
-                <td>@category.TenTheLoai</td><td>@category.KhuVucLuuTru</td><td>@category.SoLuongSach</td>
-                <td>@category.TrangThai.GetDisplayName()</td>
-                <td class="text-end text-nowrap">
-                    <a asp-action="Details" asp-route-id="@category.MaTheLoai" class="btn btn-sm btn-outline-secondary">Chi tiết</a>
-                    <a asp-action="Edit" asp-route-id="@category.MaTheLoai" class="btn btn-sm btn-outline-primary">Sửa</a>
-                    <a asp-action="Delete" asp-route-id="@category.MaTheLoai" class="btn btn-sm btn-outline-danger">Xóa</a>
-                </td>
-            </tr>
-        }
-        @if (!Model.Items.Any()) { <tr><td colspan="5" class="text-center text-muted py-4">Không tìm thấy thể loại phù hợp.</td></tr> }
-        </tbody>
-    </table>
+@* Vùng kết quả được thay bằng partial _BangTheLoai khi lọc/tìm kiếm/phân trang qua AJAX *@
+<div id="vung-ket-qua-the-loai">
+    <partial name="_BangTheLoai" model="Model" />
 </div>
-<partial name="_PagerPartial" model="(PagerViewModel)ViewBag.Pager" />
+
+@section Scripts {
+<script>
+    // Lọc/tìm kiếm/phân trang bằng AJAX: server trả về partial _BangTheLoai (header X-Requested-With),
+    // JS chỉ thay vùng kết quả; URL vẫn cập nhật để chia sẻ và nút Back hoạt động.
+    (function () {
+        var vung = document.getElementById('vung-ket-qua-the-loai');
+        var form = document.getElementById('bo-loc-the-loai');
+        if (!vung || !form) return;
+
+        function nap(url, push) {
+            vung.style.opacity = '0.55';
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.text(); })
+                .then(function (html) {
+                    vung.innerHTML = html;
+                    vung.style.opacity = '1';
+                    if (push) history.pushState(null, '', url);
+                })
+                .catch(function () { vung.style.opacity = '1'; });
+        }
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var qs = new URLSearchParams(new FormData(form)).toString();
+            nap(form.getAttribute('action') + '?' + qs, true);
+        });
+
+        vung.addEventListener('click', function (e) {
+            var a = e.target.closest('a[href]');
+            if (!a || !a.closest('.phan-trang')) return;
+            e.preventDefault();
+            nap(a.getAttribute('href'), true);
+        });
+
+        // Nút Back/Forward của trình duyệt vẫn hoạt động.
+        window.addEventListener('popstate', function () { nap(location.href, false); });
+    })();
+</script>
+}

@@ -16,11 +16,13 @@ public class SachController : Controller
 {
     private readonly ISachService _sachService;
     private readonly ITheLoaiService _theLoaiService;
+    private readonly IAnhBiaService _anhBiaService;
 
-    public SachController(ISachService sachService, ITheLoaiService theLoaiService)
+    public SachController(ISachService sachService, ITheLoaiService theLoaiService, IAnhBiaService anhBiaService)
     {
         _sachService = sachService;
         _theLoaiService = theLoaiService;
+        _anhBiaService = anhBiaService;
     }
 
     [HttpGet]
@@ -30,33 +32,59 @@ public class SachController : Controller
         int? maTheLoai,
         TrangThaiSach? trangThai,
         int page = 1,
-        int pageSize = PagingDefaults.DefaultPageSize)
+        int pageSize = PagingDefaults.DefaultPageSize,
+        string? tacGia = null,
+        int? namTu = null,
+        int? namDen = null)
     {
         if (trangThai.HasValue && !Enum.IsDefined(trangThai.Value))
             trangThai = null;
         search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+        tacGia = string.IsNullOrWhiteSpace(tacGia) ? null : tacGia.Trim();
 
         var result = await _sachService.GetListAsync(
-            new SachFilter(search, maTheLoai, trangThai, page, pageSize), HttpContext.RequestAborted);
+            new SachFilter(search, maTheLoai, trangThai, page, pageSize, tacGia, namTu, namDen),
+            HttpContext.RequestAborted);
         var routeValues = new Dictionary<string, string>();
         if (search is not null) routeValues["search"] = search;
         if (maTheLoai.HasValue) routeValues["maTheLoai"] = maTheLoai.Value.ToString();
         if (trangThai.HasValue) routeValues["trangThai"] = trangThai.Value.ToString();
+        if (tacGia is not null) routeValues["tacGia"] = tacGia;
+        if (namTu.HasValue) routeValues["namTu"] = namTu.Value.ToString();
+        if (namDen.HasValue) routeValues["namDen"] = namDen.Value.ToString();
+        ViewBag.Pager = PagerViewModel.From(result, "Sach", nameof(Index), routeValues);
+
+        // Lọc/tìm kiếm/phân trang qua AJAX: chỉ trả về partial bảng + phân trang.
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView("_BangSach", result);
 
         ViewBag.Search = search;
         ViewBag.MaTheLoai = maTheLoai;
         ViewBag.TrangThai = trangThai;
+        ViewBag.TacGia = tacGia;
+        ViewBag.NamTu = namTu;
+        ViewBag.NamDen = namDen;
         ViewBag.TheLoaiOptions = await GetCategoryOptionsAsync(maTheLoai);
-        ViewBag.Pager = PagerViewModel.From(result, "Sach", nameof(Index), routeValues);
+        ViewBag.TacGiaOptions = await _sachService.GetAuthorOptionsAsync(HttpContext.RequestAborted);
         return View(result);
     }
 
     [HttpGet]
-    [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu, VaiTro.BanDoc)]
     public async Task<IActionResult> Details(int id)
     {
         var detail = await _sachService.GetAsync(id, HttpContext.RequestAborted);
         return detail is null ? NotFound() : View(detail);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Catalog(string? search, int page = 1)
+    {
+        search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+        var result = await _sachService.GetListAsync(
+            new SachFilter(search, null, TrangThaiSach.DangPhucVu, page, 12),
+            HttpContext.RequestAborted);
+        ViewBag.Search = search;
+        return View(result);
     }
 
     [HttpGet]
@@ -70,9 +98,16 @@ public class SachController : Controller
     [HttpPost]
     [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Sach model)
+    public async Task<IActionResult> Create(Sach model, IFormFile? anhBia, bool xoaAnh = false)
     {
         if (!ModelState.IsValid)
+        {
+            ViewBag.TheLoaiOptions = await GetCategoryOptionsAsync(model.MaTheLoai);
+            return View(model);
+        }
+
+        var imgPath = await XuLyAnhBiaAsync(anhBia, xoaAnh, null);
+        if (imgPath == null && anhBia is { Length: > 0 })
         {
             ViewBag.TheLoaiOptions = await GetCategoryOptionsAsync(model.MaTheLoai);
             return View(model);
@@ -89,7 +124,7 @@ public class SachController : Controller
             model.ViTriKe,
             model.MoTa,
             model.TrangThai,
-            model.ImgPath), HttpContext.RequestAborted);
+            imgPath ?? model.ImgPath), HttpContext.RequestAborted);
 
         if (!result.Succeeded)
         {
@@ -117,7 +152,7 @@ public class SachController : Controller
     [HttpPost]
     [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, Sach model)
+    public async Task<IActionResult> Edit(int id, Sach model, IFormFile? anhBia, bool xoaAnh = false)
     {
         var detail = await _sachService.GetAsync(id, HttpContext.RequestAborted);
         if (detail is null)
@@ -125,6 +160,13 @@ public class SachController : Controller
         model.MaSach = id;
 
         if (!ModelState.IsValid)
+        {
+            ViewBag.TheLoaiOptions = await GetCategoryOptionsAsync(model.MaTheLoai);
+            return View(model);
+        }
+
+        var imgPath = await XuLyAnhBiaAsync(anhBia, xoaAnh, detail.ImgPath);
+        if (imgPath == null && anhBia is { Length: > 0 })
         {
             ViewBag.TheLoaiOptions = await GetCategoryOptionsAsync(model.MaTheLoai);
             return View(model);
@@ -142,7 +184,7 @@ public class SachController : Controller
             model.ViTriKe,
             model.MoTa,
             model.TrangThai,
-            model.ImgPath), HttpContext.RequestAborted);
+            imgPath ?? (xoaAnh ? null : model.ImgPath)), HttpContext.RequestAborted);
 
         if (!result.Succeeded)
         {
@@ -153,6 +195,27 @@ public class SachController : Controller
 
         TempData["ThongBao"] = "Đã cập nhật sách.";
         return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [HttpPost]
+    [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleTrangThai(int id, string? returnUrl)
+    {
+        var result = await _sachService.ToggleTrangThaiAsync(id, HttpContext.RequestAborted);
+        if (result.Succeeded)
+        {
+            var detail = await _sachService.GetAsync(id, HttpContext.RequestAborted);
+            TempData["ThongBao"] = detail?.TrangThai == TrangThaiSach.DangPhucVu
+                ? "Đã mở lại sách."
+                : "Đã chuyển sách sang Tạm ngưng.";
+        }
+        else
+        {
+            TempData["Loi"] = result.FirstError;
+        }
+
+        return Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : RedirectToAction(nameof(Index));
     }
 
     [HttpGet]
@@ -169,14 +232,47 @@ public class SachController : Controller
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var result = await _sachService.DeleteAsync(id, HttpContext.RequestAborted);
-        if (result.Succeeded)
+        if (!result.Succeeded)
         {
-            TempData["ThongBao"] = "Đã xóa sách.";
-            return RedirectToAction(nameof(Index));
+            TempData["Loi"] = result.FirstError;
+            return RedirectToAction(nameof(Details), new { id });
         }
 
-        TempData["Loi"] = result.FirstError;
-        return RedirectToAction(nameof(Details), new { id });
+        if (result.Value)
+        {
+            var detail = await _sachService.GetAsync(id, HttpContext.RequestAborted);
+            if (detail?.ImgPath is { } imgPath)
+                _anhBiaService.Delete(imgPath);
+            TempData["ThongBao"] = "Đã xóa sách.";
+        }
+        else
+        {
+            TempData["ThongBao"] = "Sách đã có lịch sử mượn → chuyển Ngừng phục vụ, giữ dữ liệu.";
+        }
+        return RedirectToAction(nameof(Index));
+    }
+
+    // Trả về đường dẫn ảnh mới (hoặc null khi xóa/không đổi); lỗi upload được nạp vào ModelState.
+    private async Task<string?> XuLyAnhBiaAsync(IFormFile? anhBia, bool xoaAnh, string? imgPathCu)
+    {
+        if (xoaAnh)
+        {
+            _anhBiaService.Delete(imgPathCu);
+            return null;
+        }
+
+        if (anhBia is not { Length: > 0 })
+            return null;
+
+        var upload = await _anhBiaService.SaveAsync(anhBia, HttpContext.RequestAborted);
+        if (!upload.Succeeded)
+        {
+            ModelState.AddModelError("ImgPath", upload.FirstError);
+            return null;
+        }
+
+        _anhBiaService.Delete(imgPathCu);
+        return upload.Value;
     }
 
     private async Task<IEnumerable<SelectListItem>> GetCategoryOptionsAsync(int? selectedMaTheLoai)
