@@ -1,0 +1,97 @@
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Phần kết quả của kho sách (thanh công cụ, chip, lưới/danh sách, phân trang); AJAX chỉ thay phần này *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.CatalogViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@using QuanLyThuVien_UNETI4_TI17A1CL.ViewModels
+@{
+    var f = Model.Filter;
+    var baseRoute = f.ToRouteValues();
+    baseRoute["pageSize"] = Model.Result.PageSize.ToString();
+
+    Dictionary<string, string> Without(params string[] keys)
+    {
+        var d = new Dictionary<string, string>(baseRoute);
+        foreach (var k in keys) d.Remove(k);
+        return d;
+    }
+
+    // Mỗi điều kiện đang dùng là một chip; bấm vào để bỏ riêng điều kiện đó.
+    var chips = new List<(string Label, Dictionary<string, string> Route)>();
+    if (f.Search is not null) chips.Add(($"“{f.Search}”", Without("search")));
+    if (f.MaTheLoai is { } mtl) chips.Add((Model.TenTheLoaiChon ?? $"Thể loại {mtl}", Without("maTheLoai")));
+    if (f.TacGia is not null) chips.Add((f.TacGia, Without("tacGia")));
+    if (f.NamTu.HasValue || f.NamDen.HasValue)
+        chips.Add(($"Năm {(f.NamTu?.ToString() ?? "…")} – {(f.NamDen?.ToString() ?? "…")}", Without("namTu", "namDen")));
+    if (f.GiaTu.HasValue || f.GiaDen.HasValue)
+        chips.Add(($"Giá {(f.GiaTu?.ToString("N0") ?? "0")} – {(f.GiaDen?.ToString("N0") ?? "không giới hạn")} ₫", Without("giaTu", "giaDen")));
+    if (f.TonKho is { } tk) chips.Add((tk == TonKhoFilter.ConSach ? "Còn sách" : "Hết sách", Without("tonKho")));
+    if (f.TrangThai is { } tt) chips.Add((tt.GetDisplayName(), Without("trangThai")));
+
+    var idx = 0;
+}
+
+<div class="ctool">
+    <span class="cnt"><strong>@Model.Result.TotalCount</strong> cuốn</span>
+
+    @foreach (var c in chips)
+    {
+        <a class="fchip" data-ajax asp-action="Catalog" asp-all-route-data="c.Route" title="Bỏ điều kiện này">
+            @c.Label <i aria-hidden="true">×</i><span class="visually-hidden">Bỏ điều kiện</span>
+        </a>
+    }
+
+    <span class="sp"></span>
+
+    <select name="trangThai" class="form-select form-select-sm ctool-sel" aria-label="Trạng thái sách" data-filter>
+        <option value="">Mọi trạng thái</option>
+        @foreach (var s in Enum.GetValues<TrangThaiSach>())
+        {
+            <option value="@s" selected="@(f.TrangThai == s)">@s.GetDisplayName()</option>
+        }
+    </select>
+
+    <select name="sort" class="form-select form-select-sm ctool-sel" aria-label="Sắp xếp" data-default="az">
+        @foreach (var o in CatalogFilter.SortOptions)
+        {
+            <option value="@o.Value" selected="@(f.Sort == o.Value)">@o.Label</option>
+        }
+    </select>
+
+    <div class="seg" role="group" aria-label="Kiểu hiển thị">
+        <a data-ajax class="@(f.View == "grid" ? "on" : "")" asp-action="Catalog" asp-all-route-data='Without("view")'
+           aria-label="Xem dạng lưới" aria-current="@(f.View == "grid" ? "true" : null)"><partial name="_Icon" model='"grid"' /></a>
+        <a data-ajax class="@(f.View == "list" ? "on" : "")" asp-action="Catalog"
+           asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["view"] = "list" })"
+           aria-label="Xem dạng danh sách" aria-current="@(f.View == "list" ? "true" : null)"><partial name="_Icon" model='"list"' /></a>
+    </div>
+</div>
+
+@if (!Model.Result.Items.Any())
+{
+    <div class="app-card text-center py-5 cat-empty">
+        <h2 class="h5">Không tìm thấy đầu sách phù hợp</h2>
+        <p class="text-muted">Thử bỏ bớt điều kiện lọc hoặc đổi từ khóa.</p>
+        <div><a data-ajax asp-action="Catalog" class="btn btn-outline-primary">Xem toàn bộ kho sách</a></div>
+    </div>
+}
+else if (f.View == "list")
+{
+    <div class="bk-list">
+        @foreach (var b in Model.Result.Items)
+        {
+            <div class="bk-item" style="--i:@(idx++)"><partial name="_BookRow" model="b" /></div>
+        }
+    </div>
+}
+else
+{
+    <div class="bk-grid">
+        @foreach (var b in Model.Result.Items)
+        {
+            <div class="bk-item" style="--i:@(idx++)"><partial name="_BookCard" model="b" /></div>
+        }
+    </div>
+}
+
+<partial name="_PagerPartial" model="Model.Pager" />

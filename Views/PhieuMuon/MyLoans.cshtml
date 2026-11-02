@@ -1,0 +1,187 @@
+@* Họ và tên: Nguyễn Hữu Tuấn *@
+@* Mã sinh viên: 23103100136 *@
+@* Nội dung thực hiện: View theo dõi danh sách phiếu mượn của bạn đọc (MyLoans) *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.MyLoansViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Phiếu mượn của tôi";
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+}
+
+<div class="container py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h4 mb-0">Phiếu mượn của tôi</h1>
+            <p class="text-muted small mb-0">Theo dõi tiến trình xử lý, thời hạn trả sách và trạng thái các đầu sách đã đăng ký.</p>
+        </div>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-search"></i> Tìm thêm sách
+        </a>
+    </div>
+
+    @if (TempData["ThongBao"] is string thongBao)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>Thông báo:</strong> @thongBao
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Loi"] is string loi)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Lỗi:</strong> @loi
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Cảnh báo quá hạn nếu có -->
+    @if (Model.SoPhieuQuaHan > 0)
+    {
+        <div class="alert alert-overdue d-flex align-items-center mb-4" role="alert">
+            <span class="fs-4 me-3">⚠️</span>
+            <div>
+                <h6 class="fw-bold mb-1">Bạn có @Model.SoPhieuQuaHan phiếu mượn đang quá hạn!</h6>
+                <div class="small">
+                    Vui lòng mang sách đến quầy thư viện trả sớm để tránh phát sinh thêm phí phạt trễ hạn. Các đăng ký mượn mới sẽ tạm bị khóa đến khi bạn hoàn tất trả sách quá hạn.
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Tabs phân loại -->
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <a asp-action="MyLoans" asp-route-filter="all" class="btn btn-sm @(Model.Filter == "all" ? "btn-primary" : "btn-light border")">
+            Tất cả (@Model.TongSoPhieu)
+        </a>
+        <a asp-action="MyLoans" asp-route-filter="pending" class="btn btn-sm @(Model.Filter == "pending" ? "btn-primary" : "btn-light border")">
+            Chờ duyệt (@Model.SoPhieuChoDuyet)
+        </a>
+        <a asp-action="MyLoans" asp-route-filter="active" class="btn btn-sm @(Model.Filter == "active" ? "btn-primary" : "btn-light border")">
+            Đang xử lý &amp; mượn (@(Model.SoPhieuChoDuyet + Model.SoPhieuDaDuyet + Model.SoPhieuDangMuon))
+        </a>
+        <a asp-action="MyLoans" asp-route-filter="overdue" class="btn btn-sm @(Model.Filter == "overdue" ? "btn-danger" : "btn-outline-danger")">
+            Quá hạn (@Model.SoPhieuQuaHan)
+        </a>
+        <a asp-action="MyLoans" asp-route-filter="completed" class="btn btn-sm @(Model.Filter == "completed" ? "btn-primary" : "btn-light border")">
+            Đã hoàn thành (@Model.SoPhieuDaTra)
+        </a>
+    </div>
+
+    <!-- Danh sách phiếu mượn -->
+    <div class="app-card p-0 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-striped align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã</th>
+                        <th>Đầu sách</th>
+                        <th>Thể loại</th>
+                        <th>Ngày đăng ký</th>
+                        <th>Hạn trả</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Loans)
+                    {
+                        var isOd = item.IsOverdue;
+                        <tr class="@(isOd ? "table-danger" : "")">
+                            <td>
+                                <a asp-action="Details" asp-route-id="@item.MaPhieuMuon" class="fw-bold font-monospace text-decoration-none text-dark">
+                                    #@item.MaPhieuMuon
+                                </a>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@item.TenSach</div>
+                                <small class="text-muted">@item.TacGia @(item.ViTriKe != null ? $"· Kệ {item.ViTriKe}" : "")</small>
+                            </td>
+                            <td>@(item.TheLoai ?? "—")</td>
+                            <td>@item.NgayDangKy.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                @if (item.HanTra.HasValue)
+                                {
+                                    <div class="@(isOd ? "text-danger fw-bold" : "text-dark")">
+                                        @item.HanTra.Value.ToString("dd/MM/yyyy")
+                                    </div>
+                                    @if (isOd)
+                                    {
+                                        <span class="badge badge-soft-danger small">Quá hạn @item.SoNgayQuaHan ngày</span>
+                                    }
+                                    else if (item.TrangThai == TrangThaiPhieuMuon.DangMuon)
+                                    {
+                                        <small class="text-muted">Còn @item.SoNgayConLai ngày</small>
+                                    }
+                                }
+                                else if (item.TrangThai == TrangThaiPhieuMuon.DaDuyet)
+                                {
+                                    <span class="text-info small fw-bold">Sẵn sàng nhận sách tại quầy</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge @(item.TrangThai switch {
+                                    TrangThaiPhieuMuon.ChoDuyet => "badge-soft-warning",
+                                    TrangThaiPhieuMuon.DaDuyet  => "badge-soft-info",
+                                    TrangThaiPhieuMuon.DangMuon => isOd ? "badge-soft-danger" : "badge-soft-primary",
+                                    TrangThaiPhieuMuon.DaTra    => "badge-soft-success",
+                                    TrangThaiPhieuMuon.TuChoi   => "badge-soft-danger",
+                                    TrangThaiPhieuMuon.DaHuy    => "badge-soft-secondary",
+                                    _                           => "badge-soft-secondary"
+                                })">
+                                    @item.TrangThai.GetDisplayName()
+                                </span>
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <a asp-action="Details" asp-route-id="@item.MaPhieuMuon" class="btn btn-sm btn-outline-primary">
+                                    Chi tiết
+                                </a>
+
+                                @if (item.TrangThai == TrangThaiPhieuMuon.DangMuon && !isOd)
+                                {
+                                    <form asp-controller="GiaHanMuon" asp-action="Create" asp-route-maPhieuMuon="@item.MaPhieuMuon" method="get" class="d-inline">
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-arrow-repeat"></i> Gia hạn
+                                        </button>
+                                    </form>
+                                }
+
+                                @if (item.CanCancel)
+                                {
+                                    <form asp-action="Cancel" asp-route-id="@item.MaPhieuMuon" method="post" class="d-inline" id="cancelLoanForm-@item.MaPhieuMuon">
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                data-confirm-form="#cancelLoanForm-@item.MaPhieuMuon"
+                                                data-confirm-title="Xác nhận hủy phiếu mượn"
+                                                data-confirm-message="Bạn có chắc chắn muốn hủy phiếu mượn cuốn sách '@item.TenSach'? Thao tác không thể hoàn tác."
+                                                data-confirm-ok="Hủy phiếu"
+                                                data-confirm-class="btn-danger">
+
+                                            Hủy phiếu
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+
+                    @if (!Model.Loans.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <p class="mb-2">Không có phiếu mượn nào trong mục này.</p>
+                                <a asp-controller="Home" asp-action="Index" class="btn btn-sm btn-outline-primary">
+                                    Khám phá kho sách để mượn ngay
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

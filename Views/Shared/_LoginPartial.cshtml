@@ -1,49 +1,42 @@
 @* Họ và tên: Lại Anh Quân *@
 @* Mã sinh viên: 23103100255 *@
-@* Nội dung thực hiện: Xây dựng phần đăng nhập/đăng xuất *@
-
-@* Họ và tên: Vũ Tiến Thành *@
-@* Mã sinh viên: 23103100257 *@
-@* Nội dung thực hiện: nâng cấp khu tài khoản theo tài liệu site.css (avatar + dropdown có icon SVG) *@
-
+@* Nội dung thực hiện: Xây dựng phần đăng nhập/đăng xuất và thông tin tài khoản *@
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
 @using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces
 @inject ICurrentUserService Current
 
-@* Chỉ để hiển thị. Quyền thật sự được kiểm tra ở Controller bằng [AuthorizeRole]. *@
 @if (Current.User is { } user)
 {
-    var initials = string.Concat((user.HoTen ?? "?")
-        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-        .TakeLast(2)
-        .Select(w => char.ToUpperInvariant(w[0])));
+    var avatarText = string.IsNullOrWhiteSpace(user.HoTen) ? "U" : user.HoTen.Trim().Substring(0, 1).ToUpperInvariant();
     <div class="dropdown app-account">
-        <button class="app-account-trigger dropdown-toggle" type="button"
-                data-bs-toggle="dropdown" aria-expanded="false">
-            <span class="app-avatar" aria-hidden="true">@initials</span>
-            <span class="app-account-meta"><strong>@user.HoTen</strong><small>@user.VaiTro.GetDisplayName()</small></span>
+        <button class="app-account-trigger dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="app-avatar" aria-hidden="true">@avatarText</span>
+            <span class="app-account-meta">
+                <strong>@user.HoTen</strong>
+                <small>@user.VaiTro.GetDisplayName()</small>
+            </span>
             <span class="app-account-chevron" aria-hidden="true">⌄</span>
         </button>
         <ul class="dropdown-menu dropdown-menu-end app-account-menu">
             <li class="app-account-menu-heading">
-                <span class="app-avatar" aria-hidden="true">@initials</span>
+                <span class="app-avatar" aria-hidden="true">@avatarText</span>
                 <span><strong>@user.HoTen</strong><small>@user.VaiTro.GetDisplayName()</small></span>
             </li>
-            <li>
-                <a class="dropdown-item d-flex align-items-center gap-2" asp-controller="TaiKhoan" asp-action="ChangePassword">
-                    <span class="app-account-menu-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3M12 14v3"/></svg>
-                    </span>
-                    <span class="app-account-menu-label">Đổi mật khẩu</span>
-                </a>
-            </li>
+            @if (user.VaiTro == VaiTro.BanDoc)
+            {
+                var hasActiveCard = await Current.HasActiveBanDocAsync();
+                <li><a class="dropdown-item" asp-controller="BanDoc" asp-action="MyProfile"><span class="app-account-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="app-account-menu-label">Thẻ &amp; hồ sơ cá nhân</span></a></li>
+                @if (hasActiveCard)
+                {
+                    <li><a class="dropdown-item" asp-controller="PhieuMuon" asp-action="MyLoans"><span class="app-account-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3.5h11a3 3 0 0 1 3 3V21H8a3 3 0 0 1-3-3z"/><path d="M5 18a3 3 0 0 1 3-3h11M9 7h6M9 10h6"/></svg></span><span class="app-account-menu-label">Phiếu mượn của tôi</span></a></li>
+                    <li><a class="dropdown-item" asp-controller="PhieuMuon" asp-action="MyFines"><span class="app-account-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M7 6V4h10v2M12 9v7m3-5.5c0-.8-.9-1.5-2-1.5h-2a2 2 0 0 0 0 4h2a2 2 0 0 1 0 4h-2c-1.1 0-2-.7-2-1.5"/></svg></span><span class="app-account-menu-label">Tiền phạt của tôi</span></a></li>
+                }
+            }
+            <li><a class="dropdown-item" asp-controller="TaiKhoan" asp-action="ChangePassword"><span class="app-account-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3M12 14v3"/></svg></span><span class="app-account-menu-label">Đổi mật khẩu</span></a></li>
             <li><hr class="dropdown-divider" /></li>
             <li class="px-2 pb-1">
                 <form asp-controller="TaiKhoan" asp-action="Logout" method="post">
-                    <button type="submit" class="btn btn-outline-danger w-100 app-account-logout">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"/><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/></svg>
-                        Đăng xuất
-                    </button>
+                    <button type="submit" class="btn btn-outline-danger w-100 app-account-logout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"/><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/></svg>Đăng xuất</button>
                 </form>
             </li>
         </ul>
@@ -51,5 +44,8 @@
 }
 else
 {
-    <a class="btn btn-primary app-login-button" asp-controller="TaiKhoan" asp-action="Login">Đăng nhập</a>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary app-login-button" asp-controller="TaiKhoan" asp-action="Register">Đăng ký</a>
+        <a class="btn btn-primary app-login-button" asp-controller="TaiKhoan" asp-action="Login">Đăng nhập</a>
+    </div>
 }

@@ -1,8 +1,271 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@* Họ và tên: Nguyễn Hữu Tuấn *@
+@* Mã sinh viên: 23103100136 *@
+@* Nội dung thực hiện: Trang chủ tra cứu sách và điểm khởi đầu quy trình đăng ký mượn sách (Module 3) *@
+
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Sửa UI Trang chủ *@
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.LandingViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces
+@inject ICurrentUserService Current
+@{
+    ViewData["Title"] = "Trang chủ";
+    var cfg = Model.CauHinh;
+    var rank = 0;
+    string Pct(decimal v) => (v * 100m).ToString("0.##");
+    var steps = new (string Icon, string Title, string Text)[]
+    {
+        ("search", "Tìm sách", "Gõ tên hoặc lọc theo thể loại, tác giả."),
+        ("form", "Đăng ký", "Chọn sách còn bản và gửi phiếu mượn."),
+        ("pickup", "Nhận sách", "Phiếu được duyệt thì ghé quầy nhận."),
+        ("return", "Trả sách", "Trả tại quầy, tiền phạt (nếu có) hiện trên web.")
+    };
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/catalog.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/landing.css" asp-append-version="true" />
+}
+
+@if (TempData["ThongBao"] is string thongBao)
+{
+    <div class="alert alert-success" role="status">@thongBao</div>
+}
+@if (TempData["Loi"] is string loi)
+{
+    <div class="alert alert-danger" role="alert">@loi</div>
+}
+
+<section class="lp-hero reveal">
+    <div class="lp-hero-main">
+        <h1>Mượn sách siêu dễ, đọc thả ga</h1>
+        <p>Tìm sách, đăng ký mượn trực tuyến, nhận sách tại quầy thủ thư và theo dõi hạn trả mọi lúc.</p>
+        <form asp-controller="Home" asp-action="Catalog" method="get" class="lp-search">
+            <input name="search" class="lp-search-input" placeholder="Hôm nay bạn muốn đọc gì?" aria-label="Tìm sách" autocomplete="off" />
+            <button type="submit" class="btn btn-dark btn-lg">Tìm kiếm</button>
+        </form>
+        @if (Model.GoiY.Any())
+        {
+            <div class="lp-chips">
+                <span>Gợi ý:</span>
+                @foreach (var g in Model.GoiY)
+                {
+                    <a asp-controller="Home" asp-action="Catalog" asp-route-search="@g">@g</a>
+                }
+            </div>
+        }
+        <div class="lp-facts">
+            <span><b>@Model.TongDauSach</b> đầu sách</span>
+            <span><b>@Model.SoDauSachSanSang</b> đang sẵn sàng cho mượn</span>
+        </div>
+    </div>
+    @if (Model.HeroBooks.Count > 0)
+    {
+        <div class="lp-fan">
+            @for (var k = 0; k < Model.HeroBooks.Count; k++)
+            {
+                var hb = Model.HeroBooks[k];
+                <a class="lp-fan-item f@(k)" asp-action="Book" asp-route-id="@hb.MaSach" title="@hb.TenSach" tabindex="@(k == 1 ? 0 : -1)">
+                    <partial name="_BookCover" model="hb" />
+                </a>
+            }
+        </div>
+    }
+</section>
+
+<section class="lp-how reveal" style="--i:1" aria-label="Cách mượn sách">
+    <ol>
+        @foreach (var s in steps)
+        {
+            <li>
+                <span class="lp-ic"><partial name="_Icon" model="s.Icon" /></span>
+                <b>@s.Title</b>
+                <span class="lp-how-text">@s.Text</span>
+            </li>
+        }
+    </ol>
+</section>
+
+<section class="lp-section reveal" style="--i:2">
+    <div class="lp-head">
+        <div><h2>Chọn gu của bạn</h2><span class="text-muted">Chạm vào một thể loại để xem ngay</span></div>
+        <a asp-action="Catalog">Xem toàn bộ kho sách</a>
+    </div>
+    <div class="rail-wrap" data-rail>
+        <button type="button" class="rail-arrow prev" aria-label="Cuộn trái"><partial name="_Icon" model='"chev-l"' /></button>
+        <div class="rail-track">
+            @foreach (var c in Model.TheLoais)
+            {
+                <a class="lp-cat" asp-action="Catalog" asp-route-maTheLoai="@c.MaTheLoai">
+                    <span class="lp-cat-ic"><partial name="_CategoryIcon" model="c.TenTheLoai" /></span>
+                    <b>@c.TenTheLoai</b>
+                    <small>@c.SoDauSach đầu sách</small>
+                </a>
+            }
+        </div>
+        <button type="button" class="rail-arrow next" aria-label="Cuộn phải"><partial name="_Icon" model='"chev-r"' /></button>
+    </div>
+</section>
+
+<section class="lp-section lp-duo reveal" style="--i:3">
+    <div>
+        <div class="lp-head"><div><h2>Được mượn nhiều nhất</h2><span class="text-muted">Xếp hạng theo số lượt mượn</span></div></div>
+        @if (Model.MuonNhieu.Any())
+        {
+            <div class="app-card lp-rank">
+                @foreach (var r in Model.MuonNhieu)
+                {
+                    rank++;
+                    <a class="lp-rank-item" asp-action="Book" asp-route-id="@r.Book.MaSach">
+                        <span class="lp-rank-no @(rank <= 3 ? "top" : "")">@rank</span>
+                        <span class="lp-rank-cover"><partial name="_BookCover" model="r.Book" /></span>
+                        <span class="lp-rank-text">
+                            <b>@r.Book.TenSach</b>
+                            <small>@r.Book.TacGia &middot; @r.Book.TenTheLoai</small>
+                        </span>
+                        <span class="lp-rank-count"><b>@r.SoLuotMuon</b><small>lượt mượn</small></span>
+                    </a>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="app-card text-muted">Chưa có lượt mượn nào được ghi nhận.</div>
+        }
+    </div>
+
+    @if (Model.SachCuaNgay is { } day)
+    {
+        <div>
+            <div class="lp-head"><div><h2>Sách của ngày</h2><span class="text-muted">Gợi ý đổi mới mỗi ngày</span></div></div>
+            <a class="lp-feat" asp-action="Book" asp-route-id="@day.MaSach">
+                <div class="lp-feat-cover"><partial name="_BookCover" model="day" /></div>
+                <div class="lp-feat-body">
+                    <span class="lp-tag"><partial name="_Icon" model='"star"' /> Sách của ngày</span>
+                    <h3>@day.TenSach</h3>
+                    <p class="text-muted mb-2">@day.TacGia &middot; @day.TenTheLoai &middot; @day.NamXuatBan</p>
+                    <p class="mb-3">Còn @day.SoLuongConLai bản@(string.IsNullOrWhiteSpace(day.ViTriKe) ? "" : $", nhận tại kệ {day.ViTriKe}").</p>
+                    <span class="btn btn-primary btn-sm">Xem chi tiết</span>
+                </div>
+            </a>
+        </div>
+    }
+</section>
+
+<section class="lp-section reveal" style="--i:4">
+    <div class="lp-head">
+        <div><h2>Sách mới về</h2><span class="text-muted">Các đầu sách vừa được thêm vào kho</span></div>
+        <a asp-action="Catalog">Xem thêm</a>
+    </div>
+    <div class="rail-wrap" data-rail>
+        <button type="button" class="rail-arrow prev" aria-label="Cuộn trái"><partial name="_Icon" model='"chev-l"' /></button>
+        <div class="rail-track lp-rail">
+            @foreach (var b in Model.SachMoi)
+            {
+                <div class="lp-rail-item"><partial name="_BookCard" model="b" /></div>
+            }
+        </div>
+        <button type="button" class="rail-arrow next" aria-label="Cuộn phải"><partial name="_Icon" model='"chev-r"' /></button>
+    </div>
+</section>
+
+@if (Model.TacGiaNoiBat.Any())
+{
+    <section class="lp-section reveal" style="--i:5">
+        <div class="lp-head"><div><h2>Tác giả nổi bật</h2><span class="text-muted">Chạm vào một tác giả để xem các đầu sách của họ</span></div></div>
+        <div class="rail-wrap" data-rail>
+            <button type="button" class="rail-arrow prev" aria-label="Cuộn trái"><partial name="_Icon" model='"chev-l"' /></button>
+            <div class="rail-track">
+                @foreach (var a in Model.TacGiaNoiBat)
+                {
+                    <a class="au" asp-action="Catalog" asp-route-tacGia="@a.TenTacGia">
+                        <span class="au-st" aria-hidden="true">
+                            @foreach (var ab in a.Books)
+                            {
+                                <span class="au-cv"><partial name="_BookCover" model="ab" /></span>
+                            }
+                        </span>
+                        <b>@a.TenTacGia</b>
+                        <small>@a.SoDauSach đầu sách@(a.SoLuotMuon > 0 ? $" · {a.SoLuotMuon} lượt mượn" : "")</small>
+                    </a>
+                }
+            </div>
+            <button type="button" class="rail-arrow next" aria-label="Cuộn phải"><partial name="_Icon" model='"chev-r"' /></button>
+        </div>
+    </section>
+}
+
+<section class="lp-band reveal" style="--i:6" aria-label="Thống kê thư viện">
+    <div><b>@Model.TongDauSach</b><span>đầu sách</span></div>
+    <div><b>@Model.TongBanSach</b><span>bản sách trong kho</span></div>
+    <div><b>@Model.TongBanDoc</b><span>bạn đọc</span></div>
+    <div><b>@Model.TongLuotMuon</b><span>lượt mượn đã ghi nhận</span></div>
+</section>
+
+<section class="lp-section lp-info reveal" style="--i:7">
+    <div>
+        <div class="lp-head"><div><h2>Câu hỏi thường gặp</h2><span class="text-muted">Quy định mượn trả, gia hạn và tiền phạt</span></div></div>
+        <div class="accordion lp-faq" id="faq">
+            @{
+                var faqs = new List<(string Q, string A)>
+                {
+                    ("Mỗi lần được mượn tối đa bao nhiêu cuốn?", $"Tối đa {cfg.SoPhieuToiDa} phiếu đang xử lý cùng lúc (tính cả phiếu chờ duyệt và đã duyệt)."),
+                    ("Thời hạn mượn là bao lâu?", $"Sinh viên {cfg.SoNgayMuonSinhVien} ngày, giảng viên {cfg.SoNgayMuonGiangVien} ngày, bạn đọc khác {cfg.SoNgayMuonKhac} ngày, tính từ ngày nhận sách."),
+                    ("Gia hạn sách như thế nào?", $"Gửi yêu cầu gia hạn khi sách chưa quá hạn. Mỗi phiếu gia hạn tối đa {cfg.SoLanGiaHanToiDa} lần, mỗi lần tối đa {cfg.SoNgayGiaHanToiDa} ngày, thủ thư sẽ duyệt."),
+                    ("Trả muộn hoặc làm hỏng sách thì sao?", $"Trả muộn phạt {cfg.TienPhatMoiNgay.ToString("N0")} ₫ mỗi ngày. Sách hư hỏng phạt {Pct(cfg.TyLePhatHuHong)}% giá bìa, làm mất phạt {Pct(cfg.TyLePhatMat)}% giá bìa."),
+                    ("Tôi nhận sách ở đâu?", "Khi phiếu được duyệt, bạn đến quầy thủ thư để nhận sách theo vị trí kệ ghi trên trang chi tiết.")
+                };
+            }
+            @for (var i = 0; i < faqs.Count; i++)
+            {
+                <div class="accordion-item">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-@i" aria-expanded="false" aria-controls="faq-@i">@faqs[i].Q</button>
+                    </h3>
+                    <div id="faq-@i" class="accordion-collapse collapse" data-bs-parent="#faq">
+                        <div class="accordion-body">@faqs[i].A</div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div>
+        @* Nội dung tĩnh: sửa trực tiếp tại đây khi giờ mở cửa hoặc thông tin liên hệ thay đổi. *@
+        <div class="lp-head"><div><h2>Giờ mở cửa và liên hệ</h2></div></div>
+        <div class="app-card lp-visit">
+            <dl class="lp-hours">
+                <dt>Thứ 2 – Thứ 6</dt><dd>7:30 – 17:00</dd>
+                <dt>Thứ 7</dt><dd>8:00 – 11:30</dd>
+                <dt>Chủ nhật</dt><dd>Nghỉ</dd>
+            </dl>
+            <p class="mb-1"><b>Phòng đọc, tầng 2</b><br /><span class="text-muted">Khu thư viện trường UNETI</span></p>
+            <p class="mb-0 text-muted">thuvien@uneti.edu.vn</p>
+        </div>
+
+        @if (!Current.IsAuthenticated)
+        {
+            <div class="lp-cta">
+                <h3>Tạo tài khoản miễn phí</h3>
+                <p>Đăng ký trong vài phút để theo dõi phiếu mượn và đăng ký mượn sách trực tuyến.</p>
+                <div class="d-flex gap-2">
+                    <a asp-controller="TaiKhoan" asp-action="Register" class="btn btn-light">Đăng ký</a>
+                    <a asp-controller="TaiKhoan" asp-action="Login" class="btn btn-outline-light">Đăng nhập</a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="lp-cta">
+                <h3>Phiếu mượn của bạn</h3>
+                <p>Theo dõi trạng thái, hạn trả và gia hạn ngay trong trang cá nhân.</p>
+                <a asp-controller="PhieuMuon" asp-action="MyLoans" class="btn btn-light">Xem phiếu mượn</a>
+            </div>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/js/rows.js" asp-append-version="true"></script>
+}

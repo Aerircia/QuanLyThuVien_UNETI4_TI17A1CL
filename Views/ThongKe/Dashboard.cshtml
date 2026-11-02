@@ -1,0 +1,129 @@
+@* Họ và tên: Phùng Ngọc Bảo *@
+@* Mã sinh viên: 23103100278 *@
+@* Nội dung thực hiện: Dashboard tổng quan thư viện *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.ThongKeDashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard thư viện";
+    var summary = Model.Summary;
+    var report = Model.Report;
+    var maxLoan = Math.Max(report.LuotMuonTheoThang.Select(x => x.SoLuong).DefaultIfEmpty(0).Max(), 1);
+    var maxReturn = Math.Max(report.LuotTraTheoThang.Select(x => x.SoLuong).DefaultIfEmpty(0).Max(), 1);
+    var maxBook = Math.Max(report.Top10Sach.Select(x => x.SoLuot).DefaultIfEmpty(0).Max(), 1);
+    var maxReader = Math.Max(report.BanDocMuonNhieu.Select(x => x.SoLuot).DefaultIfEmpty(0).Max(), 1);
+    var statusTotal = Math.Max(report.PhieuMuonTheoTrangThai.Sum(x => x.SoPhieu), 1);
+    var cards = new[]
+    {
+        new { Label = "Tổng đầu sách", Value = summary.TongDauSach.ToString("N0"), Note = $"{summary.TongTheLoai:N0} thể loại", Tone = "violet", Icon = "fa-solid fa-book" },
+        new { Label = "Bạn đọc", Value = summary.TongBanDoc.ToString("N0"), Note = "Tài khoản bạn đọc", Tone = "green", Icon = "fa-solid fa-users" },
+        new { Label = "Tổng số cuốn", Value = summary.TongCuonSach.ToString("N0"), Note = "Quy mô kho sách", Tone = "cyan", Icon = "fa-solid fa-layer-group" },
+        new { Label = "Đang mượn", Value = summary.SoPhieuDangMuon.ToString("N0"), Note = "Phiếu đã giao sách", Tone = "amber", Icon = "fa-solid fa-book-open" },
+        new { Label = "Quá hạn", Value = summary.SoPhieuQuaHan.ToString("N0"), Note = "Cần theo dõi", Tone = "red", Icon = "fa-solid fa-triangle-exclamation" }
+    };
+}
+
+<div class="la-dashboard">
+    <div class="la-page-toolbar">
+        <div>
+            <span class="la-page-kicker"><i class="fa-solid fa-gauge-high"></i> UNETI LIBRARY</span>
+            <h1>Tổng quan thư viện</h1>
+            <p>Theo dõi nhanh tình hình kho sách, bạn đọc và hoạt động mượn trả.</p>
+        </div>
+        <div class="la-page-toolbar-actions">
+            <span class="la-dash-date"><i class="fa-regular fa-calendar"></i> @DateTime.Today.ToString("dd/MM/yyyy")</span>
+        </div>
+    </div>
+
+    <section class="la-dash-kpis" aria-label="Các chỉ số tổng quan">
+        @foreach (var card in cards)
+        {
+            <article class="la-dash-kpi la-dash-@card.Tone">
+                <span class="la-dash-kpi-icon" aria-hidden="true"><i class="@card.Icon"></i></span>
+                <div class="la-dash-kpi-value">@card.Value</div>
+                <div class="la-dash-kpi-label">@card.Label</div>
+                <div class="la-dash-kpi-note">@card.Note</div>
+            </article>
+        }
+    </section>
+
+    <section class="la-dash-main-grid">
+        <div class="la-dash-left-column">
+            <div class="la-dash-chart-grid">
+                <article class="la-dash-panel">
+                    <div class="la-dash-panel-heading"><div><span class="la-dash-overline">HOẠT ĐỘNG MƯỢN</span><h2>Lượt mượn theo tháng</h2></div><span class="la-dash-period">12 tháng gần nhất</span></div>
+                    @if (report.LuotMuonTheoThang.Count == 0 || !report.LuotMuonTheoThang.Any(x => x.SoLuong > 0))
+                    { <div class="la-dash-empty">Chưa có dữ liệu lượt mượn.</div> }
+                    else
+                    {
+                        <div class="la-dash-column-chart" role="img" aria-label="Biểu đồ lượt mượn theo tháng">
+                            @foreach (var item in report.LuotMuonTheoThang)
+                            {
+                                var height = Math.Max(3, (int)Math.Round(item.SoLuong * 100.0 / maxLoan));
+                                <div class="la-dash-column-item"><span class="la-dash-column-value">@item.SoLuong</span><div class="la-dash-column-track"><span style="height:@height%"></span></div><small>@item.Ky.Substring(5)</small></div>
+                            }
+                        </div>
+                        <div class="la-dash-legend"><span><i class="la-legend-blue"></i> Số phiếu đã giao sách</span></div>
+                    }
+                </article>
+                <article class="la-dash-panel">
+                    <div class="la-dash-panel-heading"><div><span class="la-dash-overline">HOẠT ĐỘNG TRẢ SÁCH</span><h2>Lượt trả theo tháng</h2></div><span class="la-dash-period">12 tháng gần nhất</span></div>
+                    @if (report.LuotTraTheoThang.Count == 0 || !report.LuotTraTheoThang.Any(x => x.SoLuong > 0))
+                    { <div class="la-dash-empty">Chưa có dữ liệu trả sách.</div> }
+                    else
+                    {
+                        <div class="la-dash-column-chart la-dash-return-chart" role="img" aria-label="Biểu đồ lượt trả theo tháng">
+                            @foreach (var item in report.LuotTraTheoThang)
+                            {
+                                var height = Math.Max(3, (int)Math.Round(item.SoLuong * 100.0 / maxReturn));
+                                <div class="la-dash-column-item"><span class="la-dash-column-value">@item.SoLuong</span><div class="la-dash-column-track"><span style="height:@height%"></span></div><small>@item.Ky.Substring(5)</small></div>
+                            }
+                        </div>
+                        <div class="la-dash-legend"><span><i class="la-legend-green"></i> Số lượt trả đã ghi nhận</span></div>
+                    }
+                </article>
+            </div>
+
+            <article class="la-dash-panel la-dash-status-panel">
+                <div class="la-dash-panel-heading"><div><span class="la-dash-overline">LIBRARY ACTIVITY</span><h2>Tình hình phiếu mượn</h2></div><a asp-controller="PhieuMuon" asp-action="Index" class="la-dash-view-all">Quản lý phiếu mượn <i class="fa-solid fa-arrow-right"></i></a></div>
+                <div class="la-dash-status-table-wrap"><table class="la-dash-status-table"><thead><tr><th>Trạng thái</th><th>Số lượng</th><th>Tỷ trọng</th><th>Tiến độ</th></tr></thead><tbody>
+                @foreach (var item in report.PhieuMuonTheoTrangThai)
+                {
+                    var percent = (int)Math.Round(item.SoPhieu * 100.0 / statusTotal);
+                    <tr><td><span class="la-dash-status-name"><i></i>@item.TrangThai</span></td><td><strong>@item.SoPhieu.ToString("N0")</strong></td><td>@percent%</td><td><div class="la-dash-progress"><span style="width:@percent%"></span></div></td></tr>
+                }
+                </tbody></table></div>
+            </article>
+        </div>
+
+        <aside class="la-dash-right-column">
+            <article class="la-dash-panel la-dash-ranking-panel">
+                <div class="la-dash-panel-heading"><div><span class="la-dash-overline">ĐƯỢC QUAN TÂM</span><h2>Sách mượn nhiều</h2></div><span class="la-count-pill">Top 5</span></div>
+                @if (report.Top10Sach.Count == 0) { <div class="la-dash-empty">Chưa có dữ liệu sách được mượn.</div> }
+                else
+                {
+                    <div class="la-dash-rank-list">@{ var rankBook = 0; }
+                    @foreach (var item in report.Top10Sach.Take(5))
+                    {
+                        rankBook++; var width = (int)Math.Round(item.SoLuot * 100.0 / maxBook);
+                        <div class="la-dash-rank-item"><span class="la-dash-rank-number">@rankBook.ToString("00")</span><div class="la-dash-rank-content"><strong title="@item.TenSach">@item.TenSach</strong><div class="la-dash-rank-track"><span style="width:@width%"></span></div><small>@item.SoLuot lượt mượn</small></div></div>
+                    }
+                    </div>
+                }
+            </article>
+            <article class="la-dash-panel la-dash-ranking-panel">
+                <div class="la-dash-panel-heading"><div><span class="la-dash-overline">CỘNG ĐỒNG</span><h2>Bạn đọc tích cực</h2></div><span class="la-count-pill">Top 5</span></div>
+                @if (report.BanDocMuonNhieu.Count == 0) { <div class="la-dash-empty">Chưa có dữ liệu bạn đọc.</div> }
+                else
+                {
+                    <div class="la-dash-rank-list">@{ var rankReader = 0; }
+                    @foreach (var item in report.BanDocMuonNhieu.Take(5))
+                    {
+                        rankReader++; var width = (int)Math.Round(item.SoLuot * 100.0 / maxReader);
+                        <div class="la-dash-rank-item"><span class="la-dash-rank-number la-dash-rank-member">@rankReader.ToString("00")</span><div class="la-dash-rank-content"><strong title="@item.HoTen">@item.HoTen</strong><div class="la-dash-rank-track la-dash-member-track"><span style="width:@width%"></span></div><small>@item.SoLuot lượt mượn · Mã @item.MaBanDoc</small></div></div>
+                    }
+                    </div>
+                }
+            </article>
+        </aside>
+    </section>
+</div>

@@ -1,0 +1,122 @@
+/* Họ và tên: Lại Anh Quân */
+/* Mã sinh viên: 23103100255 */
+/* Nội dung thực hiện: CSS thẻ sách, kho sách (tìm kiếm/lọc/lưới/danh sách) và chi tiết sách; dùng chung với trang chủ */
+
+/* ---------- Bìa sách ---------- */
+.bk-cover { position: relative; aspect-ratio: 2 / 3; overflow: hidden; border: 1px solid var(--app-line); border-radius: 12px; background: #fff; }
+.bk-cover > img, .bk-cover > .book-cover-mock { transition: transform .35s ease; }
+.bk-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.bk-cover .book-cover-mock { height: 100%; aspect-ratio: auto; border-radius: 0; box-shadow: none; }
+.bk-cover.is-off img, .bk-cover.is-off .book-cover-mock { filter: grayscale(.75) opacity(.75); }
+.book-cover-mock.cv-0 { background: linear-gradient(135deg, #3f5a46, #5b7f4d); }
+.book-cover-mock.cv-1 { background: linear-gradient(135deg, #6b5a3e, #a58a55); }
+.book-cover-mock.cv-2 { background: linear-gradient(135deg, #7a4f55, #b57f86); }
+.book-cover-mock.cv-3 { background: linear-gradient(135deg, #3b5b63, #5f929d); }
+.book-cover-mock.cv-4 { background: linear-gradient(135deg, #5b6244, #959c68); }
+.book-cover-mock.cv-5 { background: linear-gradient(135deg, #5a4f72, #8a7ba8); }
+.bk-cover .book-cover-mock h5 { font-size: 15px; }
+
+/* ---------- Thẻ sách (lưới) ---------- */
+.bk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 1.5rem 1rem; margin-bottom: 1rem; }
+.bk-grid-sm { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.bk-item { min-width: 0; animation: ui-rise .35s cubic-bezier(.22, .8, .24, 1) both; animation-delay: min(calc(var(--i, 0) * 25ms), 300ms); }
+body.app-body .bk-card { display: block; color: var(--app-text); text-decoration: none; }
+body.app-body .bk-card:hover { color: var(--app-text); }
+.bk-card .bk-cover { transition: transform .25s ease, box-shadow .25s ease; }
+.bk-card:hover .bk-cover { transform: translateY(-5px); box-shadow: 0 14px 28px rgba(55, 83, 42, .22); }
+.bk-card:hover .bk-cover > img, .bk-card:hover .bk-cover > .book-cover-mock { transform: scale(1.04); }
+.bk-card:active .bk-cover { transform: translateY(-2px) scale(.98); }
+body.app-body .bk-title { display: -webkit-box; min-height: 2.7em; margin: .6rem 0 .15rem; overflow: hidden; font-size: 14px; font-weight: 600; line-height: 1.35; letter-spacing: 0; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.bk-author { overflow: hidden; color: var(--app-muted); font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
+.bk-meta { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-top: .4rem; }
+.bk-price { color: var(--app-ac-hover); font-size: 13px; font-weight: 700; white-space: nowrap; }
+
+/* ---------- Dòng sách (danh sách) ---------- */
+.bk-list { display: grid; gap: .75rem; margin-bottom: 1rem; }
+body.app-body .bk-row { display: grid; grid-template-columns: 64px 1fr auto; align-items: center; gap: 1rem; padding: .75rem 1rem; border: 1px solid var(--app-line); border-radius: 14px; background: #fff; color: var(--app-text); text-decoration: none; transition: box-shadow .2s ease, transform .2s ease, border-color .2s ease; }
+body.app-body .bk-row:hover { transform: translateX(4px); border-color: #cfdcc2; box-shadow: var(--app-shadow-md); color: var(--app-text); }
+.bk-row .bk-title { min-height: 0; -webkit-line-clamp: 1; font-size: 15px; }
+.bk-row-cover .bk-cover { border-radius: 8px; }
+.bk-row-cover .book-cover-mock { padding: 4px; }
+.bk-row-cover .book-cover-mock > * { display: none; }
+
+/* ---------- Kho sách: tiêu đề + ô tìm kiếm dạng viên thuốc ---------- */
+.ch2 { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.1rem; }
+body.app-body .ch2 h1 { margin-bottom: .2rem; font-size: clamp(1.5rem, 2.4vw, 1.9rem); }
+.sfx { display: flex; flex: 1 1 380px; max-width: 640px; gap: .6rem; }
+.sbar { display: flex; flex: 1; align-items: center; padding: 4px; border: 1px solid var(--app-line); border-radius: 999px; background: #fff; box-shadow: var(--app-shadow-sm); transition: box-shadow .2s ease, border-color .2s ease; }
+.sbar:focus-within { border-color: #93b27e; box-shadow: 0 0 0 3px rgba(91, 127, 77, .13); }
+body.app-body .sbar-input { flex: 1; min-width: 0; height: 40px; padding: 0 1rem; border: 0; outline: 0; background: transparent; color: var(--app-text); font-size: 14px; }
+.sbar-input::placeholder { color: #9aa493; }
+.filter-open { white-space: nowrap; }
+
+/* ---------- Thanh bên bộ lọc (offcanvas dưới 992px) ---------- */
+.cl { display: grid; grid-template-columns: 1fr; gap: 1.5rem; align-items: start; }
+.cl-main { min-width: 0; scroll-margin-top: 90px; outline: 0; }
+body.app-body .cl-side h4 { margin: 1.1rem 0 .4rem; color: var(--app-muted); font-size: 11.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+body.app-body .cl-side h4:first-child { margin-top: 0; }
+.cl-side { --bs-offcanvas-width: 320px; max-width: 88vw; }
+body.app-body .opt { position: relative; display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin: 0; padding: 7px 10px; border-radius: 12px; color: var(--app-text); font-size: 13.5px; font-weight: 500; cursor: pointer; transition: background-color .15s ease, color .15s ease; }
+.opt input { position: absolute; opacity: 0; pointer-events: none; }
+.opt:hover { background: #f2f6ed; }
+.opt:has(input:checked) { background: var(--app-ac-soft); color: var(--app-ac-hover); font-weight: 700; }
+.opt:has(input:focus-visible) { outline: 3px solid rgba(91, 127, 77, .28); outline-offset: 1px; }
+.opt-l { display: flex; align-items: center; gap: .55rem; min-width: 0; }
+.opt-l .ico { color: var(--app-ac); }
+.opt-c { color: var(--app-muted); font-size: 12px; font-weight: 500; }
+.yr { display: flex; align-items: center; gap: .4rem; }
+.yr .form-control { min-width: 0; }
+.cl-side-actions { display: flex; gap: .5rem; margin-top: 1.1rem; }
+.js-catalog .no-js-only { display: none; }
+
+@media (min-width: 992px) {
+  .cl { grid-template-columns: 260px minmax(0, 1fr); }
+  body.app-body .cl-side { position: sticky; top: 88px; max-height: calc(100vh - 104px); overflow-y: auto; }
+  .cl-side-card { width: 100%; padding: 1rem 1rem 1.1rem; border: 1px solid var(--app-line); border-radius: 16px; background: #fff; box-shadow: var(--app-shadow-sm); }
+}
+
+/* ---------- Thanh công cụ: số lượng, chip, trạng thái, sắp xếp, lưới/danh sách ---------- */
+.ctool { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; min-height: 40px; margin-bottom: 1rem; }
+.ctool .sp { flex: 1; }
+.ctool .cnt { margin-right: .25rem; font-size: 14px; }
+body.app-body .ctool-sel { width: auto; min-width: 150px; min-height: 36px; padding-top: 5px; padding-bottom: 5px; border-radius: 999px; }
+body.app-body .fchip { display: inline-flex; align-items: center; gap: .4rem; padding: 4px 6px 4px 12px; border-radius: 999px; background: var(--app-ac-soft); color: var(--app-ac-hover); font-size: 13px; font-weight: 600; text-decoration: none; transition: background-color .15s ease, transform .15s ease; }
+body.app-body .fchip:hover { background: var(--app-ac-soft-2); color: var(--app-ac-hover); }
+body.app-body .fchip:active { transform: scale(.95); }
+.fchip i { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--app-ac-soft-2); font-style: normal; font-size: 12px; line-height: 1; }
+.seg { display: inline-flex; padding: 3px; border-radius: 999px; background: #eaf0e1; }
+body.app-body .seg a { display: grid; place-items: center; width: 36px; height: 30px; border-radius: 999px; color: var(--app-muted); transition: background-color .15s ease, color .15s ease; }
+body.app-body .seg a:hover { color: var(--app-ac-hover); }
+body.app-body .seg a.on { background: var(--app-ac); color: #fff; box-shadow: 0 2px 6px rgba(91, 127, 77, .3); }
+.cat-empty { animation: ui-rise .35s ease both; }
+
+/* ---------- Danh mục dạng viên thuốc (mobile) ---------- */
+.pills { padding-bottom: .5rem; }
+body.app-body .pill { display: inline-flex; align-items: center; gap: .4rem; padding: 8px 16px; border-radius: 999px; background: #fff; box-shadow: 0 1px 3px rgba(55, 83, 42, .12); color: var(--app-text); font-size: 13px; font-weight: 600; text-decoration: none; white-space: nowrap; transition: background-color .15s ease, color .15s ease, transform .15s ease; }
+body.app-body .pill:hover { color: var(--app-ac-hover); }
+body.app-body .pill.on { background: var(--app-ac); color: #fff; }
+.pill:active { transform: scale(.95); }
+
+/* ---------- Chi tiết sách ---------- */
+.bk-detail { display: grid; grid-template-columns: 240px minmax(0, 1fr) 300px; gap: 2rem; align-items: start; }
+.bk-detail-cover .bk-cover { border-radius: 14px; box-shadow: var(--app-shadow-md); }
+body.app-body .bk-detail-info h1 { margin-bottom: .25rem; }
+.bk-dl { display: grid; grid-template-columns: 130px 1fr; gap: .45rem 1rem; margin: 1rem 0 1.25rem; }
+.bk-dl dt { color: var(--app-muted); font-weight: 600; }
+.bk-dl dd { margin: 0; }
+.bk-desc { max-width: 70ch; white-space: pre-line; }
+.bk-borrow { position: sticky; top: 90px; }
+
+@media (max-width: 991px) {
+  .bk-detail { grid-template-columns: 200px minmax(0, 1fr); }
+  .bk-borrow { grid-column: 1 / -1; position: static; }
+}
+@media (max-width: 575px) {
+  .bk-detail { grid-template-columns: 1fr; }
+  .bk-detail-cover { max-width: 200px; }
+  .bk-grid { grid-template-columns: repeat(2, 1fr); }
+  body.app-body .bk-row { grid-template-columns: 52px 1fr; }
+  .bk-row-price { grid-column: 2; }
+  .ctool .sp { display: none; }
+  body.app-body .ctool-sel { flex: 1 1 140px; }
+}

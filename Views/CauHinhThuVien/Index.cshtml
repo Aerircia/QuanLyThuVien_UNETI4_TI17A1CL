@@ -6,87 +6,173 @@
     ViewData["Title"] = "Cấu hình thư viện";
 }
 
-<h1 class="h3 mb-3">Cấu hình thư viện</h1>
-
-@if (TempData["Success"] is string ok)
-{
-    <div class="alert alert-success">@ok</div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/cauhinh.css" asp-append-version="true" />
 }
-
-<p class="text-muted">
-    Thay đổi chỉ áp dụng cho các thao tác mới. Phiếu đã giao sách giữ nguyên hạn trả;
-    tiền phạt tính theo mức hiện hành tại thời điểm trả sách.
-</p>
-
-<form asp-action="Index" method="post">
-    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-
-    <div class="card mb-3">
-        <div class="card-header">Thời hạn mượn</div>
-        <div class="card-body row g-3">
-            <div class="col-md-4">
-                <label asp-for="SoNgayMuonSinhVien" class="form-label"></label>
-                <input asp-for="SoNgayMuonSinhVien" class="form-control" type="number" min="1" max="365" />
-                <span asp-validation-for="SoNgayMuonSinhVien" class="text-danger"></span>
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-8">
+        <div class="page-cauhinh">
+            <div class="page-head">
+                <h1>Cấu hình thư viện</h1>
+                <p>Các quy định mượn, trả và tiền phạt áp dụng cho toàn thư viện.</p>
             </div>
-            <div class="col-md-4">
-                <label asp-for="SoNgayMuonGiangVien" class="form-label"></label>
-                <input asp-for="SoNgayMuonGiangVien" class="form-control" type="number" min="1" max="365" />
-                <span asp-validation-for="SoNgayMuonGiangVien" class="text-danger"></span>
+
+            @if (TempData["Success"] is string ok)
+            {
+                <div class="alert alert-success" role="status">@ok</div>
+            }
+
+            <div class="alert alert-info page-notice" role="note">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></svg>
+                <span>
+                    Thay đổi chỉ áp dụng cho các thao tác mới. Phiếu đã giao sách giữ nguyên hạn trả;
+                    tiền phạt tính theo mức hiện hành tại thời điểm trả sách.
+                </span>
             </div>
-            <div class="col-md-4">
-                <label asp-for="SoNgayMuonKhac" class="form-label"></label>
-                <input asp-for="SoNgayMuonKhac" class="form-control" type="number" min="1" max="365" />
-                <span asp-validation-for="SoNgayMuonKhac" class="text-danger"></span>
-            </div>
+
+            <form id="cfgForm" asp-action="Index" method="post" novalidate>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="page-grid">
+                    <section class="card" aria-labelledby="grpMuon">
+                        <div class="page-card-head">
+                            <h2 id="grpMuon">Thời hạn mượn</h2>
+                            <p>Số ngày được mượn theo loại bạn đọc.</p>
+                        </div>
+                        <div class="page-fields">
+                            <div>
+                                <label asp-for="SoNgayMuonSinhVien" class="form-label"></label>
+                                <div class="input-group">
+                                    <input asp-for="SoNgayMuonSinhVien" class="form-control" type="number" min="1" max="365" inputmode="numeric" />
+                                    <span class="input-group-text">ngày</span>
+                                </div>
+                                <span class="page-hint">Từ 1 đến 365</span>
+                                <span asp-validation-for="SoNgayMuonSinhVien" class="text-danger"></span>
+                            </div>
+                            <div>
+                                <label asp-for="SoNgayMuonGiangVien" class="form-label"></label>
+                                <div class="input-group">
+                                    <input asp-for="SoNgayMuonGiangVien" class="form-control" type="number" min="1" max="365" inputmode="numeric" />
+                                    <span class="input-group-text">ngày</span>
+                                </div>
+                                <span class="page-hint">Từ 1 đến 365</span>
+                                <span asp-validation-for="SoNgayMuonGiangVien" class="text-danger"></span>
+                            </div>
+                            <div>
+                                <label asp-for="SoNgayMuonKhac" class="form-label"></label>
+                                <div class="input-group">
+                                    <input asp-for="SoNgayMuonKhac" class="form-control" type="number" min="1" max="365" inputmode="numeric" />
+                                    <span class="input-group-text">ngày</span>
+                                </div>
+                                <span class="page-hint">Từ 1 đến 365</span>
+                                <span asp-validation-for="SoNgayMuonKhac" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="card" aria-labelledby="grpGioiHan">
+                        <div class="page-card-head">
+                            <h2 id="grpGioiHan">Giới hạn mượn và gia hạn</h2>
+                            <p>Số phiếu và số lần gia hạn mỗi bạn đọc được phép.</p>
+                        </div>
+                        <div class="page-fields">
+                            <div>
+                                <label asp-for="SoPhieuToiDa" class="form-label"></label>
+                                <div class="input-group">
+                                    <input asp-for="SoPhieuToiDa" class="form-control" type="number" min="1" max="20" inputmode="numeric" />
+                                    <span class="input-group-text">phiếu</span>
+                                </div>
+                                <span class="page-hint">Từ 1 đến 20</span>
+                                <span asp-validation-for="SoPhieuToiDa" class="text-danger"></span>
+                            </div>
+                            <div>
+                                <label asp-for="SoLanGiaHanToiDa" class="form-label"></label>
+                                <div class="input-group">
+                                    <input asp-for="SoLanGiaHanToiDa" class="form-control" type="number" min="0" max="10" inputmode="numeric" />
+                                    <span class="input-group-text">lần</span>
+                                </div>
+                                <span class="page-hint">Từ 0 đến 10 (0 = không cho gia hạn)</span>
+                                <span asp-validation-for="SoLanGiaHanToiDa" class="text-danger"></span>
+                            </div>
+                            <div>
+                                <label asp-for="SoNgayGiaHanToiDa" class="form-label"></label>
+                                <div class="input-group">
+                                    <input asp-for="SoNgayGiaHanToiDa" class="form-control" type="number" min="1" max="30" inputmode="numeric" />
+                                    <span class="input-group-text">ngày</span>
+                                </div>
+                                <span class="page-hint">Từ 1 đến 30</span>
+                                <span asp-validation-for="SoNgayGiaHanToiDa" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="card" aria-labelledby="grpPhat">
+                        <div class="page-card-head">
+                            <h2 id="grpPhat">Mức phạt</h2>
+                            <p>Phạt hư hỏng và mất tính theo phần trăm giá bìa sách.</p>
+                        </div>
+                        <div class="page-fields">
+                            <div>
+                                <label asp-for="TienPhatMoiNgay" class="form-label"></label>
+                                <div class="input-group">
+                                    <input asp-for="TienPhatMoiNgay" class="form-control" type="number" min="0" max="1000000" step="100" inputmode="numeric" />
+                                    <span class="input-group-text">₫/ngày</span>
+                                </div>
+                                <span class="page-hint">Từ 0 đến 1.000.000</span>
+                                <span asp-validation-for="TienPhatMoiNgay" class="text-danger"></span>
+                            </div>
+                            <div>
+                                <label asp-for="PhanTramPhatHuHong" class="form-label"></label>
+                                <div class="input-group">
+                                    <input asp-for="PhanTramPhatHuHong" class="form-control" type="number" min="0" max="100" step="any" inputmode="decimal" />
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <span class="page-hint">Từ 0 đến 100</span>
+                                <span asp-validation-for="PhanTramPhatHuHong" class="text-danger"></span>
+                            </div>
+                            <div>
+                                <label asp-for="PhanTramPhatMat" class="form-label"></label>
+                                <div class="input-group">
+                                    <input asp-for="PhanTramPhatMat" class="form-control" type="number" min="0" max="100" step="any" inputmode="decimal" />
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <span class="page-hint">Từ 0 đến 100</span>
+                                <span asp-validation-for="PhanTramPhatMat" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="page-actions">
+                    <button type="button" class="btn btn-primary"
+                            data-confirm-form="#cfgForm"
+                            data-confirm-title="Lưu cấu hình?"
+                            data-confirm-message="Thay đổi sẽ áp dụng cho các thao tác mới trên toàn hệ thống."
+                            data-confirm-ok="Đồng ý">Lưu cấu hình</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Khôi phục giá trị đã lưu</a>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
-    <div class="card mb-3">
-        <div class="card-header">Giới hạn mượn và gia hạn</div>
-        <div class="card-body row g-3">
-            <div class="col-md-4">
-                <label asp-for="SoPhieuToiDa" class="form-label"></label>
-                <input asp-for="SoPhieuToiDa" class="form-control" type="number" min="1" max="20" />
-                <span asp-validation-for="SoPhieuToiDa" class="text-danger"></span>
-            </div>
-            <div class="col-md-4">
-                <label asp-for="SoLanGiaHanToiDa" class="form-label"></label>
-                <input asp-for="SoLanGiaHanToiDa" class="form-control" type="number" min="0" max="10" />
-                <span asp-validation-for="SoLanGiaHanToiDa" class="text-danger"></span>
-            </div>
-            <div class="col-md-4">
-                <label asp-for="SoNgayGiaHanToiDa" class="form-label"></label>
-                <input asp-for="SoNgayGiaHanToiDa" class="form-control" type="number" min="1" max="30" />
-                <span asp-validation-for="SoNgayGiaHanToiDa" class="text-danger"></span>
-            </div>
-        </div>
-    </div>
 
-    <div class="card mb-3">
-        <div class="card-header">Mức phạt</div>
-        <div class="card-body row g-3">
-            <div class="col-md-4">
-                <label asp-for="TienPhatMoiNgay" class="form-label"></label>
-                <input asp-for="TienPhatMoiNgay" class="form-control" type="number" min="0" max="1000000" step="100" />
-                <span asp-validation-for="TienPhatMoiNgay" class="text-danger"></span>
-            </div>
-            <div class="col-md-4">
-                <label asp-for="PhanTramPhatHuHong" class="form-label"></label>
-                <input asp-for="PhanTramPhatHuHong" class="form-control" type="number" min="0" max="100" step="any" />
-                <span asp-validation-for="PhanTramPhatHuHong" class="text-danger"></span>
-            </div>
-            <div class="col-md-4">
-                <label asp-for="PhanTramPhatMat" class="form-label"></label>
-                <input asp-for="PhanTramPhatMat" class="form-control" type="number" min="0" max="100" step="any" />
-                <span asp-validation-for="PhanTramPhatMat" class="text-danger"></span>
-            </div>
-        </div>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Lưu cấu hình</button>
-</form>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/forms.js" asp-append-version="true"></script>
+    <script>
+        // forms.js gửi form bằng form.submit() (bỏ qua validation), nên kiểm tra phía client trước khi mở hộp xác nhận.
+        // Server vẫn validate lại khi POST.
+        document.addEventListener('click', function (e) {
+            var trigger = e.target.closest('[data-confirm-form]');
+            if (!trigger || !window.jQuery) return;
+            var form = document.querySelector(trigger.dataset.confirmForm);
+            if (form && !jQuery(form).valid()) {
+                e.stopPropagation();
+                var bad = form.querySelector('.input-validation-error');
+                if (bad) bad.focus();
+            }
+        }, true);
+    </script>
 }

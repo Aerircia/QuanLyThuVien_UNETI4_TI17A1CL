@@ -1,0 +1,49 @@
+/* Họ và tên: Lại Anh Quân */
+/* Mã sinh viên: 23103100255 */
+/* Nội dung thực hiện: CSS riêng cho trang đăng nhập/đăng ký/quên mật khẩu và quản lý tài khoản (dùng biến --app-* của site.css) */
+
+/* ---------- Trang xác thực ---------- */
+.auth-wrap { display: flex; justify-content: center; padding: 1.5rem 0 2.5rem; }
+.auth-card { width: 100%; max-width: 440px; padding: 2rem 2rem 1.5rem; }
+.auth-icon { display: grid; place-items: center; width: 56px; height: 56px; margin: 0 auto 1rem; border-radius: 50%; background: var(--app-ac-soft); color: var(--app-ac); }
+.auth-icon svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+body.app-body .auth-title { margin-bottom: .35rem; text-align: center; font-size: 1.4rem; }
+.auth-sub { margin-bottom: 1.25rem; text-align: center; color: var(--app-muted); }
+.auth-foot { margin: 1.25rem 0 0; text-align: center; color: var(--app-muted); font-size: 13px; }
+
+/* ---------- Thanh 3 bước quên mật khẩu ---------- */
+.reset-steps { display: flex; gap: .25rem; margin: 0 0 1.5rem; padding: 0; list-style: none; }
+.reset-steps li { position: relative; flex: 1; text-align: center; color: var(--app-muted); font-size: 12px; font-weight: 600; }
+.reset-steps li:not(:first-child)::before { content: ''; position: absolute; top: 13px; right: 50%; width: 100%; height: 2px; background: var(--app-line); }
+.reset-steps-dot { position: relative; z-index: 1; display: grid; place-items: center; width: 28px; height: 28px; margin: 0 auto .3rem; border-radius: 50%; background: #e8eee1; font-weight: 800; }
+.reset-steps li.active, .reset-steps li.done { color: var(--app-ac-hover); }
+.reset-steps li.active .reset-steps-dot, .reset-steps li.done .reset-steps-dot { background: var(--app-ac); color: #fff; }
+.reset-steps li.active::before, .reset-steps li.done::before { background: var(--app-ac); }
+
+/* ---------- Ô nhập OTP ---------- */
+.otp-boxes { display: flex; justify-content: center; gap: .5rem; }
+body.app-body .otp-box { width: 3rem; height: 3.5rem; padding: 0; text-align: center; font-size: 1.4rem; font-weight: 700; }
+
+/* ---------- Ô mật khẩu có nút Hiện/Ẩn (bù lại bo góc pill của .btn trong site.css) ---------- */
+body.app-body .input-group > .form-control:not(:last-child) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+body.app-body .input-group > .btn { min-width: 48px; border-radius: 0 var(--app-radius-sm) var(--app-radius-sm) 0; }
+
+/* Nút mắt hiện/ẩn mật khẩu: svg đầu = đang ẩn, svg sau = đang hiện */
+body.app-body .pw-toggle .ico { width: 18px; height: 18px; }
+body.app-body .pw-toggle .ico:last-child { display: none; }
+body.app-body .pw-toggle.is-visible .ico:first-child { display: none; }
+body.app-body .pw-toggle.is-visible .ico:last-child { display: block; }
+
+/* ---------- Quản lý tài khoản ---------- */
+.page-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: 1.25rem; }
+body.app-body .page-head h1 { margin-bottom: .15rem; }
+.filter-bar { margin-bottom: 1rem; }
+.account-form { max-width: 680px; }
+.form-actions { display: flex; gap: .5rem; margin-top: .5rem; }
+.acc-cell { display: flex; align-items: center; gap: .75rem; }
+.acc-avatar { flex: 0 0 36px; width: 36px; height: 36px; font-size: 13px; }
+
+@media (max-width: 480px) {
+  .auth-card { padding: 1.5rem 1.25rem 1.25rem; }
+  body.app-body .otp-box { width: 2.5rem; height: 3rem; font-size: 1.2rem; }
+}

@@ -1,60 +1,55 @@
-// Họ và tên: Vũ Tiến Thành
-// Mã sinh viên: 23103100257
-// Nội dung thực hiện: Điều hướng dùng chung theo hợp đồng data-app-* trong tài liệu site.css
-// - data-app-sidebar-toggle / data-app-sidebar-close: sidebar khung nhân viên (class app-sidebar-open trên body)
-// - data-app-nav-toggle + #appPublicNav: menu công khai (class is-open)
-// Ngưỡng mobile: 900px (khớp media query trong site.css).
-(function () {
+﻿// Họ và tên: Phùng Ngọc Bảo
+// Mã sinh viên: 23103100278
+// Nội dung thực hiện: Các tương tác điều hướng dùng chung cho toàn bộ Razor views
+(() => {
   'use strict';
 
-  function setSidebarOpen(open) {
-    document.body.classList.toggle('app-sidebar-open', open);
-    var btn = document.querySelector('[data-app-sidebar-toggle]');
-    if (btn) {
-      btn.setAttribute('aria-expanded', String(open));
-      btn.setAttribute('aria-label', open ? 'Đóng menu điều hướng' : 'Mở menu điều hướng');
-    }
-  }
+  const sidebarToggle = document.querySelector('[data-app-sidebar-toggle]');
+  const sidebarClose = document.querySelector('[data-app-sidebar-close]');
+  const publicNavToggle = document.querySelector('[data-app-nav-toggle]');
+  const publicNav = document.getElementById('appPublicNav');
 
-  function setNavOpen(open) {
-    var nav = document.getElementById('appPublicNav');
-    if (nav) nav.classList.toggle('is-open', open);
-    var btn = document.querySelector('[data-app-nav-toggle]');
-    if (btn) {
-      btn.setAttribute('aria-expanded', String(open));
-      btn.setAttribute('aria-label', open ? 'Đóng menu' : 'Mở menu');
+  const setSidebarOpen = (isOpen) => {
+    document.body.classList.toggle('app-sidebar-open', isOpen);
+    if (sidebarToggle) {
+      sidebarToggle.setAttribute('aria-expanded', String(isOpen));
+      sidebarToggle.setAttribute('aria-label', isOpen ? 'Đóng menu điều hướng' : 'Mở menu điều hướng');
     }
-  }
+  };
 
-  document.querySelector('[data-app-sidebar-toggle]')?.addEventListener('click', function () {
+  sidebarToggle?.addEventListener('click', () => {
     setSidebarOpen(!document.body.classList.contains('app-sidebar-open'));
   });
 
-  // Dùng querySelectorAll để mọi nút đóng (nút X và lớp mờ) đều hoạt động.
-  document.querySelectorAll('[data-app-sidebar-close]').forEach(function (el) {
-    el.addEventListener('click', function () { setSidebarOpen(false); });
+  sidebarClose?.addEventListener('click', () => setSidebarOpen(false));
+
+  publicNavToggle?.addEventListener('click', () => {
+    if (!publicNav) return;
+    const isOpen = publicNav.classList.toggle('is-open');
+    publicNavToggle.setAttribute('aria-expanded', String(isOpen));
+    publicNavToggle.setAttribute('aria-label', isOpen ? 'Đóng menu' : 'Mở menu');
   });
 
-  document.querySelector('[data-app-nav-toggle]')?.addEventListener('click', function () {
-    var nav = document.getElementById('appPublicNav');
-    setNavOpen(!(nav && nav.classList.contains('is-open')));
+  // Thu gọn menu mobile sau khi chọn trang
+  publicNav?.querySelectorAll('a[href]').forEach((link) => {
+    link.addEventListener('click', () => {
+      if (window.matchMedia('(max-width: 900px)').matches) {
+        publicNav.classList.remove('is-open');
+        publicNavToggle?.setAttribute('aria-expanded', 'false');
+      }
+    });
   });
 
-  // Bấm vào liên kết trong menu công khai thì tự đóng menu (màn hình nhỏ).
-  document.getElementById('appPublicNav')?.addEventListener('click', function (e) {
-    if (e.target.closest('a') && window.innerWidth <= 900) setNavOpen(false);
-  });
-
-  // Esc đóng cả hai menu.
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') {
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
       setSidebarOpen(false);
-      setNavOpen(false);
+      publicNav?.classList.remove('is-open');
+      publicNavToggle?.setAttribute('aria-expanded', 'false');
     }
   });
 
-  // Vượt 900px thì dọn trạng thái sidebar còn sót.
-  window.matchMedia('(min-width: 901px)').addEventListener('change', function (e) {
-    if (e.matches) setSidebarOpen(false);
+  // Dọn trạng thái menu mobile còn sót khi chuyển sang màn hình lớn hơn 900px
+  window.matchMedia('(min-width: 901px)').addEventListener('change', (event) => {
+    if (event.matches) setSidebarOpen(false);
   });
 })();

@@ -50,14 +50,26 @@ public static class ServiceCollectionExtensions
             .ValidateOnStart();
 
         // Có Email:Host -> gửi SMTP thật (MailKit).
-        // Chưa có: chỉ Development được ghi OTP vào log.
-        if (!string.IsNullOrWhiteSpace(configuration["Email:Host"]))
+        //   - Development: bọc trong LogEmailSender để vừa gửi thật vừa ghi log (OTP) ra terminal.
+        //   - Môi trường khác: chỉ SmtpEmailSender, không ghi OTP vào log.
+        // Chưa có Email:Host: chỉ Development được ghi OTP vào log.
+        var smtpConfigured = !string.IsNullOrWhiteSpace(configuration["Email:Host"]);
+
+        if (smtpConfigured && environment.IsDevelopment())
+        {
+            services.AddScoped<SmtpEmailSender>();
+            services.AddScoped<IEmailSender>(sp => new LogEmailSender(
+                sp.GetRequiredService<ILogger<LogEmailSender>>(),
+                sp.GetRequiredService<SmtpEmailSender>()));
+        }
+        else if (smtpConfigured)
         {
             services.AddScoped<IEmailSender, SmtpEmailSender>();
         }
         else if (environment.IsDevelopment())
         {
-            services.AddScoped<IEmailSender, LogEmailSender>();
+            services.AddScoped<IEmailSender>(sp => new LogEmailSender(
+                sp.GetRequiredService<ILogger<LogEmailSender>>()));
         }
         else
         {
@@ -75,12 +87,18 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAnhBiaService, AnhBiaService>();
         services.AddScoped<IOtpService, OtpService>();
         services.AddScoped<IPasswordResetService, PasswordResetService>();
+        services.AddScoped<IBanDocService, BanDocService>();
+        services.AddScoped<IPhieuMuonService, PhieuMuonService>();
         services.AddScoped<ICauHinhThuVienService, CauHinhThuVienService>();
 
         services.AddScoped<IGiaHanMuonService, GiaHanMuonService>();
         services.AddScoped<ITraSachService, TraSachService>();
         services.AddScoped<ITienPhatTreHanService, TienPhatTreHanService>();
         services.AddScoped<ITienPhatTinhTrangSachService, TienPhatTinhTrangSachService>();
+
+        services.AddScoped<IThongKeService, ThongKeService>();
+        services.AddScoped<IHomeService, HomeService>();
+
         return services;
     }
 }

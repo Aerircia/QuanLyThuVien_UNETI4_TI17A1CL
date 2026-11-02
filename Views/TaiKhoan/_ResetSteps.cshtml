@@ -1,0 +1,17 @@
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Thanh 3 bước của quên mật khẩu (Model = bước hiện tại 1..3) *@
+@model int
+@{
+    var steps = new[] { "Email", "Mã OTP", "Mật khẩu mới" };
+}
+<ol class="reset-steps" aria-label="Các bước đặt lại mật khẩu">
+    @for (var i = 0; i < steps.Length; i++)
+    {
+        var n = i + 1;
+        <li class="@(n < Model ? "done" : n == Model ? "active" : "")" aria-current="@(n == Model ? "step" : null)">
+            <span class="reset-steps-dot">@(n < Model ? "✓" : n.ToString())</span>
+            <span class="reset-steps-label">@steps[i]</span>
+        </li>
+    }
+</ol>

@@ -1,0 +1,727 @@
+@* Họ và tên: Phùng Ngọc Bảo *@
+@* Mã sinh viên: 23103100278 *@
+@* Nội dung thực hiện: Hiển thị 11 nhóm thống kê LINQ *@
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.ThongKeReport
+
+@{
+    ViewData["Title"] = "Thống kê thư viện";
+
+    var totalTitles = Model.DauSachTheoTheLoai.Sum(x => x.SoDauSach);
+    var totalLoans = Model.LuotMuonTheoSach.Sum(x => x.SoLuot);
+    var totalReturns = Model.LuotTraTheoThang.Sum(x => x.SoLuong);
+    var totalFines = Model.TienPhatTheoThang.Sum(x => x.TienPhat);
+
+    var categoryMax = Math.Max(
+        Model.DauSachTheoTheLoai.Select(x => x.SoDauSach).DefaultIfEmpty(0).Max(), 1);
+
+    var bookMax = Math.Max(
+        Model.LuotMuonTheoSach.Select(x => x.SoLuot).DefaultIfEmpty(0).Max(), 1);
+
+    var readerMax = Math.Max(
+        Model.BanDocMuonNhieu.Select(x => x.SoLuot).DefaultIfEmpty(0).Max(), 1);
+
+    var loanMax = Math.Max(
+        Model.LuotMuonTheoThang.Select(x => x.SoLuong).DefaultIfEmpty(0).Max(), 1);
+
+    var returnMax = Math.Max(
+        Model.LuotTraTheoThang.Select(x => x.SoLuong).DefaultIfEmpty(0).Max(), 1);
+
+    var fineMax = Math.Max(
+        Model.TienPhatTheoThang.Select(x => x.TienPhat).DefaultIfEmpty(0m).Max(), 1m);
+
+    var extensionMax = Math.Max(
+        Model.GiaHanTheoSach.Select(x => x.SoLuot).DefaultIfEmpty(0).Max(), 1);
+
+    var late = Math.Clamp((double)Model.TyLeTraTrePhanTram, 0d, 100d);
+
+    var colors = new[]
+    {
+        "#5b8050", "#dca33d", "#3c9b7c", "#d9576b",
+        "#8c9a82", "#6d8fbd", "#9273b5", "#d58b62"
+    };
+
+    var statusTotal = Model.PhieuMuonTheoTrangThai.Sum(x => x.SoPhieu);
+    var statusStops = new List<string>();
+    var currentAngle = 0d;
+
+    if (statusTotal > 0)
+    {
+        for (var i = 0; i < Model.PhieuMuonTheoTrangThai.Count; i++)
+        {
+            var item = Model.PhieuMuonTheoTrangThai[i];
+            var next = currentAngle + item.SoPhieu * 360d / statusTotal;
+
+            statusStops.Add(
+                $"{colors[i % colors.Length]} " +
+                $"{currentAngle.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}deg " +
+                $"{next.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}deg"
+            );
+
+            currentAngle = next;
+        }
+    }
+
+    var statusGradient = statusStops.Count > 0
+        ? $"conic-gradient({string.Join(", ", statusStops)})"
+        : "conic-gradient(#e9eee3 0deg 360deg)";
+
+    var borrowedTotal = Model.TyLeMuonTheoTheLoai.Sum(
+        x => Math.Max(x.SoCuonDangMuon, 0));
+
+    var borrowedStops = new List<string>();
+    currentAngle = 0;
+
+    if (borrowedTotal > 0)
+    {
+        for (var i = 0; i < Model.TyLeMuonTheoTheLoai.Count; i++)
+        {
+            var item = Model.TyLeMuonTheoTheLoai[i];
+
+            var next = currentAngle +
+                Math.Max(item.SoCuonDangMuon, 0) * 360d / borrowedTotal;
+
+            borrowedStops.Add(
+                $"{colors[i % colors.Length]} " +
+                $"{currentAngle.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}deg " +
+                $"{next.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}deg"
+            );
+
+            currentAngle = next;
+        }
+    }
+
+    var borrowedGradient = borrowedStops.Count > 0
+        ? $"conic-gradient({string.Join(", ", borrowedStops)})"
+        : "conic-gradient(#e9eee3 0deg 360deg)";
+}
+
+<div class="la-dashboard la-report la-report-redesigned">
+
+    @* TIÊU ĐỀ TRANG *@
+    <div class="la-page-toolbar">
+        <div>
+            <span class="la-page-kicker">UNETI LIBRARY</span>
+            <h1>Thống kê thư viện</h1>
+            <p>
+                Tổng hợp hoạt động mượn trả, tình hình đầu sách và bạn đọc.
+            </p>
+        </div>
+
+        <div class="la-page-toolbar-actions">
+            <span class="la-dash-date">
+                @DateTime.Today.ToString("dd/MM/yyyy")
+            </span>
+        </div>
+    </div>
+
+    @* 1. TỔNG QUAN KPI *@
+    <section class="la-dash-kpis la-report-kpis" aria-label="Tóm tắt báo cáo">
+
+        <article class="la-dash-kpi la-report-kpi">
+            <div class="la-dash-kpi-label">Đầu sách</div>
+            <div class="la-dash-kpi-value">@totalTitles.ToString("N0")</div>
+            <div class="la-dash-kpi-note">Tổng số đầu sách theo thể loại</div>
+        </article>
+
+        <article class="la-dash-kpi la-report-kpi">
+            <div class="la-dash-kpi-label">Lượt mượn</div>
+            <div class="la-dash-kpi-value">@totalLoans.ToString("N0")</div>
+            <div class="la-dash-kpi-note">Phiếu đã được giao sách</div>
+        </article>
+
+        <article class="la-dash-kpi la-report-kpi">
+            <div class="la-dash-kpi-label">Lượt trả</div>
+            <div class="la-dash-kpi-value">@totalReturns.ToString("N0")</div>
+            <div class="la-dash-kpi-note">Tổng lượt trả trong kỳ</div>
+        </article>
+
+        <article class="la-dash-kpi la-report-kpi">
+            <div class="la-dash-kpi-label">Tiền phạt</div>
+            <div class="la-dash-kpi-value">@totalFines.ToString("N0") đ</div>
+            <div class="la-dash-kpi-note">Tổng tiền phạt trong kỳ</div>
+        </article>
+
+    </section>
+
+    @* 2. PHIẾU MƯỢN THEO TRẠNG THÁI VÀ ĐẦU SÁCH THEO THỂ LOẠI *@
+    <div class="la-report-overview-grid">
+
+        <section class="la-dash-panel la-report-panel">
+
+            <div class="la-dash-panel-heading la-report-panel-heading">
+                <div>
+                    <h2>Phiếu mượn theo trạng thái</h2>
+                    <p class="la-panel-description">
+                        Tỷ trọng từng trạng thái trên tổng số phiếu.
+                    </p>
+                </div>
+
+                <span class="la-count-pill">@statusTotal phiếu</span>
+            </div>
+
+            @if (statusTotal == 0)
+            {
+                <div class="la-empty">
+                    <strong>Chưa có phiếu mượn</strong>
+                </div>
+            }
+            else
+            {
+                <div class="la-pie-layout">
+
+                    <div class="la-pie-chart" style="background:@statusGradient">
+                        <div class="la-pie-hole">
+                            <strong>@statusTotal</strong>
+                            <small>phiếu</small>
+                        </div>
+                    </div>
+
+                    <div class="la-pie-legend">
+
+                        @for (var i = 0; i < Model.PhieuMuonTheoTrangThai.Count; i++)
+                        {
+                            var row = Model.PhieuMuonTheoTrangThai[i];
+                            var percent = row.SoPhieu * 100d / statusTotal;
+
+                            <div class="la-pie-legend-row">
+                                <i style="background:@colors[i % colors.Length]"></i>
+                                <span>@row.TrangThai</span>
+                                <b>@row.SoPhieu</b>
+                                <small>@percent.ToString("N1")%</small>
+                            </div>
+                        }
+
+                    </div>
+                </div>
+            }
+
+        </section>
+
+        <section class="la-dash-panel la-report-panel">
+
+            <div class="la-dash-panel-heading la-report-panel-heading">
+                <div>
+                    <h2>Số đầu sách theo thể loại</h2>
+                    <p class="la-panel-description">
+                        Quy mô đầu sách trong từng nhóm.
+                    </p>
+                </div>
+
+                <span class="la-count-pill">
+                    @Model.DauSachTheoTheLoai.Count nhóm
+                </span>
+            </div>
+
+            @if (Model.DauSachTheoTheLoai.Count == 0)
+            {
+                <div class="la-empty">
+                    <strong>Chưa có dữ liệu thể loại</strong>
+                </div>
+            }
+            else
+            {
+                <div class="la-bar-list">
+
+                    @foreach (var row in Model.DauSachTheoTheLoai)
+                    {
+                        var width = (int)Math.Round(
+                            row.SoDauSach * 100d / categoryMax);
+
+                        <div class="la-bar-item">
+                            <div class="la-bar-label">
+                                <span>@row.TenTheLoai</span>
+                                <strong>@row.SoDauSach</strong>
+                            </div>
+
+                            <div class="la-bar-track">
+                                <span style="width:@width%"></span>
+                            </div>
+                        </div>
+                    }
+
+                </div>
+            }
+
+        </section>
+
+    </div>
+
+    @* 3. LƯỢT MƯỢN THEO TỪNG ĐẦU SÁCH *@
+    <section class="la-dash-panel la-report-panel la-panel-wide">
+
+        <div class="la-dash-panel-heading la-report-panel-heading">
+            <div>
+                <h2>Lượt mượn theo từng đầu sách</h2>
+                <p class="la-panel-description">
+                    Sắp xếp theo số lượt mượn giảm dần.
+                </p>
+            </div>
+
+            <span class="la-count-pill">
+                @Model.LuotMuonTheoSach.Count đầu sách
+            </span>
+        </div>
+
+        <div class="la-table-wrap">
+            <table class="la-table">
+
+                <thead>
+                    <tr>
+                        <th>Mã sách</th>
+                        <th>Đầu sách</th>
+                        <th>Lượt mượn</th>
+                        <th>Mức tương đối</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @foreach (var row in Model.LuotMuonTheoSach)
+                    {
+                        var width = (int)Math.Round(
+                            row.SoLuot * 100d / bookMax);
+
+                        <tr>
+                            <td>
+                                <span class="la-mono">#@row.MaSach</span>
+                            </td>
+
+                            <td class="la-primary-cell">
+                                @row.TenSach
+                            </td>
+
+                            <td>
+                                <strong>@row.SoLuot.ToString("N0")</strong>
+                            </td>
+
+                            <td>
+                                <div class="la-mini-track">
+                                    <span style="width:@width%"></span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                    @if (Model.LuotMuonTheoSach.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="4">
+                                <div class="la-empty la-empty-inline">
+                                    <strong>Chưa có lượt mượn</strong>
+                                    <small>Chỉ tính phiếu đã được giao sách.</small>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                </tbody>
+            </table>
+        </div>
+
+    </section>
+
+    @* 4. TOP SÁCH VÀ BẠN ĐỌC MƯỢN NHIỀU NHẤT *@
+    <div class="la-content-grid la-content-grid-two">
+
+        <section class="la-dash-panel la-report-panel">
+
+            <div class="la-dash-panel-heading la-report-panel-heading">
+                <div>
+                    <h2>Top 10 sách được mượn nhiều nhất</h2>
+                </div>
+
+                <span class="la-count-pill">Top 10</span>
+            </div>
+
+            @if (Model.Top10Sach.Count == 0)
+            {
+                <div class="la-empty">
+                    <strong>Chưa có dữ liệu</strong>
+                </div>
+            }
+            else
+            {
+                <div class="la-ranking-list">
+
+                    @{
+                        var rank = 0;
+                    }
+
+                    @foreach (var row in Model.Top10Sach)
+                    {
+                        rank++;
+
+                        var width = (int)Math.Round(
+                            row.SoLuot * 100d / bookMax);
+
+                        <div class="la-ranking-row">
+
+                            <span class="la-rank">
+                                @rank.ToString("00")
+                            </span>
+
+                            <div class="la-ranking-main">
+                                <strong>@row.TenSach</strong>
+
+                                <div class="la-mini-track">
+                                    <span style="width:@width%"></span>
+                                </div>
+                            </div>
+
+                            <b>@row.SoLuot</b>
+
+                        </div>
+                    }
+
+                </div>
+            }
+
+        </section>
+
+        <section class="la-dash-panel la-report-panel">
+
+            <div class="la-dash-panel-heading la-report-panel-heading">
+                <div>
+                    <h2>Bạn đọc mượn nhiều nhất</h2>
+                </div>
+
+                <span class="la-count-pill">Top 10</span>
+            </div>
+
+            @if (Model.BanDocMuonNhieu.Count == 0)
+            {
+                <div class="la-empty">
+                    <strong>Chưa có dữ liệu</strong>
+                </div>
+            }
+            else
+            {
+                <div class="la-ranking-list">
+
+                    @{
+                        var rank = 0;
+                    }
+
+                    @foreach (var row in Model.BanDocMuonNhieu)
+                    {
+                        rank++;
+
+                        var width = (int)Math.Round(
+                            row.SoLuot * 100d / readerMax);
+
+                        <div class="la-ranking-row">
+
+                            <span class="la-rank">
+                                @rank.ToString("00")
+                            </span>
+
+                            <div class="la-ranking-main">
+                                <strong>@row.HoTen</strong>
+
+                                <small>Mã bạn đọc: @row.MaBanDoc</small>
+
+                                <div class="la-mini-track">
+                                    <span style="width:@width%"></span>
+                                </div>
+                            </div>
+
+                            <b>@row.SoLuot</b>
+
+                        </div>
+                    }
+
+                </div>
+            }
+
+        </section>
+
+    </div>
+
+    @* 5. THỐNG KÊ THEO THÁNG *@
+    <div class="la-content-grid la-content-grid-three">
+
+        <section class="la-dash-panel la-report-panel">
+
+            <div class="la-dash-panel-heading la-report-panel-heading">
+                <div>
+                    <h2>Lượt mượn theo tháng</h2>
+                </div>
+
+                <span class="la-count-pill">
+                    @Model.LuotMuonTheoThang.Count tháng
+                </span>
+            </div>
+
+            @if (Model.LuotMuonTheoThang.Count == 0)
+            {
+                <div class="la-empty">
+                    <strong>Chưa có dữ liệu</strong>
+                </div>
+            }
+            else
+            {
+                <div class="la-month-list">
+
+                    @foreach (var row in Model.LuotMuonTheoThang)
+                    {
+                        var width = (int)Math.Round(
+                            row.SoLuong * 100d / loanMax);
+
+                        <div class="la-month-row">
+                            <span>@row.Ky</span>
+
+                            <div class="la-bar-track">
+                                <span style="width:@width%"></span>
+                            </div>
+
+                            <strong>@row.SoLuong</strong>
+                        </div>
+                    }
+
+                </div>
+            }
+
+        </section>
+
+        <section class="la-dash-panel la-report-panel">
+
+            <div class="la-dash-panel-heading la-report-panel-heading">
+                <div>
+                    <h2>Lượt trả theo tháng</h2>
+                </div>
+
+                <span class="la-count-pill">
+                    @Model.LuotTraTheoThang.Count tháng
+                </span>
+            </div>
+
+            @if (Model.LuotTraTheoThang.Count == 0)
+            {
+                <div class="la-empty">
+                    <strong>Chưa có dữ liệu</strong>
+                </div>
+            }
+            else
+            {
+                <div class="la-month-list">
+
+                    @foreach (var row in Model.LuotTraTheoThang)
+                    {
+                        var width = (int)Math.Round(
+                            row.SoLuong * 100d / returnMax);
+
+                        <div class="la-month-row">
+                            <span>@row.Ky</span>
+
+                            <div class="la-bar-track la-bar-track-blue">
+                                <span style="width:@width%"></span>
+                            </div>
+
+                            <strong>@row.SoLuong</strong>
+                        </div>
+                    }
+
+                </div>
+            }
+
+        </section>
+
+        <section class="la-dash-panel la-report-panel">
+
+            <div class="la-dash-panel-heading la-report-panel-heading">
+                <div>
+                    <h2>Tiền phạt theo tháng</h2>
+                </div>
+
+                <span class="la-count-pill">
+                    @Model.TienPhatTheoThang.Count tháng
+                </span>
+            </div>
+
+            @if (Model.TienPhatTheoThang.Count == 0)
+            {
+                <div class="la-empty">
+                    <strong>Chưa có dữ liệu</strong>
+                </div>
+            }
+            else
+            {
+                <div class="la-month-list">
+
+                    @foreach (var row in Model.TienPhatTheoThang)
+                    {
+                        var width = (int)Math.Round(
+                            row.TienPhat * 100m / fineMax);
+
+                        <div class="la-month-row la-month-fine">
+                            <span>@row.Ky</span>
+
+                            <div class="la-bar-track la-bar-track-amber">
+                                <span style="width:@width%"></span>
+                            </div>
+
+                            <strong>@row.TienPhat.ToString("N0") đ</strong>
+                        </div>
+                    }
+
+                </div>
+            }
+
+        </section>
+
+    </div>
+
+    @* 6. SỐ LƯỢT GIA HẠN ĐƯỢC DUYỆT *@
+    <section class="la-dash-panel la-report-panel la-panel-wide">
+
+        <div class="la-dash-panel-heading la-report-panel-heading">
+            <div>
+                <h2>Số lượt gia hạn được duyệt theo đầu sách</h2>
+            </div>
+
+            <span class="la-count-pill">
+                @Model.GiaHanTheoSach.Count đầu sách
+            </span>
+        </div>
+
+        <div class="la-table-wrap">
+            <table class="la-table">
+
+                <thead>
+                    <tr>
+                        <th>Mã sách</th>
+                        <th>Đầu sách</th>
+                        <th>Lượt gia hạn</th>
+                        <th>Mức tương đối</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @foreach (var row in Model.GiaHanTheoSach)
+                    {
+                        var width = (int)Math.Round(
+                            row.SoLuot * 100d / extensionMax);
+
+                        <tr>
+                            <td>
+                                <span class="la-mono">#@row.MaSach</span>
+                            </td>
+
+                            <td class="la-primary-cell">
+                                @row.TenSach
+                            </td>
+
+                            <td>
+                                <strong>@row.SoLuot.ToString("N0")</strong>
+                            </td>
+
+                            <td>
+                                <div class="la-mini-track">
+                                    <span class="la-fill-violet" style="width:@width%"></span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                    @if (Model.GiaHanTheoSach.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="4">
+                                <div class="la-empty la-empty-inline">
+                                    <strong>
+                                        Chưa có yêu cầu gia hạn được duyệt.
+                                    </strong>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                </tbody>
+            </table>
+        </div>
+
+    </section>
+
+    @* 7. TỶ LỆ TRẢ TRỄ VÀ TỶ TRỌNG SÁCH ĐANG MƯỢN *@
+    <div class="la-report-overview-grid">
+
+        <section class="la-dash-panel la-report-panel la-rate-panel">
+
+            <div class="la-dash-panel-heading la-report-panel-heading">
+                <div>
+                    <h2>Tỷ lệ phiếu trả trễ</h2>
+                </div>
+            </div>
+
+            <div class="la-rate-value">
+                @Model.TyLeTraTrePhanTram.ToString("N1")<small>%</small>
+            </div>
+
+            <div class="la-rate-track">
+                <span style="width:@(late.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%"></span>
+            </div>
+
+            <p class="la-panel-description">
+                Tính trên tổng bản ghi trả sách.
+            </p>
+
+        </section>
+
+        <section class="la-dash-panel la-report-panel">
+
+            <div class="la-dash-panel-heading la-report-panel-heading">
+                <div>
+                    <h2>Tỷ trọng sách đang mượn theo thể loại</h2>
+                </div>
+
+                <span class="la-count-pill">
+                    @borrowedTotal cuốn
+                </span>
+            </div>
+
+            @if (borrowedTotal == 0)
+            {
+                <div class="la-empty">
+                    <strong>Chưa có sách đang mượn</strong>
+                </div>
+            }
+            else
+            {
+                <div class="la-pie-layout">
+
+                    <div class="la-pie-chart" style="background:@borrowedGradient">
+
+                        <div class="la-pie-hole">
+                            <strong>@borrowedTotal</strong>
+                            <small>cuốn</small>
+                        </div>
+
+                    </div>
+
+                    <div class="la-pie-legend">
+
+                        @for (var i = 0; i < Model.TyLeMuonTheoTheLoai.Count; i++)
+                        {
+                            var row = Model.TyLeMuonTheoTheLoai[i];
+                            var percent = row.SoCuonDangMuon * 100d / borrowedTotal;
+
+                            <div class="la-pie-legend-row">
+                                <i style="background:@colors[i % colors.Length]"></i>
+                                <span>@row.TenTheLoai</span>
+                                <b>@row.SoCuonDangMuon / @row.TongSoCuon</b>
+                                <small>@percent.ToString("N1")%</small>
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+            }
+
+        </section>
+
+    </div>
+
+</div>

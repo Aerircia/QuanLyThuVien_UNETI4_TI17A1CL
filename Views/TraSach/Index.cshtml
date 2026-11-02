@@ -13,10 +13,18 @@
     var phatItems = Html.GetEnumSelectList<TrangThaiPhat>().ToList();
     foreach (var item in phatItems)
         item.Selected = Model.TrangThaiPhat is { } p && item.Value == ((int)p).ToString();
+         
+    var dangLoc = !string.IsNullOrWhiteSpace(Model.Search) || Model.TinhTrang.HasValue || Model.TrangThaiPhat.HasValue;
 }
+<div class="mb-3">
+    <h1 class="mb-1">Trả sách và tiền phạt</h1>
+    <p class="text-muted mb-0">Theo dõi các lượt trả sách, số ngày trễ và khoản phạt của bạn đọc.</p>
+</div>
 
-<h1 class="h4 mb-3">Lịch sử trả sách và tiền phạt</h1>
-
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item"><a class="nav-link" asp-action="ChoTra">Chờ nhận trả</a></li>
+    <li class="nav-item"><a class="nav-link active" asp-action="Index">Lịch sử trả sách</a></li>
+</ul>
 @if (TempData["ThongBao"] is string thongBao)
 {
     <div class="alert alert-success" role="status">@thongBao</div>
@@ -26,28 +34,36 @@
     <div class="alert alert-danger" role="alert">@loi</div>
 }
 
-<form method="get" asp-action="Index" class="row g-2 mb-3">
-    <input type="hidden" name="pageSize" value="@Model.PageSize" />
-    <div class="col-md-4">
-        <input name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo họ tên bạn đọc hoặc tên sách" />
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <input type="hidden" name="pageSize" value="@Model.PageSize" />
+            <div class="col-lg-4">
+                <input name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo họ tên bạn đọc hoặc tên sách" />
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <select name="tinhTrang" class="form-select" asp-items="tinhTrangItems" onchange="this.form.requestSubmit()">
+                    <option value="">Mọi tình trạng sách</option>
+                </select>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <select name="trangThaiPhat" class="form-select" asp-items="phatItems" onchange="this.form.requestSubmit()">
+                    <option value="">Mọi trạng thái phạt</option>
+                </select>
+            </div>
+            <div class="col-lg-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Tìm</button>
+                @if (dangLoc)
+                {
+                    <a asp-action="Index" asp-route-pageSize="@Model.PageSize" class="btn btn-outline-secondary">Xóa lọc</a>
+                }
+            </div>
+        </form>
     </div>
-    <div class="col-md-3">
-        <select name="tinhTrang" class="form-select" asp-items="tinhTrangItems">
-            <option value="">Mọi tình trạng sách</option>
-        </select>
-    </div>
-    <div class="col-md-3">
-        <select name="trangThaiPhat" class="form-select" asp-items="phatItems">
-            <option value="">Mọi trạng thái phạt</option>
-        </select>
-    </div>
-    <div class="col-md-2 d-grid">
-        <button type="submit" class="btn btn-outline-primary">Lọc</button>
-    </div>
-</form>
+</div>
 
 <div class="table-responsive">
-    <table class="table table-hover align-middle">
+    <table class="table table-striped align-middle">
         <thead>
             <tr>
                 <th>Phiếu</th>
@@ -90,7 +106,6 @@
                     </td>
                 </tr>
             }
-
             @if (!Model.Result.Items.Any())
             {
                 <tr><td colspan="9" class="text-center text-muted py-4">Chưa có bản ghi trả sách nào phù hợp.</td></tr>

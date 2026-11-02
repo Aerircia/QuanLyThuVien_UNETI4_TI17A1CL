@@ -1,0 +1,35 @@
+/* Họ và tên: Lại Anh Quân */
+/* Mã sinh viên: 23103100255 */
+/* Nội dung thực hiện: CSS riêng cho trang Cấu hình thư viện (dùng biến --app-* của site.css) */
+
+.page-cauhinh .page-head { margin-bottom: 1rem; }
+body.app-body .page-cauhinh .page-head h1 { margin-bottom: .25rem; }
+.page-cauhinh .page-head p { margin: 0; color: var(--app-muted); }
+
+.page-cauhinh .page-notice { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 1.25rem; }
+.page-cauhinh .page-notice svg { flex: none; width: 18px; height: 18px; margin-top: 2px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Ẩn khung lỗi rỗng của validation summary khi chưa có lỗi */
+.page-cauhinh .validation-summary-valid { display: none; }
+
+.page-cauhinh .page-grid { display: grid; gap: 1.1rem; max-width: 960px; }
+.page-cauhinh .page-card-head { padding: 15px 20px; border-bottom: 1px solid var(--app-line); }
+body.app-body .page-cauhinh .page-card-head h2 { margin: 0; font-size: 1rem; }
+.page-cauhinh .page-card-head p { margin: 2px 0 0; color: var(--app-muted); font-size: 12px; }
+
+.page-cauhinh .page-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem 1.25rem; padding: 20px; }
+.page-cauhinh .page-hint { display: block; margin-top: 4px; color: var(--app-muted); font-size: 11.5px; }
+
+/* Đơn vị bên phải ô nhập: bù lại bo góc cho khớp .form-control của site.css */
+body.app-body .page-cauhinh .input-group > .form-control:not(:last-child) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+body.app-body .page-cauhinh .input-group > .input-group-text { border-radius: 0 var(--app-radius-sm) var(--app-radius-sm) 0; }
+
+.page-cauhinh .page-actions { display: flex; flex-wrap: wrap; gap: .6rem; max-width: 960px; margin-top: 1.25rem; }
+
+@media (min-width: 768px) and (max-width: 1100px) {
+  .page-cauhinh .page-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+  .page-cauhinh .page-fields { grid-template-columns: minmax(0, 1fr); }
+  .page-cauhinh .page-actions .btn { flex: 1 1 100%; }
+}

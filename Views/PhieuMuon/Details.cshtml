@@ -1,0 +1,314 @@
+@* Họ và tên: Nguyễn Hữu Tuấn *@
+@* Mã sinh viên: 23103100136 *@
+@* Nội dung thực hiện: View chi tiết phiếu mượn (PhieuMuon/Details) - Bảo mật: chỉ bạn đọc sở hữu mới xem được *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.PhieuMuonDetailViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Chi tiết phiếu mượn #" + Model.MaPhieuMuon;
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var isOd = Model.IsOverdue;
+
+    int currentStep = Model.TrangThai switch
+    {
+        TrangThaiPhieuMuon.ChoDuyet => 1,
+        TrangThaiPhieuMuon.DaDuyet => 2,
+        TrangThaiPhieuMuon.DangMuon => 3,
+        TrangThaiPhieuMuon.DaTra => 4,
+        _ => 0
+    };
+}
+
+<div class="container py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h4 mb-0">Phiếu mượn #@Model.MaPhieuMuon</h1>
+            <span class="text-muted small">Đăng ký ngày @Model.NgayDangKy.ToString("dd/MM/yyyy")</span>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="MyLoans" class="btn btn-outline-secondary btn-sm">← Danh sách của tôi</a>
+            @if (Model.TrangThai == TrangThaiPhieuMuon.DangMuon && !isOd)
+            {
+                <a asp-controller="GiaHanMuon" asp-action="Create" asp-route-maPhieuMuon="@Model.MaPhieuMuon" class="btn btn-outline-primary btn-sm">
+                    Gia hạn mượn sách
+                </a>
+            }
+            @if (Model.CanCancel)
+            {
+                <form asp-action="Cancel" asp-route-id="@Model.MaPhieuMuon" method="post" class="d-inline" id="cancelLoanDetailsForm">
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                            data-confirm-form="#cancelLoanDetailsForm"
+                            data-confirm-title="Xác nhận hủy phiếu mượn"
+                            data-confirm-message="Bạn có chắc muốn hủy phiếu mượn này? Thao tác không thể hoàn tác."
+                            data-confirm-ok="Hủy phiếu"
+                            data-confirm-class="btn-danger">
+
+                        Hủy phiếu mượn
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+
+    @if (TempData["ThongBao"] is string thongBao)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @thongBao
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Tiến trình phiếu mượn -->
+    @if (currentStep > 0)
+    {
+        <div class="app-card mb-4 p-3">
+            <h6 class="fw-bold text-muted text-uppercase small mb-2">Tiến trình xử lý phiếu mượn</h6>
+            <div class="loan-steps">
+                <div class="step-item @(currentStep >= 1 ? "active" : "")">
+                    <div class="step-bar"></div>
+                    <div>1. Đăng ký</div>
+                    <small class="text-muted d-block">@Model.NgayDangKy.ToString("dd/MM/yyyy")</small>
+                </div>
+                <div class="step-item @(currentStep >= 2 ? "active" : "")">
+                    <div class="step-bar"></div>
+                    <div>2. Đã duyệt</div>
+                    <small class="text-muted d-block">@(Model.NgayXuLy?.ToString("dd/MM/yyyy") ?? "Chờ duyệt")</small>
+                </div>
+                <div class="step-item @(currentStep >= 3 ? "active" : "")">
+                    <div class="step-bar"></div>
+                    <div>3. Đang mượn</div>
+                    <small class="text-muted d-block">@(Model.NgayMuon?.ToString("dd/MM/yyyy") ?? "Chưa nhận")</small>
+                </div>
+                <div class="step-item @(currentStep >= 4 ? "active" : "")">
+                    <div class="step-bar"></div>
+                    <div>4. Đã trả</div>
+                    <small class="text-muted d-block">@(Model.ThongTinTraSach?.NgayTra.ToString("dd/MM/yyyy") ?? "Chưa trả")</small>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (isOd)
+    {
+        <div class="alert alert-danger mb-4" role="alert">
+            <h6 class="alert-heading fw-bold mb-1">Cảnh báo: Sách mượn đã quá hạn trả @Model.SoNgayQuaHan ngày!</h6>
+            <p class="mb-0 small">
+                Hạn trả quy định là ngày <strong>@Model.HanTra?.ToString("dd/MM/yyyy")</strong>. Vui lòng mang sách đến quầy thư viện trả ngay để hoàn tất phiếu mượn và thanh toán phí phạt trễ hạn.
+            </p>
+        </div>
+    }
+
+    <div class="row g-3 mb-4">
+        <!-- Thông tin sách -->
+        <div class="col-md-6">
+            <div class="app-card h-100">
+                <h6 class="fw-bold text-muted text-uppercase small mb-3 border-bottom pb-2">Thông tin đầu sách</h6>
+                <dl class="row mb-0 small">
+                    <dt class="col-sm-4 text-muted">Tên sách:</dt>
+                    <dd class="col-sm-8 fw-bold">@Model.TenSach</dd>
+
+                    <dt class="col-sm-4 text-muted">Tác giả:</dt>
+                    <dd class="col-sm-8">@Model.TacGia</dd>
+
+                    <dt class="col-sm-4 text-muted">Thể loại:</dt>
+                    <dd class="col-sm-8">@(Model.TheLoai ?? "—")</dd>
+
+                    <dt class="col-sm-4 text-muted">Nhà xuất bản:</dt>
+                    <dd class="col-sm-8">@(Model.NhaXuatBan ?? "—")</dd>
+
+                    <dt class="col-sm-4 text-muted">Năm xuất bản:</dt>
+                    <dd class="col-sm-8">@Model.NamXuatBan</dd>
+
+                    <dt class="col-sm-4 text-muted">Vị trí kệ:</dt>
+                    <dd class="col-sm-8"><span class="badge bg-secondary font-monospace">@(Model.ViTriKe ?? "Khu chung")</span></dd>
+
+                    <dt class="col-sm-4 text-muted">Giá bìa:</dt>
+                    <dd class="col-sm-8">@Model.GiaBia.ToString("N0") ₫</dd>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Thông tin phiếu mượn & bạn đọc -->
+        <div class="col-md-6">
+            <div class="app-card h-100">
+                <h6 class="fw-bold text-muted text-uppercase small mb-3 border-bottom pb-2">Thông tin mượn &amp; Bạn đọc</h6>
+                <dl class="row mb-0 small">
+                    <dt class="col-sm-4 text-muted">Bạn đọc:</dt>
+                    <dd class="col-sm-8 fw-bold">@Model.HoTenBanDoc</dd>
+
+                    <dt class="col-sm-4 text-muted">Mã số thẻ:</dt>
+                    <dd class="col-sm-8"><span class="badge bg-light text-dark border font-monospace">@(Model.MaSoThe ?? "Chưa cấp")</span></dd>
+
+                    <dt class="col-sm-4 text-muted">Trạng thái phiếu:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge @(Model.TrangThai switch {
+                            TrangThaiPhieuMuon.ChoDuyet => "bg-warning text-dark",
+                            TrangThaiPhieuMuon.DaDuyet => "bg-info text-dark",
+                            TrangThaiPhieuMuon.DangMuon => isOd ? "bg-danger" : "bg-primary",
+                            TrangThaiPhieuMuon.DaTra => "bg-success",
+                            TrangThaiPhieuMuon.TuChoi => "bg-danger",
+                            TrangThaiPhieuMuon.DaHuy => "bg-light text-muted border",
+                            _ => "bg-secondary"
+                        })">
+                            @Model.TrangThai.GetDisplayName()
+                        </span>
+                        @if (isOd)
+                        {
+                            <span class="badge bg-danger ms-1">Quá hạn</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4 text-muted">Ngày đăng ký:</dt>
+                    <dd class="col-sm-8">@Model.NgayDangKy.ToString("dd/MM/yyyy")</dd>
+
+                    <dt class="col-sm-4 text-muted">Ngày mượn:</dt>
+                    <dd class="col-sm-8">@(Model.NgayMuon?.ToString("dd/MM/yyyy") ?? "Chưa giao sách")</dd>
+
+                    <dt class="col-sm-4 text-muted">Hạn trả:</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.HanTra.HasValue)
+                        {
+                            <span class="@(isOd ? "text-danger fw-bold" : "fw-bold")">
+                                @Model.HanTra.Value.ToString("dd/MM/yyyy")
+                            </span>
+                            @if (isOd)
+                            {
+                                <span class="badge bg-danger ms-1">Trễ @Model.SoNgayQuaHan ngày</span>
+                            }
+                            else if (Model.TrangThai == TrangThaiPhieuMuon.DangMuon)
+                            {
+                                <span class="text-muted ms-1">(Còn @Model.SoNgayConLai ngày)</span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4 text-muted">Ghi chú bạn đọc:</dt>
+                    <dd class="col-sm-8">@(Model.GhiChu ?? "—")</dd>
+
+                    <dt class="col-sm-4 text-muted">Nhận xét thủ thư:</dt>
+                    <dd class="col-sm-8">@(Model.NhanXetThuThu ?? "—")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thông tin trả sách & tiền phạt nếu có -->
+    @if (Model.ThongTinTraSach != null)
+    {
+        <div class="app-card mb-4 border-success">
+            <h6 class="fw-bold text-success text-uppercase small mb-3 border-bottom pb-2">Thông tin trả sách</h6>
+            <div class="row g-2 small">
+                <div class="col-sm-4">Ngày trả: <strong>@Model.ThongTinTraSach.NgayTra.ToString("dd/MM/yyyy")</strong></div>
+                <div class="col-sm-4">Tình trạng sách: <strong>@Model.ThongTinTraSach.TinhTrangSach.GetDisplayName()</strong></div>
+                <div class="col-sm-4">Số ngày trễ: <strong>@Model.ThongTinTraSach.SoNgayTre ngày</strong></div>
+                <div class="col-sm-4">Tiền phạt: <strong class="text-danger">@Model.ThongTinTraSach.TienPhat.ToString("N0") ₫</strong></div>
+                <div class="col-sm-4">Trạng thái nộp phạt:
+                    <span class="badge @(Model.ThongTinTraSach.TrangThaiPhat == TrangThaiPhat.DaNop ? "bg-success" : "bg-danger")">
+                        @Model.ThongTinTraSach.TrangThaiPhat.GetDisplayName()
+                    </span>
+                </div>
+                <div class="col-sm-4">Thủ thư tiếp nhận: <strong>@(Model.ThongTinTraSach.NguoiNhan ?? "—")</strong></div>
+                @if (!string.IsNullOrWhiteSpace(Model.ThongTinTraSach.GhiChu))
+                {
+                    <div class="col-12 mt-2">Ghi chú trả sách: <em>@Model.ThongTinTraSach.GhiChu</em></div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Lịch sử gia hạn -->
+    <div class="app-card mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+            <h6 class="fw-bold text-muted text-uppercase small mb-0">Lịch sử gia hạn</h6>
+            @if (Model.TrangThai == TrangThaiPhieuMuon.DangMuon && !isOd)
+            {
+                <a asp-controller="GiaHanMuon" asp-action="Create" asp-route-maPhieuMuon="@Model.MaPhieuMuon" class="btn btn-outline-primary btn-sm">
+                    Gia hạn mượn sách
+                </a>
+            }
+        </div>
+        @if (Model.LichSuGiaHan.Any())
+        {
+            <div class="table-responsive mb-3">
+                <table class="table table-sm table-hover small mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Ngày yêu cầu</th>
+                            <th>Hạn cũ</th>
+                            <th>Hạn mới đề xuất</th>
+                            <th>Lý do</th>
+                            <th>Trạng thái</th>
+                            <th>Nhận xét</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var g in Model.LichSuGiaHan)
+                        {
+                            <tr>
+                                <td>@g.NgayYeuCau.ToString("dd/MM/yyyy")</td>
+                                <td>@g.HanTraCu.ToString("dd/MM/yyyy")</td>
+                                <td class="fw-bold text-primary">@g.HanTraMoi.ToString("dd/MM/yyyy")</td>
+                                <td>@(g.LyDo ?? "—")</td>
+                                <td>
+                                    <span class="badge @(g.TrangThai == TrangThaiGiaHan.DaDuyet ? "badge-soft-success" : g.TrangThai == TrangThaiGiaHan.TuChoi ? "badge-soft-danger" : "badge-soft-warning")">
+                                        @g.TrangThai.GetDisplayName()
+                                    </span>
+                                </td>
+                                <td>@(g.NhanXet ?? "—")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p class="text-muted small mb-3">Chưa có yêu cầu gia hạn nào cho phiếu mượn này.</p>
+        }
+
+        <!-- Quy định & Lưu ý khi gia hạn mượn sách -->
+        <div class="card bg-light border-0">
+            <div class="card-body p-3">
+                <div class="fw-bold text-dark small mb-2">
+                    Lưu ý khi gia hạn mượn sách:
+                </div>
+                <ul class="mb-0 small text-muted ps-3">
+                    <li>Phiếu đang ở trạng thái <strong>Đang mượn</strong>.</li>
+                    <li>Phiếu <strong>chưa quá hạn</strong>.</li>
+                    <li>Đã gia hạn <strong>1/2 lần</strong> (chưa vượt tối đa 2 lần).</li>
+                    <li>Mỗi lần gia hạn <strong>tối đa 7 ngày</strong>, hạn trả mới phải sau hạn trả cũ.</li>
+                    <li><strong>Không có yêu cầu gia hạn khác</strong> đang chờ duyệt.</li>
+                    <li>Sách <strong>còn bản hoặc không có bạn đọc khác</strong> đang chờ mượn.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lịch sử thay đổi trạng thái (Audit Trail) -->
+    @if (Model.LichSuTrangThai.Any())
+    {
+        <div class="app-card">
+            <h6 class="fw-bold text-muted text-uppercase small mb-3 border-bottom pb-2">Lịch sử thao tác (Audit trail)</h6>
+            <div class="timeline small">
+                @foreach (var l in Model.LichSuTrangThai)
+                {
+                    <div class="d-flex align-items-baseline mb-2">
+                        <span class="badge bg-light text-muted border me-2 font-monospace">@l.NgayThucHien.ToString("dd/MM/yyyy HH:mm")</span>
+                        <div>
+                            <strong>@(l.NguoiThucHien ?? "Hệ thống")</strong>: Chuyển trạng thái sang
+                            <span class="badge bg-secondary">@l.TrangThaiMoi.GetDisplayName()</span>
+                            @if (!string.IsNullOrWhiteSpace(l.GhiChu))
+                            {
+                                <span class="text-muted ms-2">— @l.GhiChu</span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

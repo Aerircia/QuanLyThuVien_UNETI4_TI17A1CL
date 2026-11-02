@@ -1,6 +1,7 @@
 // Họ và tên: Lại Anh Quân
 // Mã sinh viên: 23103100255
 // Nội dung thực hiện: Xây dựng AuthService để xử lý đăng nhập, xác thực, thay đổi mật khẩu.
+// Đăng nhập bằng tên đăng nhập hoặc email
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -27,9 +28,14 @@ public class AuthService : IAuthService
     {
         tenDangNhap = (tenDangNhap ?? string.Empty).Trim();
 
-        // Có tracking vì có thể phải băm lại mật khẩu và lưu.
-        var tk = await _db.Set<TaiKhoan>()
-            .FirstOrDefaultAsync(t => t.TenDangNhap == tenDangNhap, ct);
+        // Đăng nhập bằng tên đăng nhập HOẶC email. Có tracking vì có thể phải băm lại mật khẩu và lưu.
+        // Tên đăng nhập khớp thì ưu tiên; khớp theo email chỉ hợp lệ khi đúng MỘT tài khoản dùng email đó.
+        var matches = await _db.Set<TaiKhoan>()
+            .Where(t => t.TenDangNhap == tenDangNhap || t.Email == tenDangNhap)
+            .Take(3)
+            .ToListAsync(ct);
+        var tk = matches.FirstOrDefault(t => string.Equals(t.TenDangNhap, tenDangNhap, StringComparison.OrdinalIgnoreCase))
+                 ?? (matches.Count == 1 ? matches[0] : null);
 
         // Không tồn tại hoặc sai mật khẩu -> cùng một kết quả.
         if (tk is null || string.IsNullOrEmpty(matKhau))
@@ -49,7 +55,7 @@ public class AuthService : IAuthService
             await _db.SaveChangesAsync(ct);
         }
 
-        return LoginResult.Success(new CurrentUser(tk.MaTaiKhoan, tk.HoTen, tk.VaiTro));
+        return LoginResult.Success(new CurrentUser(tk.MaTaiKhoan, tk.HoTen, tk.VaiTro, tk.TenDangNhap, tk.Email));
     }
 
     public async Task<LoginResult> ValidateAsync(int maTaiKhoan, CancellationToken ct = default)
@@ -57,7 +63,7 @@ public class AuthService : IAuthService
         var tk = await _db.Set<TaiKhoan>()
             .AsNoTracking()
             .Where(t => t.MaTaiKhoan == maTaiKhoan)
-            .Select(t => new { t.MaTaiKhoan, t.HoTen, t.VaiTro, t.TrangThai })
+            .Select(t => new { t.MaTaiKhoan, t.HoTen, t.VaiTro, t.TrangThai, t.TenDangNhap, t.Email })
             .FirstOrDefaultAsync(ct);
 
         if (tk is null)
@@ -66,7 +72,7 @@ public class AuthService : IAuthService
         if (tk.TrangThai == TrangThaiTaiKhoan.BiKhoa)
             return LoginResult.Fail(LoginFailure.AccountLocked);
 
-        return LoginResult.Success(new CurrentUser(tk.MaTaiKhoan, tk.HoTen, tk.VaiTro));
+        return LoginResult.Success(new CurrentUser(tk.MaTaiKhoan, tk.HoTen, tk.VaiTro, tk.TenDangNhap, tk.Email));
     }
 
     public async Task<ChangePasswordResult> ChangePasswordAsync(
