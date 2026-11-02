@@ -19,6 +19,9 @@ public class CurrentUserService : ICurrentUserService
     private bool _maBanDocLoaded;
     private int? _maBanDoc;
 
+    private bool _hasActiveBanDocLoaded;
+    private bool _hasActiveBanDoc;
+
     public CurrentUserService(IHttpContextAccessor http, AppDbContext db)
     {
         _http = http;
@@ -57,5 +60,25 @@ public class CurrentUserService : ICurrentUserService
 
         _maBanDocLoaded = true;
         return _maBanDoc;
+    }
+
+    public async Task<bool> HasActiveBanDocAsync(CancellationToken ct = default)
+    {
+        if (_hasActiveBanDocLoaded) return _hasActiveBanDoc;
+
+        var user = User;
+        if (user is null || user.VaiTro != VaiTro.BanDoc)
+        {
+            _hasActiveBanDoc = false;
+        }
+        else
+        {
+            _hasActiveBanDoc = await _db.Set<BanDoc>()
+                .AsNoTracking()
+                .AnyAsync(b => b.MaTaiKhoan == user.MaTaiKhoan && b.TrangThai == TrangThaiBanDoc.HoatDong, ct);
+        }
+
+        _hasActiveBanDocLoaded = true;
+        return _hasActiveBanDoc;
     }
 }

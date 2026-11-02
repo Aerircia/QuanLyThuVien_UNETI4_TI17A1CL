@@ -20,6 +20,9 @@ public sealed class BanDocListItem
     public int MaBanDoc { get; set; }
     public int MaTaiKhoan { get; set; }
     public string HoTen { get; set; } = string.Empty;
+    public DateOnly NgaySinh { get; set; }
+    public GioiTinh GioiTinh { get; set; }
+    public string? DiaChi { get; set; }
     public string? MaSoThe { get; set; }
     public LoaiBanDoc LoaiBanDoc { get; set; }
     public DateOnly NgayCapThe { get; set; }
@@ -43,6 +46,11 @@ public sealed class BanDocListViewModel
     public int PageSize { get; set; } = PagingDefaults.DefaultPageSize;
     public PagedResult<BanDocListItem> Result { get; set; } = default!;
     public PagerViewModel Pager { get; set; } = default!;
+
+    public int TongSoBanDoc { get; set; }
+    public int SoBanDocChoDuyet { get; set; }
+    public int SoBanDocHoatDong { get; set; }
+    public int SoBanDocNgungHoatDong { get; set; }
 }
 
 public sealed class BanDocDetail
@@ -203,6 +211,48 @@ public sealed class BanDocEditViewModel : IValidatableObject
     }
 }
 
+public sealed class DangKyTheBanDocViewModel : IValidatableObject
+{
+    [Required(ErrorMessage = "Họ và tên là bắt buộc")]
+    [StringLength(255, ErrorMessage = "Họ tên không được vượt quá 255 ký tự")]
+    [Display(Name = "Họ và tên")]
+    public string HoTen { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Ngày sinh là bắt buộc")]
+    [DataType(DataType.Date)]
+    [Display(Name = "Ngày sinh")]
+    public DateOnly NgaySinh { get; set; } = new(2003, 1, 1);
+
+    [Display(Name = "Giới tính")]
+    public GioiTinh GioiTinh { get; set; } = GioiTinh.Nam;
+
+    [Required(ErrorMessage = "Số điện thoại là bắt buộc")]
+    [RegularExpression(@"^0\d{9,10}$", ErrorMessage = "Số điện thoại không hợp lệ (10-11 số, bắt đầu bằng 0)")]
+    [Display(Name = "Số điện thoại")]
+    public string SoDienThoai { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Email là bắt buộc")]
+    [EmailAddress(ErrorMessage = "Email không đúng định dạng")]
+    [StringLength(255)]
+    [Display(Name = "Email")]
+    public string Email { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Địa chỉ là bắt buộc")]
+    [StringLength(255)]
+    [Display(Name = "Địa chỉ")]
+    public string DiaChi { get; set; } = string.Empty;
+
+    [Display(Name = "Loại bạn đọc")]
+    public LoaiBanDoc LoaiBanDoc { get; set; } = LoaiBanDoc.SinhVien;
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        var homNay = DateOnly.FromDateTime(DateTime.Today);
+        if (NgaySinh < new DateOnly(1900, 1, 1) || NgaySinh >= homNay)
+            yield return new ValidationResult("Ngày sinh không hợp lệ.", new[] { nameof(NgaySinh) });
+    }
+}
+
 public sealed class BanDocProfileViewModel
 {
     public int MaBanDoc { get; set; }
@@ -223,6 +273,8 @@ public sealed class BanDocProfileViewModel
     public int SoPhieuQuaHan { get; set; }
     public decimal TongTienPhatChuaNop { get; set; }
     public bool TheHetHan => NgayHetHanThe < DateOnly.FromDateTime(DateTime.Today);
+
+    public DangKyTheBanDocViewModel? DangKyForm { get; set; }
 }
 
 public sealed class BanDocEditProfileViewModel : IValidatableObject

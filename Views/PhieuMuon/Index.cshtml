@@ -175,10 +175,15 @@
 
                                 @if (item.TrangThai == TrangThaiPhieuMuon.ChoDuyet)
                                 {
-                                    <form asp-action="Duyet" asp-route-id="@item.MaPhieuMuon" method="post" class="d-inline">
+                                    <form asp-action="Duyet" asp-route-id="@item.MaPhieuMuon" method="post" class="d-inline" id="duyetLoanForm-@item.MaPhieuMuon">
                                         <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                        <button type="submit" class="btn btn-sm btn-success"
-                                                onclick="return confirm('Duyệt cho bạn đọc @item.HoTenBanDoc mượn cuốn sách này?');">
+                                        <button type="button" class="btn btn-sm btn-success"
+                                                data-confirm-form="#duyetLoanForm-@item.MaPhieuMuon"
+                                                data-confirm-title="Duyệt phiếu mượn"
+                                                data-confirm-message="Duyệt cho bạn đọc @item.HoTenBanDoc mượn cuốn sách '@item.TenSach'?"
+                                                data-confirm-ok="Duyệt phiếu"
+                                                data-confirm-class="btn-success">
+
                                             Duyệt
                                         </button>
                                     </form>
@@ -216,10 +221,15 @@
 
                                 @if (item.TrangThai == TrangThaiPhieuMuon.DaDuyet)
                                 {
-                                    <form asp-action="GiaoSach" asp-route-id="@item.MaPhieuMuon" method="post" class="d-inline">
+                                    <form asp-action="GiaoSach" asp-route-id="@item.MaPhieuMuon" method="post" class="d-inline" id="giaoSachForm-@item.MaPhieuMuon">
                                         <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                        <button type="submit" class="btn btn-sm btn-primary"
-                                                onclick="return confirm('Xác nhận đã giao sách tận tay cho bạn đọc @item.HoTenBanDoc? Hạn trả sẽ bắt đầu được tính từ hôm nay.');">
+                                        <button type="button" class="btn btn-sm btn-primary"
+                                                data-confirm-form="#giaoSachForm-@item.MaPhieuMuon"
+                                                data-confirm-title="Xác nhận giao sách"
+                                                data-confirm-message="Xác nhận đã giao sách '@item.TenSach' tận tay cho bạn đọc @item.HoTenBanDoc? Hạn trả sẽ bắt đầu được tính từ hôm nay."
+                                                data-confirm-ok="Giao sách"
+                                                data-confirm-class="btn-primary">
+
                                             Giao sách
                                         </button>
                                     </form>

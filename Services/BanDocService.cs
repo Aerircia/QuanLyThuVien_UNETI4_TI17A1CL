@@ -57,6 +57,9 @@ public class BanDocService : IBanDocService
                 MaBanDoc = b.MaBanDoc,
                 MaTaiKhoan = b.MaTaiKhoan,
                 HoTen = b.HoTen,
+                NgaySinh = b.NgaySinh,
+                GioiTinh = b.GioiTinh,
+                DiaChi = b.DiaChi,
                 MaSoThe = b.MaSoThe,
                 LoaiBanDoc = b.LoaiBanDoc,
                 NgayCapThe = b.NgayCapThe,
@@ -184,6 +187,7 @@ public class BanDocService : IBanDocService
         var email = (input.Email ?? string.Empty).Trim();
         var soDienThoai = (input.SoDienThoai ?? string.Empty).Trim();
         var diaChi = (input.DiaChi ?? string.Empty).Trim();
+        soDienThoai = Regex.Replace(soDienThoai, @"[\s\.\-]+", "");
         var maSoThe = string.IsNullOrWhiteSpace(input.MaSoThe) ? null : input.MaSoThe.Trim();
 
         if (string.IsNullOrWhiteSpace(hoTen))
@@ -266,6 +270,7 @@ public class BanDocService : IBanDocService
         var email = (input.Email ?? string.Empty).Trim();
         var soDienThoai = (input.SoDienThoai ?? string.Empty).Trim();
         var diaChi = (input.DiaChi ?? string.Empty).Trim();
+        soDienThoai = Regex.Replace(soDienThoai, @"[\s\.\-]+", "");
         var maSoThe = string.IsNullOrWhiteSpace(input.MaSoThe) ? null : input.MaSoThe.Trim();
 
         if (string.IsNullOrWhiteSpace(hoTen))
@@ -338,6 +343,7 @@ public class BanDocService : IBanDocService
         var email = (input.Email ?? string.Empty).Trim();
         var soDienThoai = (input.SoDienThoai ?? string.Empty).Trim();
         var diaChi = (input.DiaChi ?? string.Empty).Trim();
+        soDienThoai = Regex.Replace(soDienThoai, @"[\s\.\-]+", "");
 
         if (string.IsNullOrWhiteSpace(hoTen))
             result.AddError(nameof(input.HoTen), "Họ tên là bắt buộc.");
@@ -425,5 +431,143 @@ public class BanDocService : IBanDocService
             .OrderBy(t => t.TenDangNhap)
             .Select(t => new TaiKhoanLookupItem(t.MaTaiKhoan, t.TenDangNhap, t.HoTen, t.Email))
             .ToListAsync(ct);
+    }
+
+    public async Task<ServiceResult<int>> DangKyTheAsync(DangKyTheBanDocInput input, int maTaiKhoan, CancellationToken ct = default)
+    {
+        var result = new ServiceResult<int>();
+        var homNay = DateOnly.FromDateTime(DateTime.Today);
+
+        var hoTen = (input.HoTen ?? string.Empty).Trim();
+        var email = (input.Email ?? string.Empty).Trim();
+        var soDienThoai = (input.SoDienThoai ?? string.Empty).Trim();
+        var diaChi = (input.DiaChi ?? string.Empty).Trim();
+        soDienThoai = Regex.Replace(soDienThoai, @"[\s\.\-]+", "");
+
+        if (string.IsNullOrWhiteSpace(hoTen))
+            result.AddError(nameof(input.HoTen), "Họ và tên là bắt buộc.");
+
+        if (input.NgaySinh < new DateOnly(1900, 1, 1) || input.NgaySinh >= homNay)
+            result.AddError(nameof(input.NgaySinh), "Ngày sinh không hợp lệ.");
+
+        if (string.IsNullOrWhiteSpace(email) || !new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(email))
+            result.AddError(nameof(input.Email), "Email không đúng định dạng.");
+
+        if (string.IsNullOrWhiteSpace(soDienThoai) || !Regex.IsMatch(soDienThoai, @"^0\d{9,10}$"))
+            result.AddError(nameof(input.SoDienThoai), "Số điện thoại không hợp lệ (10-11 số, bắt đầu bằng 0).");
+
+        if (string.IsNullOrWhiteSpace(diaChi))
+            result.AddError(nameof(input.DiaChi), "Địa chỉ là bắt buộc.");
+
+        var taiKhoan = await _db.TaiKhoans.FirstOrDefaultAsync(t => t.MaTaiKhoan == maTaiKhoan, ct);
+        if (taiKhoan is null)
+            return ServiceResult<int>.Error(string.Empty, "Không tìm thấy tài khoản người dùng.");
+
+        if (false && taiKhoan.VaiTro != VaiTro.BanDoc)
+            return ServiceResult<int>.Error(string.Empty, "Chỉ tài khoản Bạn đọc mới có thể đăng ký thẻ bạn đọc.");
+
+        if (!await _taiKhoanService.IsEmailAvailableAsync(email, maTaiKhoan, ct))
+            result.AddError(nameof(input.Email), "Email đã được sử dụng bởi tài khoản khác.");
+
+        if (!result.Succeeded)
+            return result;
+
+        var existingBanDoc = await _db.BanDocs.FirstOrDefaultAsync(b => b.MaTaiKhoan == maTaiKhoan, ct);
+        if (existingBanDoc != null)
+        {
+            if (existingBanDoc.TrangThai == TrangThaiBanDoc.HoatDong)
+                return ServiceResult<int>.Error(string.Empty, "Tài khoản của bạn đã có thẻ thư viện đang hoạt động.");
+
+            // Cập nhật lại thông tin và chuyển sang Chờ duyệt (áp dụng cho trường hợp gửi lại sau khi bị từ chối hoặc sửa thông tin chờ duyệt)
+            existingBanDoc.HoTen = hoTen;
+            existingBanDoc.NgaySinh = input.NgaySinh;
+            existingBanDoc.GioiTinh = input.GioiTinh;
+            existingBanDoc.SoDienThoai = soDienThoai;
+            existingBanDoc.Email = email;
+            existingBanDoc.DiaChi = diaChi;
+            existingBanDoc.LoaiBanDoc = input.LoaiBanDoc;
+            existingBanDoc.TrangThai = TrangThaiBanDoc.ChoDuyet;
+            existingBanDoc.NgayCapThe = homNay;
+            existingBanDoc.NgayHetHanThe = homNay.AddYears(1);
+
+            taiKhoan.HoTen = hoTen;
+            taiKhoan.Email = email;
+
+            await _db.SaveChangesAsync(ct);
+            return ServiceResult<int>.Ok(existingBanDoc.MaBanDoc);
+        }
+
+        var banDoc = new BanDoc
+        {
+            MaTaiKhoan = maTaiKhoan,
+            HoTen = hoTen,
+            NgaySinh = input.NgaySinh,
+            GioiTinh = input.GioiTinh,
+            SoDienThoai = soDienThoai,
+            Email = email,
+            DiaChi = diaChi,
+            LoaiBanDoc = input.LoaiBanDoc,
+            NgayCapThe = homNay,
+            NgayHetHanThe = homNay.AddYears(1),
+            TrangThai = TrangThaiBanDoc.ChoDuyet
+        };
+
+        taiKhoan.HoTen = hoTen;
+        taiKhoan.Email = email;
+
+        _db.BanDocs.Add(banDoc);
+        try
+        {
+            await _db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException ex)
+        {
+            var msg = ex.InnerException?.Message ?? ex.Message;
+            return ServiceResult<int>.Error(string.Empty, $"Không thể gửi hồ sơ đăng ký: {msg}");
+        }
+
+        return ServiceResult<int>.Ok(banDoc.MaBanDoc);
+    }
+
+    public async Task<ServiceResult> DuyetTheAsync(int maBanDoc, CancellationToken ct = default)
+    {
+        var banDoc = await _db.BanDocs.FindAsync(new object[] { maBanDoc }, ct);
+        if (banDoc is null)
+            return ServiceResult.Fail("Không tìm thấy hồ sơ bạn đọc.");
+
+        var homNay = DateOnly.FromDateTime(DateTime.Today);
+        banDoc.TrangThai = TrangThaiBanDoc.HoatDong;
+        banDoc.NgayCapThe = homNay;
+        banDoc.NgayHetHanThe = homNay.AddYears(1);
+
+        if (string.IsNullOrWhiteSpace(banDoc.MaSoThe))
+        {
+            banDoc.MaSoThe = $"TV-{banDoc.MaBanDoc:D6}";
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return ServiceResult.Success();
+    }
+
+    public async Task<ServiceResult> TuChoiTheAsync(int maBanDoc, string? lyDo = null, CancellationToken ct = default)
+    {
+        var banDoc = await _db.BanDocs.FindAsync(new object[] { maBanDoc }, ct);
+        if (banDoc is null)
+            return ServiceResult.Fail("Không tìm thấy hồ sơ bạn đọc.");
+
+        banDoc.TrangThai = TrangThaiBanDoc.TuChoi;
+        await _db.SaveChangesAsync(ct);
+        return ServiceResult.Success();
+    }
+
+    public async Task<ServiceResult> HuyDangKyTheAsync(int maTaiKhoan, CancellationToken ct = default)
+    {
+        var banDoc = await _db.BanDocs.FirstOrDefaultAsync(b => b.MaTaiKhoan == maTaiKhoan && b.TrangThai == TrangThaiBanDoc.ChoDuyet, ct);
+        if (banDoc is null)
+            return ServiceResult.Fail("Không tìm thấy yêu cầu đăng ký thẻ nào đang chờ duyệt.");
+
+        _db.BanDocs.Remove(banDoc);
+        await _db.SaveChangesAsync(ct);
+        return ServiceResult.Success();
     }
 }

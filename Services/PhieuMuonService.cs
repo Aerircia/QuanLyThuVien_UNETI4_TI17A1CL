@@ -259,7 +259,11 @@ public class PhieuMuonService : IPhieuMuonService
 
         // Lọc theo tab
         filter = filter?.ToLowerInvariant();
-        if (filter == "active")
+        if (filter == "pending" || filter == "choduyet")
+        {
+            query = query.Where(p => p.TrangThai == TrangThaiPhieuMuon.ChoDuyet);
+        }
+        else if (filter == "active")
         {
             query = query.Where(p => p.TrangThai == TrangThaiPhieuMuon.ChoDuyet ||
                                      p.TrangThai == TrangThaiPhieuMuon.DaDuyet ||

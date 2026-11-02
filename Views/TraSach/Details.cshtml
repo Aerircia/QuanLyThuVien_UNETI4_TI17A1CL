@@ -87,9 +87,14 @@
 
                 @if (Model.TrangThaiPhat == TrangThaiPhat.ChuaNop)
                 {
-                    <form asp-action="MarkPaid" asp-route-id="@Model.MaTra" method="post"
-                          onsubmit="return confirm('Xác nhận bạn đọc đã nộp khoản phạt này?');">
-                        <button type="submit" class="btn btn-primary w-100">Đánh dấu đã nộp phạt</button>
+                    <form asp-action="MarkPaid" asp-route-id="@Model.MaTra" method="post" id="markPaidForm">
+
+                        <button type="button" class="btn btn-primary w-100"
+                                data-confirm-form="#markPaidForm"
+                                data-confirm-title="Xác nhận nộp phạt"
+                                data-confirm-message="Xác nhận bạn đọc đã nộp khoản phạt này?"
+                                data-confirm-ok="Đồng ý"
+                                data-confirm-class="btn-primary">Đánh dấu đã nộp phạt</button>
                     </form>
                 }
             </div>

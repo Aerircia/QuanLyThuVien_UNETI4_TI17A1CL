@@ -25,18 +25,34 @@ public class PhieuMuonController : Controller
         _current = current;
         _db = db;
     }
+
     // 7.3. ĐĂNG KÝ MƯỢN SÁCH (Dành cho bạn đọc)
     [AuthorizeRole(VaiTro.BanDoc)]
     [HttpGet]
     public async Task<IActionResult> Register(int id)
     {
-        // Parameter id = maSach
         var maSach = id;
-        var maBanDoc = await _current.GetMaBanDocAsync(HttpContext.RequestAborted);
-        if (!maBanDoc.HasValue)
+        var user = _current.User!;
+        var banDoc = await _db.BanDocs
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.MaTaiKhoan == user.MaTaiKhoan, HttpContext.RequestAborted);
+
+        if (banDoc is null)
         {
-            TempData["Loi"] = "Bạn chưa có hồ sơ bạn đọc hoặc thẻ thư viện. Vui lòng liên hệ thủ thư.";
-            return RedirectToAction("Index", "Home");
+            TempData["ThongBao"] = "Bạn chưa có thẻ bạn đọc. Vui lòng hoàn tất đăng ký thẻ trước khi mượn sách.";
+            return RedirectToAction("MyProfile", "BanDoc");
+        }
+
+        if (banDoc.TrangThai == TrangThaiBanDoc.ChoDuyet)
+        {
+            TempData["ThongBao"] = "Thẻ bạn đọc của bạn đang chờ thủ thư duyệt thẻ. Vui lòng chờ thẻ được kích hoạt trước khi đăng ký mượn sách.";
+            return RedirectToAction("MyProfile", "BanDoc");
+        }
+
+        if (banDoc.TrangThai != TrangThaiBanDoc.HoatDong)
+        {
+            TempData["Loi"] = "Thẻ bạn đọc của bạn hiện không hoạt động. Vui lòng kiểm tra lại thông tin hồ sơ.";
+            return RedirectToAction("MyProfile", "BanDoc");
         }
 
         var sach = await _db.Sachs
@@ -47,19 +63,12 @@ public class PhieuMuonController : Controller
         if (sach is null)
             return NotFound("Không tìm thấy đầu sách.");
 
-        var banDoc = await _db.BanDocs
-            .AsNoTracking()
-            .FirstOrDefaultAsync(b => b.MaBanDoc == maBanDoc.Value, HttpContext.RequestAborted);
-
-        if (banDoc is null)
-            return NotFound("Không tìm thấy hồ sơ bạn đọc.");
-
         var cauHinh = await _db.CauHinhThuViens.FirstOrDefaultAsync(HttpContext.RequestAborted) ?? new Models.CauHinhThuVien();
 
-        var check = await _phieuMuonService.CheckCanBorrowAsync(maBanDoc.Value, maSach, HttpContext.RequestAborted);
+        var check = await _phieuMuonService.CheckCanBorrowAsync(banDoc.MaBanDoc, maSach, HttpContext.RequestAborted);
 
         var soPhieuDangXuLy = await _db.PhieuMuons.CountAsync(
-            p => p.MaBanDoc == maBanDoc.Value &&
+            p => p.MaBanDoc == banDoc.MaBanDoc &&
                 (p.TrangThai == TrangThaiPhieuMuon.ChoDuyet ||
                  p.TrangThai == TrangThaiPhieuMuon.DaDuyet ||
                  p.TrangThai == TrangThaiPhieuMuon.DangMuon),
@@ -107,19 +116,25 @@ public class PhieuMuonController : Controller
     public async Task<IActionResult> RegisterPost(int id, PhieuMuonRegisterViewModel model)
     {
         var maSach = id;
-        var maBanDoc = await _current.GetMaBanDocAsync(HttpContext.RequestAborted);
-        if (!maBanDoc.HasValue)
-            return Forbid();
+        var user = _current.User!;
+        var banDoc = await _db.BanDocs
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.MaTaiKhoan == user.MaTaiKhoan, HttpContext.RequestAborted);
 
-        var result = await _phieuMuonService.RegisterLoanAsync(maBanDoc.Value, maSach, model.GhiChu, HttpContext.RequestAborted);
+        if (banDoc is null || banDoc.TrangThai != TrangThaiBanDoc.HoatDong)
+        {
+            TempData["Loi"] = "Bạn cần có thẻ bạn đọc đang hoạt động để mượn sách.";
+            return RedirectToAction("MyProfile", "BanDoc");
+        }
+
+        var result = await _phieuMuonService.RegisterLoanAsync(banDoc.MaBanDoc, maSach, model.GhiChu, HttpContext.RequestAborted);
 
         if (!result.Succeeded)
         {
             // Nạp lại thông tin để hiển thị lỗi
             var sach = await _db.Sachs.Include(s => s.TheLoai).AsNoTracking().FirstOrDefaultAsync(s => s.MaSach == maSach, HttpContext.RequestAborted);
-            var banDoc = await _db.BanDocs.AsNoTracking().FirstOrDefaultAsync(b => b.MaBanDoc == maBanDoc.Value, HttpContext.RequestAborted);
             var cauHinh = await _db.CauHinhThuViens.FirstOrDefaultAsync(HttpContext.RequestAborted) ?? new Models.CauHinhThuVien();
-            var check = await _phieuMuonService.CheckCanBorrowAsync(maBanDoc.Value, maSach, HttpContext.RequestAborted);
+            var check = await _phieuMuonService.CheckCanBorrowAsync(banDoc.MaBanDoc, maSach, HttpContext.RequestAborted);
 
             model.MaSach = sach?.MaSach ?? maSach;
             model.TenSach = sach?.TenSach ?? string.Empty;
@@ -130,10 +145,10 @@ public class PhieuMuonController : Controller
             model.ViTriKe = sach?.ViTriKe;
             model.SoLuongTong = sach?.SoLuongTong ?? 0;
             model.SoLuongConLai = check.SoLuongConLai;
-            model.HoTenBanDoc = banDoc?.HoTen ?? string.Empty;
-            model.MaSoThe = banDoc?.MaSoThe;
-            model.LoaiBanDoc = banDoc?.LoaiBanDoc ?? LoaiBanDoc.SinhVien;
-            model.NgayHetHanThe = banDoc?.NgayHetHanThe ?? DateOnly.MinValue;
+            model.HoTenBanDoc = banDoc.HoTen;
+            model.MaSoThe = banDoc.MaSoThe;
+            model.LoaiBanDoc = banDoc.LoaiBanDoc;
+            model.NgayHetHanThe = banDoc.NgayHetHanThe;
             model.SoPhieuToiDa = cauHinh.SoPhieuToiDa;
             model.DuDieuKienMuon = false;
             model.LyDoKhongDuDieuKien = result.Errors.Values.SelectMany(x => x).ToList();
@@ -145,26 +160,42 @@ public class PhieuMuonController : Controller
         TempData["ThongBao"] = "Đăng ký mượn sách thành công! Phiếu mượn đang ở trạng thái 'Chờ duyệt', vui lòng theo dõi thông báo từ thủ thư.";
         return RedirectToAction(nameof(MyLoans));
     }
+
     // 7.5. THEO DÕI PHIẾU MƯỢN CỦA BẠN ĐỌC
     [AuthorizeRole(VaiTro.BanDoc)]
     [HttpGet]
     public async Task<IActionResult> MyLoans(string? filter = "all")
     {
-        var maBanDoc = await _current.GetMaBanDocAsync(HttpContext.RequestAborted);
-        if (!maBanDoc.HasValue)
+        var user = _current.User!;
+        var banDoc = await _db.BanDocs
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.MaTaiKhoan == user.MaTaiKhoan, HttpContext.RequestAborted);
+
+        if (banDoc is null || banDoc.TrangThai != TrangThaiBanDoc.HoatDong)
         {
-            TempData["Loi"] = "Bạn chưa có hồ sơ bạn đọc.";
-            return RedirectToAction("Index", "Home");
+            TempData["ThongBao"] = banDoc?.TrangThai == TrangThaiBanDoc.ChoDuyet
+                ? "Thẻ bạn đọc của bạn đang chờ thủ thư duyệt thẻ. Vui lòng theo dõi tại trang Thẻ & hồ sơ."
+                : "Bạn chưa có thẻ thư viện. Vui lòng hoàn tất thông tin đăng ký thẻ bạn đọc.";
+            return RedirectToAction("MyProfile", "BanDoc");
         }
 
-        var loans = await _phieuMuonService.GetMyLoansAsync(maBanDoc.Value, filter, HttpContext.RequestAborted);
+        var maBanDoc = banDoc.MaBanDoc;
+        var allLoans = await _phieuMuonService.GetMyLoansAsync(maBanDoc, "all", HttpContext.RequestAborted);
+        var loans = (filter == "all" || string.IsNullOrWhiteSpace(filter))
+            ? allLoans
+            : await _phieuMuonService.GetMyLoansAsync(maBanDoc, filter, HttpContext.RequestAborted);
 
-        var fines = await _phieuMuonService.GetMyFinesAsync(maBanDoc.Value, HttpContext.RequestAborted);
+        var fines = await _phieuMuonService.GetMyFinesAsync(maBanDoc, HttpContext.RequestAborted);
 
         var model = new MyLoansViewModel
         {
             Loans = loans,
             Filter = filter ?? "all",
+            TongSoPhieu = allLoans.Count,
+            SoPhieuChoDuyet = allLoans.Count(l => l.TrangThai == TrangThaiPhieuMuon.ChoDuyet),
+            SoPhieuDaDuyet = allLoans.Count(l => l.TrangThai == TrangThaiPhieuMuon.DaDuyet),
+            SoPhieuDangMuon = allLoans.Count(l => l.TrangThai == TrangThaiPhieuMuon.DangMuon),
+            SoPhieuQuaHan = allLoans.Count(l => l.IsOverdue),
             TongTienPhatChuaNop = fines.ChuaNop
         };
 
@@ -192,6 +223,7 @@ public class PhieuMuonController : Controller
 
         return View(detail);
     }
+
     // 7.4. HỦY PHIẾU MƯỢN (POST only)
     [AuthorizeRole(VaiTro.BanDoc)]
     [HttpPost]
@@ -214,18 +246,27 @@ public class PhieuMuonController : Controller
 
         return RedirectToAction(nameof(MyLoans));
     }
+
     // 7.5. TIỀN PHẠT CỦA BẠN ĐỌC
     [AuthorizeRole(VaiTro.BanDoc)]
     [HttpGet]
     public async Task<IActionResult> MyFines()
     {
-        var maBanDoc = await _current.GetMaBanDocAsync(HttpContext.RequestAborted);
-        if (!maBanDoc.HasValue)
-            return NotFound();
+        var user = _current.User!;
+        var banDoc = await _db.BanDocs
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.MaTaiKhoan == user.MaTaiKhoan, HttpContext.RequestAborted);
 
-        var model = await _phieuMuonService.GetMyFinesAsync(maBanDoc.Value, HttpContext.RequestAborted);
+        if (banDoc is null || banDoc.TrangThai != TrangThaiBanDoc.HoatDong)
+        {
+            TempData["ThongBao"] = "Bạn chưa có thẻ thư viện đang hoạt động.";
+            return RedirectToAction("MyProfile", "BanDoc");
+        }
+
+        var model = await _phieuMuonService.GetMyFinesAsync(banDoc.MaBanDoc, HttpContext.RequestAborted);
         return View(model);
     }
+
     // DÀNH CHO THỦ THƯ & ADMIN: Xử lý & Xác nhận mượn sách
     [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
     [HttpGet]

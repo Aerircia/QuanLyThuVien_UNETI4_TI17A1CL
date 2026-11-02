@@ -6,4 +6,9 @@ using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums;
 
 namespace QuanLyThuVien_UNETI4_TI17A1CL.Services.Auth;
 
-public sealed record CurrentUser(int MaTaiKhoan, string HoTen, VaiTro VaiTro);
+public sealed record CurrentUser(
+    int MaTaiKhoan,
+    string HoTen,
+    VaiTro VaiTro,
+    string TenDangNhap = "",
+    string Email = "");
