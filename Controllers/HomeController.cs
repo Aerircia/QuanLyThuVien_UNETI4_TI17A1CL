@@ -2,109 +2,65 @@
 // Mã sinh viên: 23103100136
 // Nội dung thực hiện: HomeController hiển thị trang chủ và danh mục tra cứu sách mượn
 
+// Họ và tên: Lại Anh Quân
+// Mã sinh viên: 23103100255
+// Nội dung thực hiện: Làm lại trang chủ (landing), thêm trang tra cứu kho sách và chi tiết sách công khai cho khách/bạn đọc
+
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using QuanLyThuVien_UNETI4_TI17A1CL.Data;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums;
+using QuanLyThuVien_UNETI4_TI17A1CL.Services.Common;
+using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces;
 using QuanLyThuVien_UNETI4_TI17A1CL.ViewModels;
 
 namespace QuanLyThuVien_UNETI4_TI17A1CL.Controllers;
 
 public class HomeController : Controller
 {
-    private readonly AppDbContext _db;
+    private readonly IHomeService _home;
+    private readonly ICurrentUserService _current;
 
-    public HomeController(AppDbContext db)
+    public HomeController(IHomeService home, ICurrentUserService current)
     {
-        _db = db;
+        _home = home;
+        _current = current;
     }
 
-    public async Task<IActionResult> Index(string? search, int? maTheLoai, bool? conSach)
+    // Trang chủ công khai. Nhân viên có giao diện riêng nên đưa thẳng về Dashboard.
+    [HttpGet]
+    public async Task<IActionResult> Index()
     {
-        var theLoais = await _db.TheLoais
-            .Where(t => t.TrangThai == TrangThaiTheLoai.HoatDong)
-            .OrderBy(t => t.TenTheLoai)
-            .ToListAsync(HttpContext.RequestAborted);
+        if (_current.IsInRole(VaiTro.Admin, VaiTro.ThuThu))
+            return RedirectToAction("Dashboard", "ThongKe");
 
-        var query = _db.Sachs
-            .Include(s => s.TheLoai)
-            .Include(s => s.PhieuMuons)
-            .AsNoTracking();
+        return View(await _home.GetLandingAsync(HttpContext.RequestAborted));
+    }
 
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var s = search.Trim();
-            query = query.Where(b => b.TenSach.Contains(s) || b.TacGia.Contains(s));
-        }
+    // Tra cứu kho sách: khách và mọi vai trò đều xem được (chỉ đăng ký mượn mới cần đăng nhập).
+    [HttpGet]
+    public async Task<IActionResult> Catalog(
+        [FromQuery] CatalogFilter filter,
+        int page = 1,
+        int pageSize = PagingDefaults.DefaultPageSize)
+    {
+        filter.Normalize();
 
-        if (maTheLoai.HasValue)
-        {
-            query = query.Where(b => b.MaTheLoai == maTheLoai.Value);
-        }
+        // Yêu cầu AJAX (X-Requested-With) chỉ nhận phần kết quả; tải trang bình thường nhận cả trang.
+        var ajax = Request.Headers.XRequestedWith == "XMLHttpRequest";
 
-        var booksRaw = await query
-            .OrderByDescending(b => b.MaSach)
-            .ToListAsync(HttpContext.RequestAborted);
+        // Cùng một URL có hai dạng trả về: Vary giúp nút Back không bao giờ hiện nhầm mảnh HTML trần.
+        Response.Headers.Append("Vary", "X-Requested-With");
 
-        // Đếm số lượng đã mượn / mất qua LINQ
-        var bookIds = booksRaw.Select(b => b.MaSach).ToList();
-        var heldCounts = await _db.PhieuMuons
-            .Where(p => bookIds.Contains(p.MaSach) &&
-                       (p.TrangThai == TrangThaiPhieuMuon.DaDuyet || p.TrangThai == TrangThaiPhieuMuon.DangMuon))
-            .GroupBy(p => p.MaSach)
-            .Select(g => new { MaSach = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.MaSach, x => x.Count, HttpContext.RequestAborted);
+        var vm = await _home.GetCatalogAsync(filter, page, pageSize, includeSidebar: !ajax, HttpContext.RequestAborted);
+        return ajax ? PartialView("_CatalogResults", vm) : View(vm);
+    }
 
-        var lostCounts = await _db.TraSachs
-            .Where(t => bookIds.Contains(t.PhieuMuon!.MaSach) && t.TinhTrangSach == TinhTrangSach.Mat)
-            .GroupBy(t => t.PhieuMuon!.MaSach)
-            .Select(g => new { MaSach = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.MaSach, x => x.Count, HttpContext.RequestAborted);
-
-        var bookItems = booksRaw.Select(b =>
-        {
-            var held = heldCounts.GetValueOrDefault(b.MaSach, 0);
-            var lost = lostCounts.GetValueOrDefault(b.MaSach, 0);
-            var left = Math.Max(0, b.SoLuongTong - held - lost);
-
-            return new BookItemViewModel
-            {
-                MaSach = b.MaSach,
-                TenSach = b.TenSach,
-                TacGia = b.TacGia,
-                MaTheLoai = b.MaTheLoai,
-                TenTheLoai = b.TheLoai?.TenTheLoai,
-                NhaXuatBan = b.NhaXuatBan,
-                NamXuatBan = b.NamXuatBan,
-                SoLuongTong = b.SoLuongTong,
-                SoLuongConLai = left,
-                GiaBia = b.GiaBia,
-                ViTriKe = b.ViTriKe,
-                MoTa = b.MoTa,
-                TrangThai = b.TrangThai
-            };
-        }).ToList();
-
-        if (conSach == true)
-        {
-            bookItems = bookItems.Where(b => b.ConSach).ToList();
-        }
-
-        var model = new BookCatalogViewModel
-        {
-            Search = search,
-            MaTheLoai = maTheLoai,
-            ConSach = conSach,
-            TheLoais = theLoais,
-            Books = bookItems,
-            TongSoDauSach = await _db.Sachs.CountAsync(HttpContext.RequestAborted),
-            TongSoBanSach = await _db.Sachs.SumAsync(s => (int?)s.SoLuongTong ?? 0, HttpContext.RequestAborted),
-            SoDauSachSanSang = bookItems.Count(b => b.ConSach)
-        };
-
-        return View(model);
+    [HttpGet]
+    public async Task<IActionResult> Book(int id)
+    {
+        var detail = await _home.GetBookAsync(id, HttpContext.RequestAborted);
+        return detail is null ? NotFound() : View(detail);
     }
 
     public IActionResult Privacy()

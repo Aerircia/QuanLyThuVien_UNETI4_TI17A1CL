@@ -3,80 +3,96 @@
 @* Nội dung thực hiện: view chi tiết trả sách và đánh dấu đã nộp phạt *@
 @model QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.TraSachDetail
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+
 @{
     ViewData["Title"] = "Chi tiết trả sách";
 }
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div>
+        <h1 class="mb-1">Chi tiết trả sách #@Model.MaTra</h1>
+        <p class="text-muted mb-0">Phiếu mượn #@Model.MaPhieuMuon</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+</div>
 
-<div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <h1 class="h4 mb-3">Chi tiết trả sách #@Model.MaTra</h1>
+@if (TempData["ThongBao"] is string thongBao)
+{
+    <div class="alert alert-success" role="status">@thongBao</div>
+}
+@if (TempData["Loi"] is string loi)
+{
+    <div class="alert alert-danger" role="alert">@loi</div>
+}
+@if (Model.SoNgayTre > 0)
+{
+    <div class="alert alert-overdue" role="alert">Phiếu này được trả trễ <strong>@Model.SoNgayTre ngày</strong>.</div>
+}
 
-        @if (TempData["ThongBao"] is string thongBao)
-        {
-            <div class="alert alert-success" role="status">@thongBao</div>
-        }
-        @if (TempData["Loi"] is string loi)
-        {
-            <div class="alert alert-danger" role="alert">@loi</div>
-        }
-
-        <dl class="row">
-            <dt class="col-sm-5">Phiếu mượn</dt>
-            <dd class="col-sm-7">#@Model.MaPhieuMuon</dd>
-            <dt class="col-sm-5">Bạn đọc</dt>
-            <dd class="col-sm-7">@Model.TenBanDoc @(Model.MaSoThe is null ? "" : $"({Model.MaSoThe})")</dd>
-            <dt class="col-sm-5">Sách</dt>
-            <dd class="col-sm-7">@Model.TenSach</dd>
-            <dt class="col-sm-5">Giá bìa</dt>
-            <dd class="col-sm-7">@Model.GiaBia.ToString("N0") đ</dd>
-            <dt class="col-sm-5">Ngày mượn</dt>
-            <dd class="col-sm-7">@(Model.NgayMuon?.ToString("dd/MM/yyyy"))</dd>
-            <dt class="col-sm-5">Hạn trả</dt>
-            <dd class="col-sm-7">@(Model.HanTra?.ToString("dd/MM/yyyy"))</dd>
-            <dt class="col-sm-5">Ngày trả</dt>
-            <dd class="col-sm-7">@Model.NgayTra.ToString("dd/MM/yyyy")</dd>
-            <dt class="col-sm-5">Tình trạng sách</dt>
-            <dd class="col-sm-7">@Model.TinhTrang.GetDisplayName()</dd>
-            <dt class="col-sm-5">Số ngày trễ</dt>
-            <dd class="col-sm-7 @(Model.SoNgayTre > 0 ? "text-danger fw-bold" : "")">@Model.SoNgayTre</dd>
-            <dt class="col-sm-5">Tiền phạt</dt>
-            <dd class="col-sm-7">@Model.TienPhat.ToString("N0") đ</dd>
-            <dt class="col-sm-5">Trạng thái phạt</dt>
-            <dd class="col-sm-7">@Model.TrangThaiPhat.GetDisplayName()</dd>
-            <dt class="col-sm-5">Ghi chú</dt>
-            <dd class="col-sm-7">@Model.GhiChu</dd>
-            <dt class="col-sm-5">Thủ thư nhận</dt>
-            <dd class="col-sm-7">@Model.TenNguoiNhan</dd>
-        </dl>
-
-        <div class="card mb-3">
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header">Thông tin trả sách</div>
             <div class="card-body">
-                <h2 class="h6">Cách tính tiền phạt</h2>
-                <table class="table table-sm mb-0">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Bạn đọc</dt>
+                    <dd class="col-sm-8">@Model.TenBanDoc @(Model.MaSoThe is null ? "" : $"({Model.MaSoThe})")</dd>
+                    <dt class="col-sm-4">Sách</dt>
+                    <dd class="col-sm-8">@Model.TenSach</dd>
+                    <dt class="col-sm-4">Giá bìa</dt>
+                    <dd class="col-sm-8">@Model.GiaBia.ToString("N0") đ</dd>
+                    <dt class="col-sm-4">Ngày mượn</dt>
+                    <dd class="col-sm-8">@(Model.NgayMuon?.ToString("dd/MM/yyyy"))</dd>
+                    <dt class="col-sm-4">Hạn trả</dt>
+                    <dd class="col-sm-8">@(Model.HanTra?.ToString("dd/MM/yyyy"))</dd>
+                    <dt class="col-sm-4">Ngày trả</dt>
+                    <dd class="col-sm-8">@Model.NgayTra.ToString("dd/MM/yyyy")</dd>
+                    <dt class="col-sm-4">Số ngày trễ</dt>
+                    <dd class="col-sm-8 @(Model.SoNgayTre > 0 ? "text-danger fw-semibold" : "")">@Model.SoNgayTre</dd>
+                    <dt class="col-sm-4">Tình trạng sách</dt>
+                    <dd class="col-sm-8"><partial name="_TinhTrangSachBadge" model="Model.TinhTrang" /></dd>
+                    <dt class="col-sm-4">Ghi chú</dt>
+                    <dd class="col-sm-8">@Model.GhiChu</dd>
+                    <dt class="col-sm-4">Thủ thư nhận</dt>
+                    <dd class="col-sm-8">@Model.TenNguoiNhan</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+ <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span>Tiền phạt</span>
+                <partial name="_TrangThaiPhatBadge" model="Model.TrangThaiPhat" />
+            </div>
+            <div class="card-body">
+                <div class="text-center fs-2 fw-bold mb-3 @(Model.TienPhat > 0 ? "text-danger" : "text-success")">
+                    @Model.TienPhat.ToString("N0") đ
+                </div>
+
+                <table class="table table-sm align-middle mb-3">
                     <tr>
-                        <td>1. Phạt trả trễ <small class="text-muted">(TienPhatTreHanService)</small></td>
-                        <td>@Model.SoNgayTre ngày</td>
+                        <td>Phạt trả trễ (@Model.SoNgayTre ngày)</td>
                         <td class="text-end">@Model.PhatTre.ToString("N0") đ</td>
                     </tr>
                     <tr>
-                        <td>2. Phạt tình trạng sách <small class="text-muted">(TienPhatTinhTrangSachService)</small></td>
-                        <td>@Model.TinhTrang.GetDisplayName()</td>
+                        <td>Phạt tình trạng (@Model.TinhTrang.GetDisplayName())</td>
                         <td class="text-end">@Model.PhatTinhTrang.ToString("N0") đ</td>
                     </tr>
                     <tr class="fw-bold">
-                        <td colspan="2">Tổng tiền phạt</td>
+                        <td>Tổng</td>
                         <td class="text-end">@Model.TienPhat.ToString("N0") đ</td>
                     </tr>
                 </table>
+
+                @if (Model.TrangThaiPhat == TrangThaiPhat.ChuaNop)
+                {
+                    <form asp-action="MarkPaid" asp-route-id="@Model.MaTra" method="post"
+                          onsubmit="return confirm('Xác nhận bạn đọc đã nộp khoản phạt này?');">
+                        <button type="submit" class="btn btn-primary w-100">Đánh dấu đã nộp phạt</button>
+                    </form>
+                }
             </div>
         </div>
-
-        @if (Model.TrangThaiPhat == TrangThaiPhat.ChuaNop)
-        {
-            <form asp-action="MarkPaid" asp-route-id="@Model.MaTra" method="post" class="d-inline">
-                <button type="submit" class="btn btn-success">Đánh dấu đã nộp phạt</button>
-            </form>
-        }
-        <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
     </div>
 </div>

@@ -1,0 +1,28 @@
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Bộ icon SVG dùng chung (Model = tên icon), kiểu nét như icon menu của site.css *@
+@model string
+@{
+    var paths = Model switch
+    {
+        "search" => "<circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m20 20-3.5-3.5\"/>",
+        "form" => "<rect x=\"5\" y=\"3\" width=\"14\" height=\"18\" rx=\"2\"/><path d=\"M9 8h6M9 12h6M9 16h3\"/>",
+        "pickup" => "<path d=\"M6 8h12l1 12H5zM9 8a3 3 0 0 1 6 0\"/>",
+        "return" => "<path d=\"M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5M20 12a8 8 0 0 1-14 5.3L4 15M4 20v-5h5\"/>",
+        "code" => "<path d=\"m8 8-4 4 4 4M16 8l4 4-4 4M14 5l-4 14\"/>",
+        "science" => "<path d=\"M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2.2h12.4a1.5 1.5 0 0 0 1.3-2.2L14 9V3M7.5 15h9\"/>",
+        "literature" => "<path d=\"M12 6c-2-1.5-5-2-9-2v14c4 0 7 .5 9 2 2-1.5 5-2 9-2V4c-4 0-7 .5-9 2zM12 6v14\"/>",
+        "history" => "<path d=\"M3 21h18M5 21V10M9 21V10M15 21V10M19 21V10M3 10l9-6 9 6\"/>",
+        "economy" => "<path d=\"M3 17l5-5 4 4 8-9M15 7h5v5\"/>",
+        "kids" => "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M8 14s1.5 2.5 4 2.5 4-2.5 4-2.5M9 9.5h.01M15 9.5h.01\"/>",
+        "star" => "<path d=\"M12 2l3 6.5 7 .9-5.1 4.8 1.3 7-6.2-3.5-6.2 3.5 1.3-7L2 9.4l7-.9z\"/>",
+        "grid" => "<rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/>",
+        "list" => "<path d=\"M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01\"/>",
+        "filter" => "<path d=\"M3 6h9M18 6h3M3 12h3M12 12h9M3 18h11M20 18h1\"/><circle cx=\"15\" cy=\"6\" r=\"3\"/><circle cx=\"9\" cy=\"12\" r=\"3\"/><circle cx=\"17\" cy=\"18\" r=\"3\"/>",
+        "chev-l" => "<path d=\"M15 6l-6 6 6 6\"/>",
+        "chev-r" => "<path d=\"M9 6l6 6-6 6\"/>",
+        "close" => "<path d=\"M6 6l12 12M18 6L6 18\"/>",
+        _ => "<path d=\"M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5zM4 19.5A2.5 2.5 0 0 1 6.5 17H20\"/>"
+    };
+}
+<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">@Html.Raw(paths)</svg>

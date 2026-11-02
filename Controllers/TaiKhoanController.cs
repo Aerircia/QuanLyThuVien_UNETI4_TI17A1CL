@@ -1,8 +1,10 @@
 // Họ và tên: Lại Anh Quân
 // Mã sinh viên: 23103100255
-// Nội dung thực hiện: Xây dựng TaiKhoanController để xử lý đăng nhập, đăng xuất, đổi mật khẩu, từ chối truy cập và đăng ký tài khoản.
+// Nội dung thực hiện: Xây dựng TaiKhoanController để xử lý đăng nhập, đăng xuất, đổi mật khẩu, từ chối truy cập.
+// Quên mật khẩu: email đi giữa các bước bằng Session (không đưa lên URL), ResendOtp không nhận email từ form.
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Auth;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Common;
@@ -13,22 +15,41 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Controllers;
 
 public class TaiKhoanController : Controller
 {
+    private const string KeyCooldown = "Cooldown";
+    private const string KeyResetOtp = "ResetOtp";
+    private const string ResetSessionExpired = "Phiên đặt lại mật khẩu đã hết hạn. Vui lòng bắt đầu lại.";
+
     private readonly IAuthService _auth;
     private readonly IPasswordResetService _passwordReset;
+    private readonly ITaiKhoanService _taiKhoan;
     private readonly ICurrentUserService _current;
-    private readonly ITaiKhoanService _taiKhoanService;
+    private readonly OtpOptions _otp;
 
     public TaiKhoanController(
         IAuthService auth,
         IPasswordResetService passwordReset,
+        ITaiKhoanService taiKhoan,
         ICurrentUserService current,
-        ITaiKhoanService taiKhoanService)
+        IOptions<OtpOptions> otp)
     {
         _auth = auth;
         _passwordReset = passwordReset;
+        _taiKhoan = taiKhoan;
         _current = current;
-        _taiKhoanService = taiKhoanService;
+        _otp = otp.Value;
     }
+
+    // Nhân viên vào Dashboard, bạn đọc về trang chủ.
+    private IActionResult RedirectByRole(VaiTro vaiTro) =>
+        vaiTro is VaiTro.Admin or VaiTro.ThuThu
+            ? RedirectToAction("Dashboard", "ThongKe")
+            : RedirectToAction("Index", "Home");
+
+    // Nhân viên vào Dashboard, bạn đọc về trang chủ.
+    private IActionResult RedirectByRole(VaiTro vaiTro) =>
+        vaiTro is VaiTro.Admin or VaiTro.ThuThu
+            ? RedirectToAction("Dashboard", "ThongKe")
+            : RedirectToAction("Index", "Home");
 
     // ---------- Đăng nhập ----------
 
@@ -36,7 +57,7 @@ public class TaiKhoanController : Controller
     public IActionResult Login(string? returnUrl = null, string? reason = null)
     {
         if (_current.IsAuthenticated)
-            return RedirectToAction("Index", "Home");
+            return RedirectByRole(_current.User!.VaiTro);
 
         ViewBag.ThongBao = reason switch
         {
@@ -75,16 +96,16 @@ public class TaiKhoanController : Controller
         if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
             return LocalRedirect(model.ReturnUrl);
 
-        return RedirectToAction("Index", "Home");
+        return RedirectByRole(result.User!.VaiTro);
     }
 
-    // ---------- Đăng ký tài khoản (Người dùng tự đăng ký) ----------
+    // ---------- Đăng ký (chỉ tạo TaiKhoan vai trò Bạn đọc) ----------
 
     [HttpGet]
     public IActionResult Register()
     {
         if (_current.IsAuthenticated)
-            return RedirectToAction("Index", "Home");
+            return RedirectByRole(_current.User!.VaiTro);
 
         return View(new RegisterViewModel());
     }
@@ -94,19 +115,19 @@ public class TaiKhoanController : Controller
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
         if (_current.IsAuthenticated)
-            return RedirectToAction("Index", "Home");
+            return RedirectByRole(_current.User!.VaiTro);
 
         if (!ModelState.IsValid)
+        {
+            model.MatKhau = model.XacNhanMatKhau = string.Empty;
             return View(model);
+        }
 
-        var result = await _taiKhoanService.CreateAsync(
+        // Vai trò và trạng thái do server quyết định, không lấy từ form.
+        var result = await _taiKhoan.CreateAsync(
             new CreateTaiKhoanInput(
-                model.TenDangNhap.Trim(),
-                model.MatKhau,
-                model.HoTen.Trim(),
-                model.Email.Trim(),
-                VaiTro.BanDoc,
-                TrangThaiTaiKhoan.HoatDong),
+                model.TenDangNhap, model.MatKhau, model.HoTen, model.Email,
+                VaiTro.BanDoc, TrangThaiTaiKhoan.HoatDong),
             HttpContext.RequestAborted);
 
         if (!result.Succeeded)
@@ -116,7 +137,7 @@ public class TaiKhoanController : Controller
             return View(model);
         }
 
-        TempData["ThongBao"] = "Đăng ký tài khoản thành công! Vui lòng đăng nhập, sau đó vào mục 'Thẻ & hồ sơ cá nhân' để đăng ký thẻ bạn đọc.";
+        TempData["ThongBao"] = "Đăng ký thành công. Vui lòng đăng nhập.";
         return RedirectToAction(nameof(Login));
     }
 
@@ -181,61 +202,180 @@ public class TaiKhoanController : Controller
     }
 
     // ---------- Quên mật khẩu, bước 1: nhập email để nhận OTP ----------
+    // Email đang đặt lại được giữ trong Session (HttpContext.Session.Set/Get/ClearResetEmail),
+    // các bước sau không còn nhận email qua URL.
 
     [HttpGet]
-    public IActionResult ForgotPassword() => View(new ForgotPasswordViewModel());
+    public IActionResult ForgotPassword()
+    {
+        // Còn phiên đặt lại dở dang: điền sẵn email và cho phép quay lại bước nhập mã.
+        var pending = HttpContext.Session.GetResetEmail();
+        ViewBag.PendingEmail = pending;
+        return View(new ForgotPasswordViewModel { Email = pending ?? string.Empty });
+    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
     {
+        ViewBag.PendingEmail = HttpContext.Session.GetResetEmail();
+
         if (!ModelState.IsValid)
             return View(model);
 
         var result = await _passwordReset.RequestAsync(model.Email, HttpContext.RequestAborted);
 
-        switch (result.Status)
+        if (result.Status == RequestResetStatus.Sent)
         {
-            case RequestResetStatus.Sent:
-                TempData["ThongBao"] = "Mã OTP đã được gửi tới email của bạn.";
-                return RedirectToAction(nameof(ResetPassword), new { email = model.Email.Trim() });
-
-            case RequestResetStatus.EmailNotFound:
-                ModelState.AddModelError(nameof(model.Email), "Email không tồn tại trong hệ thống.");
-                break;
-
-            case RequestResetStatus.AccountLocked:
-                ModelState.AddModelError(string.Empty, "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.");
-                break;
-
-            case RequestResetStatus.CooldownActive:
-                ModelState.AddModelError(string.Empty,
-                    $"Vui lòng đợi {result.RetryAfterSeconds} giây trước khi yêu cầu mã mới.");
-                break;
-
-            case RequestResetStatus.HourlyLimitReached:
-                ModelState.AddModelError(string.Empty,
-                    $"Bạn đã yêu cầu mã quá nhiều lần. Vui lòng thử lại sau khoảng {Math.Max(1, (result.RetryAfterSeconds + 59) / 60)} phút.");
-                break;
-
-            default:
-                ModelState.AddModelError(string.Empty, "Không gửi được email. Vui lòng thử lại sau.");
-                break;
+            HttpContext.Session.SetResetEmail(model.Email.Trim());
+            TempData.Remove(KeyResetOtp); // bỏ mã của lần đặt lại trước (nếu còn)
+            TempData["ThongBao"] = "Mã OTP đã được gửi tới email của bạn.";
+            TempData[KeyCooldown] = _otp.ResendCooldownSeconds;
+            return RedirectToAction(nameof(VerifyOtp));
         }
+
+        if (result.Status == RequestResetStatus.EmailNotFound)
+            ModelState.AddModelError(nameof(model.Email), "Email không tồn tại trong hệ thống.");
+        else
+            ModelState.AddModelError(string.Empty, DescribeRequestFailure(result));
 
         return View(model);
     }
 
-    // ---------- Quên mật khẩu, bước 2: nhập OTP và mật khẩu mới ----------
+    // ---------- Quên mật khẩu, bước 2: nhập mã OTP (chỉ kiểm tra, chưa tiêu thụ mã) ----------
 
     [HttpGet]
-    public IActionResult ResetPassword(string? email = null) =>
-        View(new ResetPasswordViewModel { Email = email ?? string.Empty });
+    public IActionResult VerifyOtp()
+    {
+        var email = HttpContext.Session.GetResetEmail();
+        if (email is null)
+        {
+            TempData["Loi"] = "Vui lòng nhập email để nhận mã OTP.";
+            return RedirectToAction(nameof(ForgotPassword));
+        }
+
+        return View(new VerifyOtpViewModel
+        {
+            Email = email,
+            CooldownSeconds = TempData[KeyCooldown] as int? ?? 0
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> VerifyOtp(VerifyOtpViewModel model)
+    {
+        var email = HttpContext.Session.GetResetEmail();
+        if (email is null)
+        {
+            TempData["Loi"] = ResetSessionExpired;
+            return RedirectToAction(nameof(ForgotPassword));
+        }
+
+        // Email lấy từ Session, không tin giá trị gửi lên từ form.
+        model.Email = email;
+        ModelState.Remove(nameof(model.Email));
+
+        model.CooldownSeconds = 0;
+        model.MaOtp ??= string.Empty;
+
+        if (!ModelState.IsValid)
+        {
+            model.MaOtp = string.Empty;
+            return View(model);
+        }
+
+        var status = await _passwordReset.VerifyOtpAsync(model.Email, model.MaOtp, HttpContext.RequestAborted);
+
+        switch (status)
+        {
+            case ResetPasswordStatus.Success:
+                // Chuyển mã sang bước 3 qua TempData (cookie đã mã hóa); email đã nằm trong Session.
+                TempData[KeyResetOtp] = model.MaOtp;
+                return RedirectToAction(nameof(ResetPassword));
+
+            case ResetPasswordStatus.EmailNotFound:
+                ModelState.AddModelError(string.Empty, "Email không tồn tại trong hệ thống.");
+                break;
+
+            case ResetPasswordStatus.AccountLocked:
+                ModelState.AddModelError(string.Empty, "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.");
+                break;
+
+            case ResetPasswordStatus.TooManyAttempts:
+                ModelState.AddModelError(string.Empty,
+                    "Bạn đã nhập sai quá nhiều lần. Vui lòng bấm \"Gửi lại mã\" để nhận mã mới.");
+                break;
+
+            default:
+                ModelState.AddModelError(nameof(model.MaOtp), "Mã OTP không đúng hoặc đã hết hạn.");
+                break;
+        }
+
+        model.MaOtp = string.Empty;
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResendOtp()
+    {
+        var email = HttpContext.Session.GetResetEmail();
+        if (email is null)
+        {
+            TempData["Loi"] = ResetSessionExpired;
+            return RedirectToAction(nameof(ForgotPassword));
+        }
+
+        var result = await _passwordReset.RequestAsync(email, HttpContext.RequestAborted);
+
+        if (result.Status == RequestResetStatus.Sent)
+        {
+            TempData["ThongBao"] = "Đã gửi lại mã OTP mới tới email của bạn.";
+            TempData[KeyCooldown] = _otp.ResendCooldownSeconds;
+        }
+        else
+        {
+            TempData["Loi"] = DescribeRequestFailure(result);
+            if (result.Status == RequestResetStatus.CooldownActive)
+                TempData[KeyCooldown] = result.RetryAfterSeconds;
+        }
+
+        return RedirectToAction(nameof(VerifyOtp));
+    }
+
+    // ---------- Quên mật khẩu, bước 3: đặt mật khẩu mới (kiểm tra lại và tiêu thụ OTP) ----------
+
+    [HttpGet]
+    public IActionResult ResetPassword()
+    {
+        var email = HttpContext.Session.GetResetEmail();
+        var otp = TempData.Peek(KeyResetOtp) as string;
+
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(otp))
+        {
+            TempData["Loi"] = ResetSessionExpired;
+            return RedirectToAction(nameof(ForgotPassword));
+        }
+
+        return View(new ResetPasswordViewModel { Email = email, MaOtp = otp });
+    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
     {
+        var email = HttpContext.Session.GetResetEmail();
+        if (email is null)
+        {
+            TempData["Loi"] = ResetSessionExpired;
+            return RedirectToAction(nameof(ForgotPassword));
+        }
+
+        // Email lấy từ Session, không tin giá trị gửi lên từ form.
+        model.Email = email;
+        ModelState.Remove(nameof(model.Email));
+
         if (!ModelState.IsValid)
         {
             model.MatKhauMoi = model.XacNhanMatKhauMoi = string.Empty;
@@ -248,28 +388,39 @@ public class TaiKhoanController : Controller
         switch (status)
         {
             case ResetPasswordStatus.Success:
+                HttpContext.Session.ClearResetEmail();
+                TempData.Remove(KeyResetOtp);
                 TempData["ThongBao"] = "Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.";
                 return RedirectToAction(nameof(Login));
 
             case ResetPasswordStatus.EmailNotFound:
-                ModelState.AddModelError(nameof(model.Email), "Email không tồn tại trong hệ thống.");
+                ModelState.AddModelError(string.Empty, "Email không tồn tại trong hệ thống.");
                 break;
 
             case ResetPasswordStatus.AccountLocked:
                 ModelState.AddModelError(string.Empty, "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.");
                 break;
 
-            case ResetPasswordStatus.TooManyAttempts:
-                ModelState.AddModelError(string.Empty,
-                    "Bạn đã nhập sai quá nhiều lần. Vui lòng quay lại bước trước để nhận mã mới.");
-                break;
-
             default:
-                ModelState.AddModelError(nameof(model.MaOtp), "Mã OTP không đúng hoặc đã hết hạn.");
-                break;
+                // Mã hết hạn hoặc bị vô hiệu giữa bước 2 và bước 3: quay lại bước nhập mã (email vẫn nằm trong Session).
+                TempData.Remove(KeyResetOtp);
+                TempData["Loi"] = status == ResetPasswordStatus.TooManyAttempts
+                    ? "Bạn đã nhập sai quá nhiều lần. Vui lòng nhận mã mới."
+                    : "Mã OTP không đúng hoặc đã hết hạn. Vui lòng nhập lại hoặc nhận mã mới.";
+                return RedirectToAction(nameof(VerifyOtp));
         }
 
-        model.MaOtp = model.MatKhauMoi = model.XacNhanMatKhauMoi = string.Empty;
+        model.MatKhauMoi = model.XacNhanMatKhauMoi = string.Empty;
         return View(model);
     }
+
+    private static string DescribeRequestFailure(RequestResetResult result) => result.Status switch
+    {
+        RequestResetStatus.EmailNotFound => "Email không tồn tại trong hệ thống.",
+        RequestResetStatus.AccountLocked => "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.",
+        RequestResetStatus.CooldownActive => $"Vui lòng đợi {result.RetryAfterSeconds} giây trước khi yêu cầu mã mới.",
+        RequestResetStatus.HourlyLimitReached =>
+            $"Bạn đã yêu cầu mã quá nhiều lần. Vui lòng thử lại sau khoảng {Math.Max(1, (result.RetryAfterSeconds + 59) / 60)} phút.",
+        _ => "Không gửi được email. Vui lòng thử lại sau."
+    };
 }

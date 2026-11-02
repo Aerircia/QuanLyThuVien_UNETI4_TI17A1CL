@@ -1,0 +1,131 @@
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Tra cứu kho sách cho khách/bạn đọc: tìm kiếm, lọc, sắp xếp, phân trang, tìm nâng cao, xem lưới/danh sách *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.CatalogViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Common
+@using QuanLyThuVien_UNETI4_TI17A1CL.ViewModels
+@{
+    ViewData["Title"] = "Kho sách";
+    var f = Model.Filter;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/catalog.css" asp-append-version="true" />
+}
+
+@* Một form duy nhất giữ toàn bộ trạng thái lọc. Không có JavaScript thì nó vẫn là form GET bình thường. *@
+<form id="catalogForm" asp-controller="Home" asp-action="Catalog" method="get">
+    <input type="hidden" name="view" value="@f.View" data-default="grid" />
+    <input type="hidden" name="pageSize" value="@Model.Result.PageSize" data-default="@PagingDefaults.DefaultPageSize" />
+
+    <div class="ch2 reveal">
+        <div>
+            <h1>Kho sách</h1>
+            <p class="text-muted mb-0">@Model.TongDauSach đầu sách · @Model.TheLoais.Count thể loại</p>
+        </div>
+        <div class="sfx">
+            <div class="sbar">
+                <input id="fSearch" name="search" value="@f.Search" class="sbar-input" data-filter autocomplete="off"
+                       placeholder="Tìm tên sách, tác giả, thể loại…" aria-label="Từ khóa tìm kiếm" />
+                <button type="submit" class="btn btn-primary">Tìm</button>
+            </div>
+            <button type="button" class="btn btn-outline-primary filter-open d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#filterPanel" aria-controls="filterPanel">
+                <partial name="_Icon" model='"filter"' /> Bộ lọc
+                <span id="filterCount" class="badge badge-soft-primary" hidden="@(f.FilterCount == 0)">@f.FilterCount</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="rail-wrap sm d-lg-none" data-rail>
+        <button type="button" class="rail-arrow prev" aria-label="Cuộn trái"><partial name="_Icon" model='"chev-l"' /></button>
+        <div class="rail-track pills">
+            <a class="pill @(f.MaTheLoai is null ? "on" : "")" href="@Url.Action("Catalog", "Home")" data-pill data-cat="">Tất cả</a>
+            @foreach (var c in Model.TheLoais)
+            {
+                <a class="pill @(f.MaTheLoai == c.MaTheLoai ? "on" : "")" href="@Url.Action("Catalog", "Home", new { maTheLoai = c.MaTheLoai })"
+                   data-pill data-cat="@c.MaTheLoai"><partial name="_CategoryIcon" model="c.TenTheLoai" /> @c.TenTheLoai</a>
+            }
+        </div>
+        <button type="button" class="rail-arrow next" aria-label="Cuộn phải"><partial name="_Icon" model='"chev-r"' /></button>
+    </div>
+
+    <div class="cl">
+        <aside class="cl-side offcanvas-lg offcanvas-start" tabindex="-1" id="filterPanel" aria-labelledby="filterTitle">
+            <div class="offcanvas-header d-lg-none">
+                <h2 class="offcanvas-title fs-5" id="filterTitle">Bộ lọc</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#filterPanel" aria-label="Đóng"></button>
+            </div>
+            <div class="offcanvas-body">
+                <div class="cl-side-card">
+                    <h4>Thể loại</h4>
+                    <label class="opt">
+                        <input type="radio" name="maTheLoai" value="" data-filter checked="@(f.MaTheLoai is null)" />
+                        <span class="opt-l"><partial name="_Icon" model='"grid"' /> Tất cả</span>
+                        <span class="opt-c">@Model.TongDauSach</span>
+                    </label>
+                    @foreach (var c in Model.TheLoais)
+                    {
+                        <label class="opt">
+                            <input type="radio" name="maTheLoai" value="@c.MaTheLoai" data-filter checked="@(f.MaTheLoai == c.MaTheLoai)" />
+                            <span class="opt-l"><partial name="_CategoryIcon" model="c.TenTheLoai" /> @c.TenTheLoai</span>
+                            <span class="opt-c">@c.SoDauSach</span>
+                        </label>
+                    }
+
+                    <h4>Tác giả</h4>
+                    <select name="tacGia" class="form-select form-select-sm" data-filter aria-label="Tác giả">
+                        <option value="">Tất cả tác giả</option>
+                        @foreach (var a in Model.TacGias)
+                        {
+                            <option value="@a" selected="@(f.TacGia == a)">@a</option>
+                        }
+                    </select>
+
+                    <h4>Năm xuất bản</h4>
+                    <div class="yr">
+                        <input name="namTu" type="number" min="1900" inputmode="numeric" class="form-control form-control-sm" placeholder="Từ" value="@f.NamTu" data-filter aria-label="Từ năm" />
+                        <span aria-hidden="true">–</span>
+                        <input name="namDen" type="number" min="1900" inputmode="numeric" class="form-control form-control-sm" placeholder="Đến" value="@f.NamDen" data-filter aria-label="Đến năm" />
+                    </div>
+
+                    <h4>Giá bìa (₫)</h4>
+                    <div class="yr">
+                        <input name="giaTu" type="number" min="0" step="1000" inputmode="numeric" class="form-control form-control-sm" placeholder="Từ" value="@f.GiaTu" data-filter aria-label="Giá từ" />
+                        <span aria-hidden="true">–</span>
+                        <input name="giaDen" type="number" min="0" step="1000" inputmode="numeric" class="form-control form-control-sm" placeholder="Đến" value="@f.GiaDen" data-filter aria-label="Giá đến" />
+                    </div>
+
+                    <h4>Tồn kho</h4>
+                    <label class="opt">
+                        <input type="radio" name="tonKho" value="" data-filter checked="@(f.TonKho is null)" />
+                        <span class="opt-l">Tất cả</span>
+                    </label>
+                    <label class="opt">
+                        <input type="radio" name="tonKho" value="@TonKhoFilter.ConSach" data-filter checked="@(f.TonKho == TonKhoFilter.ConSach)" />
+                        <span class="opt-l">Còn sách</span>
+                    </label>
+                    <label class="opt">
+                        <input type="radio" name="tonKho" value="@TonKhoFilter.HetSach" data-filter checked="@(f.TonKho == TonKhoFilter.HetSach)" />
+                        <span class="opt-l">Hết sách</span>
+                    </label>
+
+                    <div class="cl-side-actions">
+                        <a id="clearFilters" href="@Url.Action("Catalog", "Home")" class="btn btn-outline-secondary btn-sm">Xóa bộ lọc</a>
+                        <button type="submit" class="btn btn-primary btn-sm no-js-only">Áp dụng</button>
+                    </div>
+                    <button type="button" class="btn btn-primary w-100 mt-3 d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#filterPanel">Xem kết quả</button>
+                </div>
+            </div>
+        </aside>
+
+        <section id="catalogResults" class="cl-main" aria-live="polite" tabindex="-1">
+            <partial name="_CatalogResults" model="Model" />
+        </section>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="~/js/rows.js" asp-append-version="true"></script>
+    <script src="~/js/catalog.js" asp-append-version="true"></script>
+}

@@ -1,6 +1,7 @@
 // Họ và tên: Lại Anh Quân
 // Mã sinh viên: 23103100255
 // Nội dung thực hiện: Xây dựng AuthService để xử lý đăng nhập, xác thực, thay đổi mật khẩu.
+// Đăng nhập bằng tên đăng nhập hoặc email
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -27,9 +28,14 @@ public class AuthService : IAuthService
     {
         tenDangNhap = (tenDangNhap ?? string.Empty).Trim();
 
-        // Có tracking vì có thể phải băm lại mật khẩu và lưu.
-        var tk = await _db.Set<TaiKhoan>()
-            .FirstOrDefaultAsync(t => t.TenDangNhap == tenDangNhap, ct);
+        // Đăng nhập bằng tên đăng nhập HOẶC email. Có tracking vì có thể phải băm lại mật khẩu và lưu.
+        // Tên đăng nhập khớp thì ưu tiên; khớp theo email chỉ hợp lệ khi đúng MỘT tài khoản dùng email đó.
+        var matches = await _db.Set<TaiKhoan>()
+            .Where(t => t.TenDangNhap == tenDangNhap || t.Email == tenDangNhap)
+            .Take(3)
+            .ToListAsync(ct);
+        var tk = matches.FirstOrDefault(t => string.Equals(t.TenDangNhap, tenDangNhap, StringComparison.OrdinalIgnoreCase))
+                 ?? (matches.Count == 1 ? matches[0] : null);
 
         // Không tồn tại hoặc sai mật khẩu -> cùng một kết quả.
         if (tk is null || string.IsNullOrEmpty(matKhau))

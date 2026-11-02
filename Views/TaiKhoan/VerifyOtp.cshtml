@@ -1,0 +1,68 @@
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Giao diện quên mật khẩu bước 2 (nhập OTP 6 ô, đếm ngược gửi lại mã) *@
+@* Form "Gửi lại mã" không còn gửi email: controller lấy email từ Session. *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.VerifyOtpViewModel
+@{
+    ViewData["Title"] = "Nhập mã OTP";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/accounts.css" asp-append-version="true" />
+}
+
+<div class="auth-wrap">
+    <div class="app-card auth-card">
+        <partial name="_ResetSteps" model="2" />
+
+        <div class="auth-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 1 1 8 0v3M12 14v3" /></svg>
+        </div>
+        <h1 class="auth-title">Nhập mã OTP</h1>
+        <p class="auth-sub">Mã gồm 6 chữ số đã được gửi tới <strong>@Model.Email</strong>. Mã có hiệu lực trong thời gian ngắn và chỉ dùng một lần.</p>
+
+        @if (TempData["ThongBao"] is string thongBao)
+        {
+            <div class="alert alert-success" role="status">@thongBao</div>
+        }
+        @if (TempData["Loi"] is string loi)
+        {
+            <div class="alert alert-warning" role="alert">@loi</div>
+        }
+
+        <form asp-action="VerifyOtp" method="post" novalidate>
+            <input type="hidden" asp-for="Email" />
+            <input type="hidden" asp-for="MaOtp" value="" />
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+
+            <div class="otp-boxes" role="group" aria-label="Mã OTP 6 chữ số">
+                @for (var i = 1; i <= 6; i++)
+                {
+                    <input class="form-control otp-box" type="text" inputmode="numeric" maxlength="1"
+                           autocomplete="@(i == 1 ? "one-time-code" : "off")" aria-label="Chữ số @i" />
+                }
+            </div>
+            <div class="text-center mt-2"><span asp-validation-for="MaOtp" class="text-danger"></span></div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100 mt-3">Xác nhận mã</button>
+        </form>
+
+        <form asp-action="ResendOtp" method="post" class="mt-3 text-center">
+            <span class="text-muted small">Chưa nhận được mã?</span>
+            <button type="submit" id="resendBtn" class="btn btn-link btn-sm p-0 ms-1 align-baseline"
+                    data-cooldown="@Model.CooldownSeconds" data-label="Gửi lại mã">Gửi lại mã</button>
+        </form>
+
+        <p class="auth-foot">
+            <a asp-action="ForgotPassword">Đổi email</a>
+            &middot;
+            <a asp-action="Login">Quay lại đăng nhập</a>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/forms.js" asp-append-version="true"></script>
+    <script src="~/js/otp.js" asp-append-version="true"></script>
+}

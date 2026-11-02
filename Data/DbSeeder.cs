@@ -9,15 +9,18 @@ using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums;
 
 namespace QuanLyThuVien_UNETI4_TI17A1CL.Data;
 
-// Baseline seed only: settings row, one account per role, one reader profile.
-// Idempotent - safe to run on every startup. The volume required by the spec (section 16)
-// is a later task, added per module as DbSeeder.<Module>.cs (make this class partial then).
+// Baseline (luôn chạy): dòng cấu hình, một tài khoản mỗi vai trò, một hồ sơ bạn đọc.
+// Dữ liệu mẫu theo đề (mục 16) chạy khi Seed:SampleData = true (mặc định true), nằm ở:
+//   DbSeeder.Catalog.cs (thể loại, sách), DbSeeder.People.cs (tài khoản, bạn đọc), DbSeeder.Loans.cs (phiếu mượn, gia hạn, trả sách).
+// Idempotent: chạy lại mỗi lần khởi động không tạo trùng.
 public static partial class DbSeeder
 {
     public static async Task SeedAsync(IServiceProvider sp)
     {
         using var scope = sp.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var log = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DbSeeder");
 
         // Requires at least one migration (dotnet ef migrations add InitialCreate)
         await db.Database.MigrateAsync();
@@ -25,8 +28,17 @@ public static partial class DbSeeder
         await SeedSettingsAsync(db);
         await SeedAccountsAsync(db);
         await SeedBanDocAsync(db);
-        await SeedModule3Async(db);
-        await SeedGiaHanMuonVaTraSachAsync(db);
+
+        if (!config.GetValue("Seed:SampleData", true))
+        {
+            log.LogInformation("Seed:SampleData = false: chỉ seed dữ liệu nền.");
+            return;
+        }
+
+        // Thứ tự bắt buộc: thể loại/sách -> tài khoản/bạn đọc -> phiếu mượn (phụ thuộc hai bước trước).
+        await SeedCatalogAsync(db, log);
+        await SeedPeopleAsync(db, log);
+        await SeedLoansAsync(db, log);
     }
 
     private static async Task SeedSettingsAsync(AppDbContext db)

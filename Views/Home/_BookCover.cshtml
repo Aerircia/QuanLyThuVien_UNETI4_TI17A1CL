@@ -1,0 +1,21 @@
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Bìa sách: dùng ImgPath nếu có, không thì bìa CSS dựng sẵn từ tên sách *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.BookCardItem
+<div class="bk-cover @(Model.ConSach ? "" : "is-off")">
+    @if (!string.IsNullOrWhiteSpace(Model.ImgPath))
+    {
+        <img src="@Model.ImgPath" alt="Bìa sách @Model.TenSach" loading="lazy" />
+    }
+    else
+    {
+        <div class="book-cover-mock cv-@(Model.MaTheLoai % 6)">
+            <small class="text-uppercase fw-semibold">@Model.TenTheLoai</small>
+            <div>
+                <h5>@Model.TenSach</h5>
+                <small>@Model.TacGia</small>
+            </div>
+            <small>@Model.NamXuatBan</small>
+        </div>
+    }
+</div>
