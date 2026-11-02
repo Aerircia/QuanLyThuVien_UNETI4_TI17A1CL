@@ -119,20 +119,30 @@
                             </td>
                             <td class="text-end">
                                 <div class="d-flex justify-content-end gap-1">
-                                    <form asp-action="Duyet" method="post" class="d-inline">
+                                    <form asp-action="Duyet" method="post" class="d-inline" id="duyetTheForm-@item.MaBanDoc">
                                         <input type="hidden" name="id" value="@item.MaBanDoc" />
                                         <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                        <button type="submit" class="btn btn-primary btn-sm"
-                                                onclick="return confirm('Xác nhận duyệt và cấp mã số thẻ thư viện cho bạn đọc @item.HoTen?');">
+                                        <button type="button" class="btn btn-primary btn-sm"
+                                                data-confirm-form="#duyetTheForm-@item.MaBanDoc"
+                                                data-confirm-title="Duyệt cấp thẻ bạn đọc"
+                                                data-confirm-message="Xác nhận phê duyệt và cấp mã số thẻ thư viện cho bạn đọc @item.HoTen?"
+                                                data-confirm-ok="Duyệt cấp thẻ"
+                                                data-confirm-class="btn-primary">
+
                                             Duyệt cấp thẻ
                                         </button>
                                     </form>
 
-                                    <form asp-action="TuChoi" method="post" class="d-inline">
+                                    <form asp-action="TuChoi" method="post" class="d-inline" id="tuChoiTheForm-@item.MaBanDoc">
                                         <input type="hidden" name="id" value="@item.MaBanDoc" />
                                         <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                        <button type="submit" class="btn btn-outline-danger btn-sm"
-                                                onclick="return confirm('Bạn có chắc muốn từ chối yêu cầu cấp thẻ của @item.HoTen?');">
+                                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                                data-confirm-form="#tuChoiTheForm-@item.MaBanDoc"
+                                                data-confirm-title="Từ chối cấp thẻ bạn đọc"
+                                                data-confirm-message="Bạn có chắc muốn từ chối yêu cầu cấp thẻ của @item.HoTen?"
+                                                data-confirm-ok="Từ chối"
+                                                data-confirm-class="btn-danger">
+
                                             Từ chối
                                         </button>
                                     </form>

@@ -2,6 +2,8 @@
 // Mã sinh viên: 23103100136
 // Nội dung thực hiện: Controller xử lý quản lý bạn đọc và hồ sơ cá nhân của bạn đọc (Module 3)
 
+using System.Globalization;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyThuVien_UNETI4_TI17A1CL.Data;
@@ -84,7 +86,7 @@ public class BanDocController : Controller
         return View(model);
     }
 
-    [AuthorizeRole(VaiTro.BanDoc)]
+    [AuthorizeRole]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DangKyThe(DangKyTheBanDocViewModel? model)
@@ -100,14 +102,23 @@ public class BanDocController : Controller
         if (!string.IsNullOrWhiteSpace(email)) form.Email = email.Trim();
 
         var soDienThoai = Request.Form["SoDienThoai"].FirstOrDefault() ?? Request.Form["DangKyForm.SoDienThoai"].FirstOrDefault();
-        if (!string.IsNullOrWhiteSpace(soDienThoai)) form.SoDienThoai = soDienThoai.Trim();
+        if (!string.IsNullOrWhiteSpace(soDienThoai))
+        {
+            form.SoDienThoai = Regex.Replace(soDienThoai.Trim(), @"[\s\.\-]+", "");
+        }
 
         var diaChi = Request.Form["DiaChi"].FirstOrDefault() ?? Request.Form["DangKyForm.DiaChi"].FirstOrDefault();
         if (!string.IsNullOrWhiteSpace(diaChi)) form.DiaChi = diaChi.Trim();
 
         var ngaySinhStr = Request.Form["NgaySinh"].FirstOrDefault() ?? Request.Form["DangKyForm.NgaySinh"].FirstOrDefault();
-        if (!string.IsNullOrWhiteSpace(ngaySinhStr) && DateOnly.TryParse(ngaySinhStr, out var ns))
-            form.NgaySinh = ns;
+        if (!string.IsNullOrWhiteSpace(ngaySinhStr))
+        {
+            if (DateOnly.TryParse(ngaySinhStr, CultureInfo.InvariantCulture, DateTimeStyles.None, out var ns) ||
+                DateOnly.TryParse(ngaySinhStr, out ns))
+            {
+                form.NgaySinh = ns;
+            }
+        }
 
         var gioiTinhStr = Request.Form["GioiTinh"].FirstOrDefault() ?? Request.Form["DangKyForm.GioiTinh"].FirstOrDefault();
         if (!string.IsNullOrWhiteSpace(gioiTinhStr) && Enum.TryParse<GioiTinh>(gioiTinhStr, out var gt))
@@ -117,11 +128,38 @@ public class BanDocController : Controller
         if (!string.IsNullOrWhiteSpace(loaiBanDocStr) && Enum.TryParse<LoaiBanDoc>(loaiBanDocStr, out var lbd))
             form.LoaiBanDoc = lbd;
 
+        // Tự động điền họ tên / email từ tài khoản người dùng nếu để trống
+        if (string.IsNullOrWhiteSpace(form.HoTen) && !string.IsNullOrWhiteSpace(user.HoTen))
+            form.HoTen = user.HoTen.Trim();
+        if (string.IsNullOrWhiteSpace(form.Email) && !string.IsNullOrWhiteSpace(user.Email))
+            form.Email = user.Email.Trim();
+
         ModelState.Clear();
         TryValidateModel(form);
 
         if (!ModelState.IsValid)
         {
+            var firstErr = ModelState.Values.SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .FirstOrDefault(m => !string.IsNullOrEmpty(m)) ?? "Thông tin đăng ký thẻ chưa hợp lệ. Vui lòng kiểm tra lại.";
+            TempData["Loi"] = firstErr;
+
+            // Đồng bộ lỗi sang tiền tố DangKyForm.<tên trường> để các thẻ span asp-validation-for="DangKyForm!..." hiển thị chính xác
+            foreach (var key in ModelState.Keys.ToList())
+            {
+                if (!key.StartsWith("DangKyForm.") && !string.IsNullOrEmpty(key))
+                {
+                    var errors = ModelState[key]?.Errors.ToList();
+                    if (errors != null)
+                    {
+                        foreach (var err in errors)
+                        {
+                            ModelState.AddModelError($"DangKyForm.{key}", err.ErrorMessage);
+                        }
+                    }
+                }
+            }
+
             var profileModel = new BanDocProfileViewModel
             {
                 HoTen = user.HoTen,
@@ -144,7 +182,20 @@ public class BanDocController : Controller
         var result = await _banDocService.DangKyTheAsync(input, user.MaTaiKhoan, HttpContext.RequestAborted);
         if (!result.Succeeded)
         {
+            TempData["Loi"] = result.FirstError;
             result.AddTo(ModelState);
+
+            foreach (var (k, msgs) in result.Errors)
+            {
+                foreach (var m in msgs)
+                {
+                    if (!string.IsNullOrEmpty(k))
+                        ModelState.AddModelError($"DangKyForm.{k}", m);
+                    else
+                        ModelState.AddModelError(string.Empty, m);
+                }
+            }
+
             var profileModel = new BanDocProfileViewModel
             {
                 HoTen = user.HoTen,
@@ -159,7 +210,7 @@ public class BanDocController : Controller
         return RedirectToAction(nameof(MyProfile));
     }
 
-    [AuthorizeRole(VaiTro.BanDoc)]
+    [AuthorizeRole]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> HuyDangKyThe()

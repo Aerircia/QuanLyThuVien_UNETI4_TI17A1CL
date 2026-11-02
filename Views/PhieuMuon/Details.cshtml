@@ -34,10 +34,15 @@
             }
             @if (Model.CanCancel)
             {
-                <form asp-action="Cancel" asp-route-id="@Model.MaPhieuMuon" method="post" class="d-inline">
+                <form asp-action="Cancel" asp-route-id="@Model.MaPhieuMuon" method="post" class="d-inline" id="cancelLoanDetailsForm">
                     <input type="hidden" name="returnUrl" value="@returnUrl" />
-                    <button type="submit" class="btn btn-sm btn-outline-danger"
-                            onclick="return confirm('Bạn có chắc muốn hủy phiếu mượn này? Thao tác không thể hoàn tác.');">
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                            data-confirm-form="#cancelLoanDetailsForm"
+                            data-confirm-title="Xác nhận hủy phiếu mượn"
+                            data-confirm-message="Bạn có chắc muốn hủy phiếu mượn này? Thao tác không thể hoàn tác."
+                            data-confirm-ok="Hủy phiếu"
+                            data-confirm-class="btn-danger">
+
                         Hủy phiếu mượn
                     </button>
                 </form>

@@ -187,6 +187,7 @@ public class BanDocService : IBanDocService
         var email = (input.Email ?? string.Empty).Trim();
         var soDienThoai = (input.SoDienThoai ?? string.Empty).Trim();
         var diaChi = (input.DiaChi ?? string.Empty).Trim();
+        soDienThoai = Regex.Replace(soDienThoai, @"[\s\.\-]+", "");
         var maSoThe = string.IsNullOrWhiteSpace(input.MaSoThe) ? null : input.MaSoThe.Trim();
 
         if (string.IsNullOrWhiteSpace(hoTen))
@@ -269,6 +270,7 @@ public class BanDocService : IBanDocService
         var email = (input.Email ?? string.Empty).Trim();
         var soDienThoai = (input.SoDienThoai ?? string.Empty).Trim();
         var diaChi = (input.DiaChi ?? string.Empty).Trim();
+        soDienThoai = Regex.Replace(soDienThoai, @"[\s\.\-]+", "");
         var maSoThe = string.IsNullOrWhiteSpace(input.MaSoThe) ? null : input.MaSoThe.Trim();
 
         if (string.IsNullOrWhiteSpace(hoTen))
@@ -341,6 +343,7 @@ public class BanDocService : IBanDocService
         var email = (input.Email ?? string.Empty).Trim();
         var soDienThoai = (input.SoDienThoai ?? string.Empty).Trim();
         var diaChi = (input.DiaChi ?? string.Empty).Trim();
+        soDienThoai = Regex.Replace(soDienThoai, @"[\s\.\-]+", "");
 
         if (string.IsNullOrWhiteSpace(hoTen))
             result.AddError(nameof(input.HoTen), "Họ tên là bắt buộc.");
@@ -439,6 +442,7 @@ public class BanDocService : IBanDocService
         var email = (input.Email ?? string.Empty).Trim();
         var soDienThoai = (input.SoDienThoai ?? string.Empty).Trim();
         var diaChi = (input.DiaChi ?? string.Empty).Trim();
+        soDienThoai = Regex.Replace(soDienThoai, @"[\s\.\-]+", "");
 
         if (string.IsNullOrWhiteSpace(hoTen))
             result.AddError(nameof(input.HoTen), "Họ và tên là bắt buộc.");
@@ -459,7 +463,7 @@ public class BanDocService : IBanDocService
         if (taiKhoan is null)
             return ServiceResult<int>.Error(string.Empty, "Không tìm thấy tài khoản người dùng.");
 
-        if (taiKhoan.VaiTro != VaiTro.BanDoc)
+        if (false && taiKhoan.VaiTro != VaiTro.BanDoc)
             return ServiceResult<int>.Error(string.Empty, "Chỉ tài khoản Bạn đọc mới có thể đăng ký thẻ bạn đọc.");
 
         if (!await _taiKhoanService.IsEmailAvailableAsync(email, maTaiKhoan, ct))
@@ -535,6 +539,11 @@ public class BanDocService : IBanDocService
         banDoc.TrangThai = TrangThaiBanDoc.HoatDong;
         banDoc.NgayCapThe = homNay;
         banDoc.NgayHetHanThe = homNay.AddYears(1);
+
+        if (string.IsNullOrWhiteSpace(banDoc.MaSoThe))
+        {
+            banDoc.MaSoThe = $"TV-{banDoc.MaBanDoc:D6}";
+        }
 
         await _db.SaveChangesAsync(ct);
         return ServiceResult.Success();

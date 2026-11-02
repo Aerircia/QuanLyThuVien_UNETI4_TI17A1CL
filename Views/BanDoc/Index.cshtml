@@ -178,19 +178,29 @@
 
                             @if (isChoDuyet)
                             {
-                                <form asp-action="Duyet" method="post" class="d-inline">
+                                <form asp-action="Duyet" method="post" class="d-inline" id="duyetTheIndexForm-@item.MaBanDoc">
                                     <input type="hidden" name="id" value="@item.MaBanDoc" />
                                     <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                    <button type="submit" class="btn btn-sm btn-primary"
-                                            onclick="return confirm('Duyệt cấp thẻ thư viện cho bạn đọc @item.HoTen?');">
+                                    <button type="button" class="btn btn-sm btn-primary"
+                                            data-confirm-form="#duyetTheIndexForm-@item.MaBanDoc"
+                                            data-confirm-title="Duyệt cấp thẻ bạn đọc"
+                                            data-confirm-message="Duyệt cấp thẻ thư viện cho bạn đọc @item.HoTen?"
+                                            data-confirm-ok="Duyệt cấp thẻ"
+                                            data-confirm-class="btn-primary">
+
                                         Duyệt
                                     </button>
                                 </form>
-                                <form asp-action="TuChoi" method="post" class="d-inline">
+                                <form asp-action="TuChoi" method="post" class="d-inline" id="tuChoiTheIndexForm-@item.MaBanDoc">
                                     <input type="hidden" name="id" value="@item.MaBanDoc" />
                                     <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                    <button type="submit" class="btn btn-sm btn-outline-danger"
-                                            onclick="return confirm('Từ chối yêu cầu cấp thẻ của bạn đọc @item.HoTen?');">
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            data-confirm-form="#tuChoiTheIndexForm-@item.MaBanDoc"
+                                            data-confirm-title="Từ chối cấp thẻ bạn đọc"
+                                            data-confirm-message="Từ chối yêu cầu cấp thẻ của bạn đọc @item.HoTen?"
+                                            data-confirm-ok="Từ chối"
+                                            data-confirm-class="btn-danger">
+
                                         Từ chối
                                     </button>
                                 </form>
@@ -198,12 +208,17 @@
                             else
                             {
                                 <a asp-action="Edit" asp-route-id="@item.MaBanDoc" class="btn btn-sm btn-outline-secondary">Sửa</a>
-                                <form asp-action="SetStatus" method="post" class="d-inline">
+                                <form asp-action="SetStatus" method="post" class="d-inline" id="statusBanDocIndex-@item.MaBanDoc">
                                     <input type="hidden" name="id" value="@item.MaBanDoc" />
                                     <input type="hidden" name="trangThai" value="@(locked ? nameof(TrangThaiBanDoc.HoatDong) : nameof(TrangThaiBanDoc.NgungHoatDong))" />
                                     <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                    <button type="submit" class="btn btn-sm @(locked ? "btn-outline-primary" : "btn-outline-danger")"
-                                            onclick="return confirm('Bạn có chắc muốn @(locked ? "kích hoạt lại" : "tạm khóa") bạn đọc này?');">
+                                    <button type="button" class="btn btn-sm @(locked ? "btn-outline-primary" : "btn-outline-danger")"
+                                            data-confirm-form="#statusBanDocIndex-@item.MaBanDoc"
+                                            data-confirm-title="@(locked ? "Mở khóa bạn đọc" : "Tạm khóa bạn đọc")"
+                                            data-confirm-message="@(locked ? $"Bạn có chắc muốn kích hoạt lại bạn đọc {item.HoTen}?" : $"Bạn có chắc muốn tạm khóa bạn đọc {item.HoTen}?")"
+                                            data-confirm-ok="@(locked ? "Mở khóa" : "Tạm khóa")"
+                                            data-confirm-class="@(locked ? "btn-primary" : "btn-danger")">
+
                                         @(locked ? "Mở khóa" : "Khóa")
                                     </button>
                                 </form>

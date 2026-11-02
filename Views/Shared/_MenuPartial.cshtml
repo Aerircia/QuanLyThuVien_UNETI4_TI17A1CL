@@ -84,10 +84,13 @@ else
             <a class="nav-link @(controller == "Home" && action == "Index" ? "is-active" : "")" asp-controller="Home" asp-action="Index"
                aria-current="@(controller == "Home" && action == "Index" ? "page" : null)">Trang chủ</a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link @(controller == "Home" && (action == "Catalog" || action == "Book") ? "is-active" : "")" asp-controller="Home" asp-action="Catalog"
-               aria-current="@(controller == "Home" && action == "Catalog" ? "page" : null)">Kho sách</a>
-        </li>
+        @if (!Current.IsInRole(VaiTro.BanDoc) || hasActiveCard)
+        {
+            <li class="nav-item">
+                <a class="nav-link @(controller == "Home" && (action == "Catalog" || action == "Book") ? "is-active" : "")" asp-controller="Home" asp-action="Catalog"
+                   aria-current="@(controller == "Home" && action == "Catalog" ? "page" : null)">Kho sách</a>
+            </li>
+        }
         @if (Current.IsInRole(VaiTro.BanDoc))
         {
             if (hasActiveCard)
@@ -103,7 +106,7 @@ else
             }
             <li class="nav-item">
                 <a class="nav-link @(controller == "BanDoc" ? "is-active" : "")"
-                   asp-controller="BanDoc" asp-action="MyProfile" aria-current="@(controller == "BanDoc" ? "page" : null)">Thẻ hồ sơ</a>
+                   asp-controller="BanDoc" asp-action="MyProfile" aria-current="@(controller == "BanDoc" ? "page" : null)">Thẻ &amp; hồ sơ</a>
             </li>
         }
     </ul>

@@ -21,12 +21,17 @@
             <a asp-action="Edit" asp-route-id="@Model.MaBanDoc" class="btn btn-outline-primary btn-sm">Sửa hồ sơ</a>
             @if (!isChoDuyet)
             {
-                <form asp-action="SetStatus" method="post" class="d-inline">
+                <form asp-action="SetStatus" method="post" class="d-inline" id="statusBanDocDetails">
                     <input type="hidden" name="id" value="@Model.MaBanDoc" />
                     <input type="hidden" name="trangThai" value="@(locked ? nameof(TrangThaiBanDoc.HoatDong) : nameof(TrangThaiBanDoc.NgungHoatDong))" />
                     <input type="hidden" name="returnUrl" value="@returnUrl" />
-                    <button type="submit" class="btn btn-sm @(locked ? "btn-outline-primary" : "btn-outline-danger")"
-                            onclick="return confirm('Bạn có chắc muốn @(locked ? "kích hoạt lại" : "tạm khóa") bạn đọc này?');">
+                    <button type="button" class="btn btn-sm @(locked ? "btn-outline-primary" : "btn-outline-danger")"
+                            data-confirm-form="#statusBanDocDetails"
+                            data-confirm-title="@(locked ? "Mở khóa bạn đọc" : "Tạm khóa bạn đọc")"
+                            data-confirm-message="Bạn có chắc muốn @(locked ? "kích hoạt lại" : "tạm khóa") bạn đọc này?"
+                            data-confirm-ok="@(locked ? "Mở khóa" : "Tạm khóa")"
+                            data-confirm-class="@(locked ? "btn-primary" : "btn-danger")">
+
                         @(locked ? "Mở khóa" : "Tạm khóa")
                     </button>
                 </form>
@@ -62,19 +67,29 @@
                 </div>
             </div>
             <div class="d-flex gap-2">
-                <form asp-action="Duyet" method="post" class="d-inline">
+                <form asp-action="Duyet" method="post" class="d-inline" id="duyetTheDetails">
                     <input type="hidden" name="id" value="@Model.MaBanDoc" />
                     <input type="hidden" name="returnUrl" value="@returnUrl" />
-                    <button type="submit" class="btn btn-primary"
-                            onclick="return confirm('Xác nhận duyệt cấp thẻ thư viện cho bạn đọc @Model.HoTen?');">
+                    <button type="button" class="btn btn-primary"
+                            data-confirm-form="#duyetTheDetails"
+                            data-confirm-title="Duyệt cấp thẻ bạn đọc"
+                            data-confirm-message="Xác nhận duyệt cấp thẻ thư viện cho bạn đọc @Model.HoTen?"
+                            data-confirm-ok="Duyệt cấp thẻ"
+                            data-confirm-class="btn-primary">
+
                         Duyệt cấp thẻ
                     </button>
                 </form>
-                <form asp-action="TuChoi" method="post" class="d-inline">
+                <form asp-action="TuChoi" method="post" class="d-inline" id="tuChoiTheDetails">
                     <input type="hidden" name="id" value="@Model.MaBanDoc" />
                     <input type="hidden" name="returnUrl" value="@returnUrl" />
-                    <button type="submit" class="btn btn-outline-danger"
-                            onclick="return confirm('Xác nhận từ chối yêu cầu cấp thẻ của bạn đọc @Model.HoTen?');">
+                    <button type="button" class="btn btn-outline-danger"
+                            data-confirm-form="#tuChoiTheDetails"
+                            data-confirm-title="Từ chối cấp thẻ bạn đọc"
+                            data-confirm-message="Xác nhận từ chối yêu cầu cấp thẻ của bạn đọc @Model.HoTen?"
+                            data-confirm-ok="Từ chối"
+                            data-confirm-class="btn-danger">
+
                         Từ chối
                     </button>
                 </form>

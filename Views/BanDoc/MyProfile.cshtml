@@ -60,9 +60,15 @@
                     </div>
                 </div>
                 <div>
-                    <form asp-action="HuyDangKyThe" method="post" class="d-inline">
-                        <button type="submit" class="btn btn-outline-danger btn-sm"
-                                onclick="return confirm('Bạn có chắc chắn muốn hủy yêu cầu đăng ký thẻ bạn đọc này?');">
+                    <form asp-action="HuyDangKyThe" method="post" class="d-inline" id="formHuyDangKyThe">
+                        @Html.AntiForgeryToken()
+                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                data-confirm-form="#formHuyDangKyThe"
+                                data-confirm-title="Hủy yêu cầu cấp thẻ"
+                                data-confirm-message="Bạn có chắc chắn muốn hủy yêu cầu đăng ký thẻ bạn đọc này?"
+                                data-confirm-ok="Đồng ý hủy"
+                                data-confirm-class="btn-danger">
+
                             Hủy yêu cầu đăng ký
                         </button>
                     </form>
@@ -156,8 +162,12 @@
                 <h5 class="card-title mb-0">@(tuChoi ? "Gửi lại yêu cầu đăng ký thẻ bạn đọc" : "Đăng ký thẻ bạn đọc mới")</h5>
             </div>
             <div class="card-body">
-                <form asp-action="DangKyThe" method="post">
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                <form asp-controller="BanDoc" asp-action="DangKyThe" method="post" id="dangKyTheForm">
+                    @Html.AntiForgeryToken()
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div asp-validation-summary="All" class="alert alert-danger mb-3"></div>
+                    }
 
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -174,7 +184,7 @@
 
                         <div class="col-md-4">
                             <label class="form-label">Ngày sinh <span class="text-danger">*</span></label>
-                            <input name="NgaySinh" value="@(Model.DangKyForm?.NgaySinh != default ? Model.DangKyForm?.NgaySinh.ToString("yyyy-MM-dd") : "")" class="form-control" type="date" required />
+                            <input name="NgaySinh" value="@(Model.DangKyForm?.NgaySinh != default ? Model.DangKyForm?.NgaySinh.ToString("yyyy-MM-dd") : "2003-01-01")" class="form-control" type="date" required />
                             <span asp-validation-for="DangKyForm!.NgaySinh" class="field-validation-error"></span>
                         </div>
 
@@ -214,7 +224,12 @@
                     </div>
 
                     <div class="mt-4 pt-2 border-top d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="button" class="btn btn-primary"
+                                data-confirm-form="#dangKyTheForm"
+                                data-confirm-title="Xác nhận đăng ký thẻ bạn đọc"
+                                data-confirm-message="Bạn có chắc chắn muốn gửi thông tin đăng ký cấp thẻ thư viện?"
+                                data-confirm-ok="Xác nhận gửi"
+                                data-confirm-class="btn-primary">
                             <i class="bi bi-card-checklist"></i> Gửi yêu cầu đăng ký thẻ
                         </button>
                         <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Để sau</a>

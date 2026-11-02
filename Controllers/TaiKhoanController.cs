@@ -45,12 +45,6 @@ public class TaiKhoanController : Controller
             ? RedirectToAction("Dashboard", "ThongKe")
             : RedirectToAction("Index", "Home");
 
-    // Nhân viên vào Dashboard, bạn đọc về trang chủ.
-    private IActionResult RedirectByRole(VaiTro vaiTro) =>
-        vaiTro is VaiTro.Admin or VaiTro.ThuThu
-            ? RedirectToAction("Dashboard", "ThongKe")
-            : RedirectToAction("Index", "Home");
-
     // ---------- Đăng nhập ----------
 
     [HttpGet]
