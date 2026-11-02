@@ -46,7 +46,7 @@
                 <label asp-for="MatKhau" class="form-label"></label>
                 <div class="input-group">
                     <input asp-for="MatKhau" class="form-control" autocomplete="current-password" />
-                    <button type="button" class="btn btn-outline-secondary" data-toggle-password="#MatKhau" aria-label="Hiện mật khẩu">Hiện</button>
+                    <button type="button" class="btn btn-outline-secondary pw-toggle" data-toggle-password="#MatKhau" aria-label="Hiện mật khẩu" aria-pressed="false"><partial name="_Icon" model='"eye"' /><partial name="_Icon" model='"eye-off"' /></button>
                 </div>
                 <span asp-validation-for="MatKhau" class="text-danger"></span>
             </div>

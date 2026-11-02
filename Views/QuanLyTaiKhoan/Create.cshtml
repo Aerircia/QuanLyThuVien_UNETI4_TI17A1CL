@@ -37,7 +37,7 @@
                         <label asp-for="MatKhau" class="form-label"></label>
                         <div class="input-group">
                             <input asp-for="MatKhau" class="form-control" autocomplete="new-password" />
-                            <button type="button" class="btn btn-outline-secondary" data-toggle-password="#MatKhau" aria-label="Hiện mật khẩu">Hiện</button>
+                            <button type="button" class="btn btn-outline-secondary pw-toggle" data-toggle-password="#MatKhau" aria-label="Hiện mật khẩu" aria-pressed="false"><partial name="_Icon" model='"eye"' /><partial name="_Icon" model='"eye-off"' /></button>
                         </div>
                         <span asp-validation-for="MatKhau" class="text-danger"></span>
                     </div>
@@ -45,7 +45,7 @@
                         <label asp-for="XacNhanMatKhau" class="form-label"></label>
                         <div class="input-group">
                             <input asp-for="XacNhanMatKhau" class="form-control" autocomplete="new-password" />
-                            <button type="button" class="btn btn-outline-secondary" data-toggle-password="#XacNhanMatKhau" aria-label="Hiện mật khẩu">Hiện</button>
+                            <button type="button" class="btn btn-outline-secondary pw-toggle" data-toggle-password="#XacNhanMatKhau" aria-label="Hiện mật khẩu" aria-pressed="false"><partial name="_Icon" model='"eye"' /><partial name="_Icon" model='"eye-off"' /></button>
                         </div>
                         <span asp-validation-for="XacNhanMatKhau" class="text-danger"></span>
                     </div>

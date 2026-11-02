@@ -17,7 +17,8 @@
       if (!input) return;
       const show = input.type === 'password';
       input.type = show ? 'text' : 'password';
-      toggle.textContent = show ? 'Ẩn' : 'Hiện';
+      toggle.classList.toggle('is-visible', show);
+      toggle.setAttribute('aria-pressed', String(show));
       toggle.setAttribute('aria-label', show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
       return;
     }
