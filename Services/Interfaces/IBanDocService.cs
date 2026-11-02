@@ -44,6 +44,15 @@ public sealed record UpdateProfileInput(
     string Email,
     string DiaChi);
 
+public sealed record DangKyTheBanDocInput(
+    string HoTen,
+    DateOnly NgaySinh,
+    GioiTinh GioiTinh,
+    string SoDienThoai,
+    string Email,
+    string DiaChi,
+    LoaiBanDoc LoaiBanDoc);
+
 public interface IBanDocService
 {
     Task<PagedResult<BanDocListItem>> GetListAsync(BanDocFilter filter, CancellationToken ct = default);
@@ -63,4 +72,12 @@ public interface IBanDocService
     Task<bool> IsMaSoTheAvailableAsync(string maSoThe, int? excludeMaBanDoc = null, CancellationToken ct = default);
 
     Task<List<TaiKhoanLookupItem>> GetUnlinkedAccountsAsync(int? currentMaTaiKhoan = null, CancellationToken ct = default);
+
+    Task<ServiceResult<int>> DangKyTheAsync(DangKyTheBanDocInput input, int maTaiKhoan, CancellationToken ct = default);
+
+    Task<ServiceResult> DuyetTheAsync(int maBanDoc, CancellationToken ct = default);
+
+    Task<ServiceResult> TuChoiTheAsync(int maBanDoc, string? lyDo = null, CancellationToken ct = default);
+
+    Task<ServiceResult> HuyDangKyTheAsync(int maTaiKhoan, CancellationToken ct = default);
 }

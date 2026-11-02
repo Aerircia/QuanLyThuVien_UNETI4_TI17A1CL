@@ -66,8 +66,10 @@ public enum LoaiBanDoc
 
 public enum TrangThaiBanDoc
 {
+    [Display(Name = "Chờ duyệt")] ChoDuyet,
     [Display(Name = "Hoạt động")] HoatDong,
-    [Display(Name = "Ngừng hoạt động")] NgungHoatDong
+    [Display(Name = "Ngừng hoạt động")] NgungHoatDong,
+    [Display(Name = "Từ chối")] TuChoi
 }
 
 public enum TrangThaiPhieuMuon

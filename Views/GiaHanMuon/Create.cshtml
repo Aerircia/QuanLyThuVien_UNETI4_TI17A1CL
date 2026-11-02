@@ -1,6 +1,6 @@
 @* Họ và tên: Vũ Ngọc Hương Giang *@
 @* Mã sinh viên: 23103100280 *@
-@* Nội dung thực hiện: view bạn đọc gửi yêu cầu gia hạn phiếu mượn *@
+@* Nội dung thực hiện: view bạn đọc gửi yêu cầu gia hạn phiếu mượn kèm các quy định và lưu ý *@
 @model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.GiaHanMuonCreateViewModel
 @{
     ViewData["Title"] = "Yêu cầu gia hạn";
@@ -8,69 +8,179 @@
     var min = info.HanTraHienTai?.AddDays(1).ToString("yyyy-MM-dd");
     var max = info.HanTraMoiToiDa?.ToString("yyyy-MM-dd");
 }
-<div class="row justify-content-center">
-    <div class="col-md-10 col-lg-7">
-        <h1 class="mb-3">Yêu cầu gia hạn phiếu mượn #@info.MaPhieuMuon</h1>
 
-        @if (TempData["ThongBao"] is string thongBao)
-        {
-            <div class="alert alert-success" role="status">@thongBao</div>
-        }
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h4 mb-1">Yêu cầu gia hạn phiếu mượn #@info.MaPhieuMuon</h1>
+        <p class="text-muted small mb-0">Đề xuất gia hạn thời gian mượn sách gửi đến Thủ thư xét duyệt.</p>
+    </div>
+    <a asp-controller="PhieuMuon" asp-action="MyLoans" class="btn btn-outline-secondary btn-sm">
+        ← Phiếu mượn của tôi
+    </a>
+</div>
 
-        <div class="card mb-3">
-            <div class="card-header">Thông tin phiếu</div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-5">Sách</dt>
-                    <dd class="col-sm-7">@info.TenSach</dd>
-                    <dt class="col-sm-5">Hạn trả hiện tại</dt>
-                    <dd class="col-sm-7">@(info.HanTraHienTai?.ToString("dd/MM/yyyy"))</dd>
-                    <dt class="col-sm-5">Số lần đã gia hạn</dt>
-                    <dd class="col-sm-7">@info.SoLanDaGiaHan / @info.SoLanToiDa</dd>
-                    <dt class="col-sm-5">Mỗi lần tối đa</dt>
-                    <dd class="col-sm-7">@info.SoNgayToiDa ngày</dd>
-                </dl>
+@if (TempData["ThongBao"] is string thongBao)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="status">
+        @thongBao
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row g-4">
+    <!-- Cột trái: Form gia hạn & thông tin phiếu -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <span class="fw-bold text-muted text-uppercase small">Thông tin phiếu &amp; Hạn trả mới</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="app-card mb-4 p-3 bg-light">
+                    <dl class="row mb-0 small">
+                        <dt class="col-sm-4 text-muted">Đầu sách:</dt>
+                        <dd class="col-sm-8 fw-bold">@info.TenSach</dd>
+
+                        <dt class="col-sm-4 text-muted">Hạn trả hiện tại:</dt>
+                        <dd class="col-sm-8 fw-bold text-primary">@(info.HanTraHienTai?.ToString("dd/MM/yyyy") ?? "—")</dd>
+
+                        <dt class="col-sm-4 text-muted">Số lần đã gia hạn:</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge @(info.SoLanDaGiaHan >= info.SoLanToiDa ? "badge-soft-danger" : "badge-soft-info")">
+                                @info.SoLanDaGiaHan / @info.SoLanToiDa lần
+                            </span>
+                        </dd>
+
+                        <dt class="col-sm-4 text-muted">Thời gian tối đa:</dt>
+                        <dd class="col-sm-8">@info.SoNgayToiDa ngày / lần gia hạn</dd>
+                    </dl>
+                </div>
+
+                @if (!info.DuocGiaHan)
+                {
+                    <div class="alert alert-warning" role="alert">
+                        <h6 class="alert-heading fw-bold mb-2">Phiếu mượn này hiện không đủ điều kiện gia hạn:</h6>
+                        <ul class="mb-0 ps-3 small">
+                            @foreach (var m in info.CanhBao)
+                            {
+                                <li>@m</li>
+                            }
+                        </ul>
+                    </div>
+                    <div class="mt-3">
+                        <a asp-controller="PhieuMuon" asp-action="MyLoans" class="btn btn-outline-secondary">
+                            ← Trở về danh sách phiếu mượn
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <form asp-action="Create" asp-route-maPhieuMuon="@info.MaPhieuMuon" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="HanTraMoi" class="form-label fw-bold"></label>
+                            <input asp-for="HanTraMoi" class="form-control" type="date" min="@min" max="@max" />
+                            <div class="form-text">
+                                Chọn hạn trả mới từ <strong>@(info.HanTraHienTai?.AddDays(1).ToString("dd/MM/yyyy"))</strong> đến <strong>@(info.HanTraMoiToiDa?.ToString("dd/MM/yyyy"))</strong> (tối đa @info.SoNgayToiDa ngày).
+                            </div>
+                            <span asp-validation-for="HanTraMoi" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="LyDo" class="form-label fw-bold"></label>
+                            <textarea asp-for="LyDo" class="form-control" rows="3" maxlength="100" placeholder="Nhập lý do cần gia hạn mượn sách..."></textarea>
+                            <div class="form-text">Tối đa 100 ký tự.</div>
+                            <span asp-validation-for="LyDo" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex gap-2 pt-2">
+                            <button type="submit" class="btn btn-primary">
+                                Gửi yêu cầu gia hạn
+                            </button>
+                            <a asp-controller="PhieuMuon" asp-action="MyLoans" class="btn btn-outline-secondary">
+                                Hủy bỏ
+                            </a>
+                        </div>
+                    </form>
+                }
             </div>
         </div>
+    </div>
 
-        @if (!info.DuocGiaHan)
-        {
-            <div class="alert alert-warning" role="alert">
-                <strong>Phiếu này hiện không thể gia hạn:</strong>
-                <ul class="mb-0">
-                    @foreach (var m in info.CanhBao)
-                    {
-                        <li>@m</li>
-                    }
-                </ul>
+    <!-- Cột phải: Các lưu ý khi gia hạn mượn sách -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <span class="fw-bold text-muted text-uppercase small">Lưu ý khi gia hạn mượn sách</span>
             </div>
-        }
-        else
-        {
-            <div class="card">
-                <div class="card-header">Gửi yêu cầu gia hạn</div>
-                <div class="card-body">
-                    <form asp-action="Create" asp-route-maPhieuMuon="@info.MaPhieuMuon" method="post">
-                        <div asp-validation-summary="ModelOnly" class="mb-2"></div>
+            <div class="card-body p-4">
+                <div class="alert alert-info py-2 px-3 mb-3 small">
+                    Hệ thống kiểm tra tự động các điều kiện dưới đây khi bạn gửi yêu cầu gia hạn:
+                </div>
 
-                        <div class="mb-3">
-                            <label asp-for="HanTraMoi" class="form-label"></label>
-                            <input asp-for="HanTraMoi" class="form-control" type="date" min="@min" max="@max" />
-                            <div class="form-text">Chọn hạn trả mới trong khoảng đến @(info.HanTraMoiToiDa?.ToString("dd/MM/yyyy")).</div>
-                            <span asp-validation-for="HanTraMoi" class="field-validation-error"></span>
+                <div class="list-group list-group-flush small">
+                    <div class="list-group-item px-0 py-2 border-0">
+                        <div class="d-flex align-items-start gap-2">
+                            <span class="badge badge-soft-primary mt-1">1</span>
+                            <div>
+                                <strong class="d-block text-dark">Phiếu đang ở trạng thái Đang mượn</strong>
+                                <span class="text-muted">Chỉ áp dụng cho các phiếu mượn đã nhận sách thực tế và đang trong thời gian mượn.</span>
+                            </div>
                         </div>
+                    </div>
 
-                        <div class="mb-3">
-                            <label asp-for="LyDo" class="form-label"></label>
-                            <textarea asp-for="LyDo" class="form-control" rows="3" maxlength="100"></textarea>
-                            <span asp-validation-for="LyDo" class="field-validation-error"></span>
+                    <div class="list-group-item px-0 py-2 border-0">
+                        <div class="d-flex align-items-start gap-2">
+                            <span class="badge badge-soft-primary mt-1">2</span>
+                            <div>
+                                <strong class="d-block text-dark">Phiếu chưa quá hạn</strong>
+                                <span class="text-muted">Hạn trả của phiếu phải từ hôm nay trở đi. Nếu sách đã quá hạn, bạn đọc bắt buộc phải đến quầy thư viện trả sách và nộp phạt.</span>
+                            </div>
                         </div>
+                    </div>
 
-                        <button type="submit" class="btn btn-primary">Gửi yêu cầu</button>
-                    </form>
+                    <div class="list-group-item px-0 py-2 border-0">
+                        <div class="d-flex align-items-start gap-2">
+                            <span class="badge badge-soft-primary mt-1">3</span>
+                            <div>
+                                <strong class="d-block text-dark">Đã gia hạn: @info.SoLanDaGiaHan/@info.SoLanToiDa lần (chưa vượt tối đa 2 lần)</strong>
+                                <span class="text-muted">Mỗi phiếu mượn chỉ được gia hạn tối đa @info.SoLanToiDa lần. Hiện tại đã gia hạn @info.SoLanDaGiaHan/@info.SoLanToiDa lần.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item px-0 py-2 border-0">
+                        <div class="d-flex align-items-start gap-2">
+                            <span class="badge badge-soft-primary mt-1">4</span>
+                            <div>
+                                <strong class="d-block text-dark">Mỗi lần gia hạn tối đa 7 ngày, hạn trả mới phải sau hạn trả cũ</strong>
+                                <span class="text-muted">Khoảng thời gian gia hạn tối đa @info.SoNgayToiDa ngày, ngày trả mới phải sau ngày hạn trả hiện tại.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item px-0 py-2 border-0">
+                        <div class="d-flex align-items-start gap-2">
+                            <span class="badge badge-soft-primary mt-1">5</span>
+                            <div>
+                                <strong class="d-block text-dark">Không có yêu cầu gia hạn khác đang chờ duyệt</strong>
+                                <span class="text-muted">Mỗi phiếu mượn chỉ được có 01 yêu cầu gia hạn chờ xử lý tại một thời điểm.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item px-0 py-2 border-0">
+                        <div class="d-flex align-items-start gap-2">
+                            <span class="badge badge-soft-primary mt-1">6</span>
+                            <div>
+                                <strong class="d-block text-dark">Sách còn bản hoặc không có bạn đọc khác đang chờ mượn</strong>
+                                <span class="text-muted">Trường hợp sách trong kho đã hết và có bạn đọc khác đăng ký chờ mượn, yêu cầu gia hạn sẽ bị từ chối để ưu tiên bạn đọc mới.</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        }
+        </div>
     </div>
 </div>
 

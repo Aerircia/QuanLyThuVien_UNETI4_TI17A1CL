@@ -7,41 +7,85 @@
     ViewData["Title"] = "Xử lý yêu cầu gia hạn";
     var d = Model.Detail!;
     var choDuyet = d.TrangThai == TrangThaiGiaHan.ChoDuyet;
+    var isOverdue = d.HanTraHienTai.HasValue && d.HanTraHienTai.Value < DateOnly.FromDateTime(DateTime.Now);
+    var diffDays = d.HanTraMoi.DayNumber - d.HanTraCu.DayNumber;
+    var validDays = diffDays > 0 && diffDays <= 7;
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-            <h1 class="mb-0">Yêu cầu gia hạn #@d.MaGiaHan</h1>
-            <partial name="_TrangThaiGiaHanBadge" model="d.TrangThai" />
-        </div>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="h4 mb-0">Yêu cầu gia hạn #@d.MaGiaHan</h1>
+        <span class="text-muted small">Phiếu mượn #@d.MaPhieuMuon — Ngày yêu cầu: @d.NgayYeuCau.ToString("dd/MM/yyyy")</span>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">← Danh sách yêu cầu</a>
+</div>
 
-        <div class="card mb-3">
-            <div class="card-header">Thông tin yêu cầu</div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-4">Bạn đọc</dt>
-                    <dd class="col-sm-8">@d.TenBanDoc</dd>
-                    <dt class="col-sm-4">Sách</dt>
-                    <dd class="col-sm-8">@d.TenSach (phiếu #@d.MaPhieuMuon - @d.TrangThaiPhieu.GetDisplayName())</dd>
-                    <dt class="col-sm-4">Số bản còn lại</dt>
-                    <dd class="col-sm-8">@d.SoLuongConLai</dd>
-                    <dt class="col-sm-4">Số lần đã gia hạn</dt>
-                    <dd class="col-sm-8">@d.SoLanDaGiaHan / @d.SoLanToiDa</dd>
-                    <dt class="col-sm-4">Hạn trả hiện tại</dt>
-                    <dd class="col-sm-8">@(d.HanTraHienTai?.ToString("dd/MM/yyyy"))</dd>
-                    <dt class="col-sm-4">Hạn trả cũ -> mới</dt>
-                    <dd class="col-sm-8">@d.HanTraCu.ToString("dd/MM/yyyy") -> <strong>@d.HanTraMoi.ToString("dd/MM/yyyy")</strong></dd>
-                    <dt class="col-sm-4">Lý do</dt>
-                    <dd class="col-sm-8">@d.LyDo</dd>
-                    <dt class="col-sm-4">Ngày yêu cầu</dt>
-                    <dd class="col-sm-8">@d.NgayYeuCau.ToString("dd/MM/yyyy")</dd>
+<div class="row g-4">
+    <!-- Cột trái: Thông tin yêu cầu và form xử lý -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <span class="fw-bold text-muted text-uppercase small">Thông tin yêu cầu gia hạn</span>
+            </div>
+            <div class="card-body p-4">
+                <dl class="row mb-0 small">
+                    <dt class="col-sm-4 text-muted">Bạn đọc:</dt>
+                    <dd class="col-sm-8 fw-bold">@d.TenBanDoc</dd>
+
+                    <dt class="col-sm-4 text-muted">Đầu sách:</dt>
+                    <dd class="col-sm-8 fw-bold">@d.TenSach</dd>
+
+                    <dt class="col-sm-4 text-muted">Trạng thái phiếu:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge @(d.TrangThaiPhieu == TrangThaiPhieuMuon.DangMuon ? "badge-soft-primary" : "badge-soft-secondary")">
+                            @d.TrangThaiPhieu.GetDisplayName()
+                        </span>
+                    </dd>
+
+                    <dt class="col-sm-4 text-muted">Số bản còn trong kho:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge @(d.SoLuongConLai > 0 ? "badge-soft-success" : "badge-soft-danger")">
+                            @d.SoLuongConLai bản
+                        </span>
+                    </dd>
+
+                    <dt class="col-sm-4 text-muted">Số lần đã gia hạn:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge @(d.SoLanDaGiaHan >= d.SoLanToiDa ? "badge-soft-danger" : "badge-soft-info")">
+                            @d.SoLanDaGiaHan / @d.SoLanToiDa lần
+                        </span>
+                    </dd>
+
+                    <dt class="col-sm-4 text-muted">Hạn trả hiện tại:</dt>
+                    <dd class="col-sm-8">@(d.HanTraHienTai?.ToString("dd/MM/yyyy") ?? "—")</dd>
+
+                    <dt class="col-sm-4 text-muted">Đề xuất hạn trả:</dt>
+                    <dd class="col-sm-8">
+                        @d.HanTraCu.ToString("dd/MM/yyyy") &rarr; <strong class="text-primary">@d.HanTraMoi.ToString("dd/MM/yyyy")</strong>
+                        <span class="text-muted ms-1">(+@diffDays ngày)</span>
+                    </dd>
+
+                    <dt class="col-sm-4 text-muted">Lý do bạn đọc:</dt>
+                    <dd class="col-sm-8">@(d.LyDo ?? "—")</dd>
+
+                    <dt class="col-sm-4 text-muted">Trạng thái yêu cầu:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge @(d.TrangThai switch {
+                            TrangThaiGiaHan.ChoDuyet => "badge-soft-warning",
+                            TrangThaiGiaHan.DaDuyet  => "badge-soft-success",
+                            _                        => "badge-soft-danger"
+                        })">
+                            @d.TrangThai.GetDisplayName()
+                        </span>
+                    </dd>
+
                     @if (!choDuyet)
                     {
-                        <dt class="col-sm-4">Ngày xử lý</dt>
-                        <dd class="col-sm-8">@(d.NgayXuLy?.ToString("dd/MM/yyyy"))</dd>
-                        <dt class="col-sm-4">Nhận xét</dt>
-                        <dd class="col-sm-8">@d.NhanXet</dd>
+                        <dt class="col-sm-4 text-muted">Ngày xử lý:</dt>
+                        <dd class="col-sm-8">@(d.NgayXuLy?.ToString("dd/MM/yyyy") ?? "—")</dd>
+
+                        <dt class="col-sm-4 text-muted">Nhận xét của Thủ thư:</dt>
+                        <dd class="col-sm-8">@(d.NhanXet ?? "—")</dd>
                     }
                 </dl>
             </div>
@@ -49,45 +93,136 @@
 
         @if (choDuyet)
         {
-            @if (d.CanhBao.Count > 0)
-            {
-                <div class="alert alert-warning" role="alert">
-                    <strong>Không đủ điều kiện duyệt:</strong>
-                    <ul class="mb-0">
-                        @foreach (var m in d.CanhBao)
-                        {
-                            <li>@m</li>
-                        }
-                    </ul>
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <span class="fw-bold text-muted text-uppercase small">Quyết định xử lý</span>
                 </div>
-            }
+                <div class="card-body p-4">
+                    @if (d.CanhBao.Count > 0)
+                    {
+                        <div class="alert alert-warning mb-3" role="alert">
+                            <h6 class="alert-heading fw-bold mb-1">Không đủ điều kiện duyệt:</h6>
+                            <ul class="mb-0 ps-3 small">
+                                @foreach (var m in d.CanhBao)
+                                {
+                                    <li>@m</li>
+                                }
+                            </ul>
+                        </div>
+                    }
 
-            <div class="card">
-                <div class="card-header">Kết quả xử lý</div>
-                <div class="card-body">
                     <form asp-action="Process" asp-route-id="@d.MaGiaHan" method="post">
-                        <div asp-validation-summary="ModelOnly" class="mb-2"></div>
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
 
                         <div class="mb-3">
-                            <label asp-for="NhanXet" class="form-label"></label>
-                            <textarea asp-for="NhanXet" class="form-control" rows="3" maxlength="100"></textarea>
-                            <div class="form-text">Bắt buộc nhập khi từ chối.</div>
-                            <span asp-validation-for="NhanXet" class="field-validation-error"></span>
+                            <label asp-for="NhanXet" class="form-label fw-bold"></label>
+                            <textarea asp-for="NhanXet" class="form-control" rows="3" maxlength="100" placeholder="Ghi chú ý kiến hoặc lý do từ chối..."></textarea>
+                            <div class="form-text">Bắt buộc nhập nhận xét khi từ chối yêu cầu. Tối đa 100 ký tự.</div>
+                            <span asp-validation-for="NhanXet" class="text-danger"></span>
                         </div>
-                        @if (d.DuDieuKienDuyet)
-                        {
-                            <button type="submit" name="duyet" value="true" class="btn btn-primary">Duyệt</button>
-                        }
-                        <button type="submit" name="duyet" value="false" class="btn btn-outline-danger">Từ chối</button>
-                        <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+
+                        <div class="d-flex gap-2">
+                            @if (d.DuDieuKienDuyet)
+                            {
+                                <button type="submit" name="duyet" value="true" class="btn btn-primary">
+                                    Duyệt gia hạn
+                                </button>
+                            }
+                            <button type="submit" name="duyet" value="false" class="btn btn-outline-danger">
+                                Từ chối
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+                        </div>
                     </form>
                 </div>
             </div>
         }
-        else
-        {
-            <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
-        }
+    </div>
+
+    <!-- Cột phải: Các tiêu chuẩn & lưu ý khi duyệt gia hạn -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <span class="fw-bold text-muted text-uppercase small">Quy định đối chiếu khi gia hạn</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info py-2 px-3 mb-3 small">
+                    Thủ thư đối chiếu đủ 06 tiêu chuẩn theo quy chế mượn trả trước khi ra quyết định:
+                </div>
+
+                <div class="list-group list-group-flush small">
+                    <div class="list-group-item px-0 py-2 border-0">
+                        <div class="d-flex align-items-start gap-2">
+                            <span class="badge @(d.TrangThaiPhieu == TrangThaiPhieuMuon.DangMuon ? "badge-soft-success" : "badge-soft-danger") mt-1">
+                                @(d.TrangThaiPhieu == TrangThaiPhieuMuon.DangMuon ? "✓" : "✗")
+                            </span>
+                            <div>
+                                <strong class="d-block text-dark">Phiếu đang ở trạng thái Đang mượn</strong>
+                                <span class="text-muted">Chỉ duyệt khi phiếu đang mượn thực tế. Hiện tại: @d.TrangThaiPhieu.GetDisplayName().</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item px-0 py-2 border-0">
+                        <div class="d-flex align-items-start gap-2">
+                            <span class="badge @(!isOverdue ? "badge-soft-success" : "badge-soft-danger") mt-1">
+                                @(!isOverdue ? "✓" : "✗")
+                            </span>
+                            <div>
+                                <strong class="d-block text-dark">Phiếu chưa quá hạn</strong>
+                                <span class="text-muted">Phiếu quá hạn phải yêu cầu bạn đọc mang sách trả tại quầy và nộp phạt.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item px-0 py-2 border-0">
+                        <div class="d-flex align-items-start gap-2">
+                            <span class="badge @(d.SoLanDaGiaHan < d.SoLanToiDa ? "badge-soft-success" : "badge-soft-danger") mt-1">
+                                @(d.SoLanDaGiaHan < d.SoLanToiDa ? "✓" : "✗")
+                            </span>
+                            <div>
+                                <strong class="d-block text-dark">Đã gia hạn @d.SoLanDaGiaHan/@d.SoLanToiDa lần (chưa vượt tối đa 2 lần)</strong>
+                                <span class="text-muted">Mỗi phiếu mượn chỉ được gia hạn tối đa @d.SoLanToiDa lần.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item px-0 py-2 border-0">
+                        <div class="d-flex align-items-start gap-2">
+                            <span class="badge @(validDays ? "badge-soft-success" : "badge-soft-danger") mt-1">
+                                @(validDays ? "✓" : "✗")
+                            </span>
+                            <div>
+                                <strong class="d-block text-dark">Mỗi lần gia hạn tối đa 7 ngày, hạn trả mới phải sau hạn trả cũ</strong>
+                                <span class="text-muted">Khoảng thời gian gia hạn yêu cầu: +@diffDays ngày (tối đa 7 ngày).</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item px-0 py-2 border-0">
+                        <div class="d-flex align-items-start gap-2">
+                            <span class="badge badge-soft-success mt-1">✓</span>
+                            <div>
+                                <strong class="d-block text-dark">Không có yêu cầu gia hạn khác đang chờ duyệt</strong>
+                                <span class="text-muted">Mỗi phiếu mượn chỉ tồn tại duy nhất 01 yêu cầu đang chờ xử lý.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item px-0 py-2 border-0">
+                        <div class="d-flex align-items-start gap-2">
+                            <span class="badge @(d.SoLuongConLai > 0 ? "badge-soft-success" : "badge-soft-warning") mt-1">
+                                @(d.SoLuongConLai > 0 ? "✓" : "!")
+                            </span>
+                            <div>
+                                <strong class="d-block text-dark">Sách còn bản hoặc không có bạn đọc khác đang chờ mượn</strong>
+                                <span class="text-muted">Kho hiện còn @d.SoLuongConLai bản khả dụng. Nếu hết bản và có bạn đọc khác chờ mượn thì từ chối gia hạn.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
