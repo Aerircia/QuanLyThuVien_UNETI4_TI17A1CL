@@ -12,7 +12,7 @@
     ViewData["Title"] = "Đăng ký mượn sách - " + Model.TenSach;
 }
 
-<div class="container py-3">
+<div class="container py-3 borrow-register-page">
     <div class="borrow-flow-steps" aria-label="Các bước đăng ký mượn">
         <span class="active">1 - Chọn sách ✓</span>
         <span class="active">2 - Xác nhận</span>
@@ -87,18 +87,12 @@
                             </li>
                         </ul>
 
-                        @if (!string.IsNullOrWhiteSpace(Model.MoTa))
-                        {
-                            <div class="small text-muted border-top pt-2">
-                                <strong>Mô tả:</strong> @Model.MoTa
-                            </div>
-                        }
                     </div>
                 </div>
 
                 <!-- Cột thông tin bạn đọc & form xác nhận -->
                 <div class="col-md-7">
-                    <div class="app-card mb-3">
+                    <div class="app-card h-100">
                         <h6 class="fw-bold text-muted text-uppercase small mb-3">1. Thông tin bạn đọc mượn</h6>
                         <div class="p-3 bg-light rounded border mb-3">
                             <div class="row g-2 small">
@@ -110,7 +104,7 @@
                             </div>
                         </div>
 
-                        <h6 class="fw-bold text-muted text-uppercase small mb-3">2. Kiểm tra điều kiện mượn (EF Core / LINQ)</h6>
+                        <h6 class="fw-bold text-muted text-uppercase small mb-3">2. Kiểm tra điều kiện mượn</h6>
                         @if (!Model.DuDieuKienMuon)
                         {
                             <div class="alert alert-danger" role="alert">
@@ -128,6 +122,14 @@
                             <div class="alert alert-success d-flex align-items-center py-2" role="alert">
                                 <span class="me-2">✓</span>
                                 <div class="small">Tài khoản và đầu sách hoàn toàn <strong>đủ điều kiện mượn</strong> theo quy định thư viện.</div>
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.MoTa))
+                        {
+                            <div class="borrow-register-description mb-3">
+                                <span class="fw-semibold d-block mb-1">Mô tả sách</span>
+                                <p class="text-muted mb-0">@Model.MoTa</p>
                             </div>
                         }
 
