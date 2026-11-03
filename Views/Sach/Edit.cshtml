@@ -12,17 +12,21 @@
 <div class="app-form-card">
     <div class="app-form-header">
         <h1>Sửa sách</h1>
-        <a asp-action="Details" asp-route-id="@Model.MaSach" class="btn app-btn-soft">← Quay lại</a>
+        <a asp-action="Index" class="btn app-btn-soft">← Quay lại</a>
     </div>
 
-    <form asp-action="Edit" asp-route-id="@Model.MaSach" method="post" enctype="multipart/form-data">
+    <form id="formSuaSach" asp-action="Edit" asp-route-id="@Model.MaSach" method="post" enctype="multipart/form-data">
         <input asp-for="MaSach" type="hidden" />
+        <input asp-for="ImgPath" type="hidden" />
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
         <div class="app-form-cover">
             <div class="app-cover-frame">
-                <img id="anhBiaPreview" src="@(coAnh ? Model.ImgPath : "")" alt="Xem trước bìa sách"
-                     class="@(coAnh ? "" : "d-none")" />
+                <button type="button" id="phongToBiaBtn" class="app-cover-preview @(coAnh ? "" : "d-none")"
+                        title="Xem ảnh bìa">
+                    <img id="anhBiaPreview" src="@(coAnh ? Model.ImgPath : "")" alt="Xem trước bìa sách"
+                         class="@(coAnh ? "" : "d-none")" />
+                </button>
                 <div id="anhBiaMock" class="book-cover-mock @(coAnh ? "d-none" : "")">
                     <h5 id="biaMockTitle">@Model.TenSach</h5>
                     <small>UNETI Library</small>
@@ -93,10 +97,25 @@
         </div>
 
         <div class="app-form-footer">
-            <a asp-action="Details" asp-route-id="@Model.MaSach" class="btn app-btn-soft">Hủy</a>
-            <button type="submit" class="btn btn-primary">Lưu</button>
+            <a asp-action="Index" class="btn app-btn-soft">Hủy</a>
+            <button type="button" class="btn btn-primary"
+                    data-confirm-form="#formSuaSach"
+                    data-confirm-title="Xác nhận sửa sách"
+                    data-confirm-message="Bạn có chắc chắn muốn lưu các thay đổi của sách này?"
+                    data-confirm-ok="Lưu thay đổi">Lưu</button>
         </div>
     </form>
+</div>
+
+<div id="xemBiaSachModal" class="app-cover-modal" role="dialog" aria-modal="true" aria-label="Xem ảnh bìa">
+    <button type="button" id="dongXemBiaBtn" class="app-cover-modal-close" aria-label="Đóng">×</button>
+    <div class="app-cover-modal-tools">
+        <button type="button" data-cover-zoom="-0.25" aria-label="Thu nhỏ">−</button>
+        <span id="tyLePhongTo">100%</span>
+        <button type="button" data-cover-zoom="0.25" aria-label="Phóng to">+</button>
+        <button type="button" id="datLaiBiaBtn">Đặt lại</button>
+    </div>
+    <img id="anhBiaPhongTo" src="" alt="Ảnh bìa sách phóng to" class="app-cover-modal-image" />
 </div>
 
 @section Scripts {
@@ -110,6 +129,13 @@
             var xoaAnh = document.getElementById('xoaAnhHidden');
             var tenInput = document.getElementById('TenSach');
             var mockTitle = document.getElementById('biaMockTitle');
+            var zoomBtn = document.getElementById('phongToBiaBtn');
+            var zoomImage = document.getElementById('anhBiaPhongTo');
+            var zoomModal = document.getElementById('xemBiaSachModal');
+            var closeZoomBtn = document.getElementById('dongXemBiaBtn');
+            var resetZoomBtn = document.getElementById('datLaiBiaBtn');
+            var zoomLabel = document.getElementById('tyLePhongTo');
+            var zoomScale = 1;
             var coAnh = !!(preview && !preview.classList.contains('d-none'));
             if (!input || !preview || !mock) return;
 
@@ -122,6 +148,7 @@
                     preview.src = e.target.result;
                     preview.classList.remove('d-none');
                     mock.classList.add('d-none');
+                    if (zoomBtn) zoomBtn.classList.remove('d-none');
                     coAnh = true;
                 };
                 reader.readAsDataURL(file);
@@ -134,6 +161,37 @@
                 hienMock();
             });
 
+            if (zoomBtn && zoomImage && zoomModal) zoomBtn.addEventListener('click', function () {
+                if (coAnh && preview.src) zoomImage.src = preview.src;
+                datLaiPhongTo();
+                zoomModal.classList.add('is-open');
+            });
+
+            function datLaiPhongTo() {
+                zoomScale = 1;
+                zoomImage.style.transform = 'scale(1)';
+                zoomLabel.textContent = '100%';
+            }
+
+            document.querySelectorAll('[data-cover-zoom]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    zoomScale = Math.min(3, Math.max(0.5, zoomScale + Number(button.dataset.coverZoom)));
+                    zoomImage.style.transform = 'scale(' + zoomScale + ')';
+                    zoomLabel.textContent = Math.round(zoomScale * 100) + '%';
+                });
+            });
+
+            function dongPhongTo() { zoomModal.classList.remove('is-open'); }
+            if (closeZoomBtn) closeZoomBtn.addEventListener('click', dongPhongTo);
+            if (resetZoomBtn) resetZoomBtn.addEventListener('click', datLaiPhongTo);
+            if (zoomModal) zoomModal.addEventListener('click', function (e) {
+                if (e.target === zoomModal) dongPhongTo();
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && zoomModal.classList.contains('is-open')) dongPhongTo();
+            });
+
+
             // Bìa mặc định hiển thị tên sách đang gõ, giống cơ chế tự tạo bìa của mẫu thiết kế.
             if (tenInput && mockTitle) tenInput.addEventListener('input', function () {
                 if (!coAnh) mockTitle.textContent = tenInput.value.trim() || 'Tên sách';
@@ -143,6 +201,7 @@
                 preview.classList.add('d-none');
                 preview.removeAttribute('src');
                 mock.classList.remove('d-none');
+                if (zoomBtn) zoomBtn.classList.add('d-none');
                 coAnh = false;
                 if (tenInput && mockTitle) mockTitle.textContent = (tenInput.value || 'Tên sách').trim() || 'Tên sách';
             }

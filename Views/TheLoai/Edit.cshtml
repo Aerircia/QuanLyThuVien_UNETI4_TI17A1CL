@@ -10,10 +10,10 @@
 <div class="app-form-card">
     <div class="app-form-header">
         <h1>Sửa thể loại</h1>
-        <a asp-action="Details" asp-route-id="@Model.MaTheLoai" class="btn app-btn-soft">← Quay lại</a>
+        <a asp-action="Index" class="btn app-btn-soft">← Quay lại</a>
     </div>
 
-    <form asp-action="Edit" asp-route-id="@Model.MaTheLoai" method="post">
+    <form id="formSuaTheLoai" asp-action="Edit" asp-route-id="@Model.MaTheLoai" method="post">
         <input asp-for="MaTheLoai" type="hidden" />
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
         <div class="mb-3">
@@ -37,8 +37,12 @@
         </div>
 
         <div class="app-form-footer">
-            <a asp-action="Details" asp-route-id="@Model.MaTheLoai" class="btn app-btn-soft">Hủy</a>
-            <button type="submit" class="btn btn-primary">Lưu</button>
+            <a asp-action="Index" class="btn app-btn-soft">Hủy</a>
+            <button type="button" class="btn btn-primary"
+                    data-confirm-form="#formSuaTheLoai"
+                    data-confirm-title="Xác nhận sửa thể loại"
+                    data-confirm-message="Bạn có chắc chắn muốn lưu các thay đổi của thể loại này?"
+                    data-confirm-ok="Lưu thay đổi">Lưu</button>
         </div>
     </form>
 </div>

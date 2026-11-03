@@ -158,6 +158,7 @@ public class SachController : Controller
         if (detail is null)
             return NotFound();
         model.MaSach = id;
+        model.ImgPath = detail.ImgPath;
 
         if (!ModelState.IsValid)
         {
@@ -184,7 +185,7 @@ public class SachController : Controller
             model.ViTriKe,
             model.MoTa,
             model.TrangThai,
-            imgPath ?? (xoaAnh ? null : model.ImgPath)), HttpContext.RequestAborted);
+            imgPath ?? (xoaAnh ? null : detail.ImgPath)), HttpContext.RequestAborted);
 
         if (!result.Succeeded)
         {
@@ -194,7 +195,7 @@ public class SachController : Controller
         }
 
         TempData["ThongBao"] = "Đã cập nhật sách.";
-        return RedirectToAction(nameof(Details), new { id });
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]

@@ -39,6 +39,7 @@ public sealed record SachDetail(
     string? NhaXuatBan,
     int NamXuatBan,
     int SoLuongTong,
+    int SoLuongConLai,
     decimal GiaBia,
     string? ViTriKe,
     string? MoTa,

@@ -17,9 +17,14 @@
     </div>
     <div class="app-form-footer">
         <a asp-action="Details" asp-route-id="@Model.MaTheLoai" class="btn app-btn-soft">Hủy</a>
-        <form asp-action="Delete" asp-route-id="@Model.MaTheLoai" method="post" class="d-inline">
+        <form id="formXoaTheLoai" asp-action="Delete" asp-route-id="@Model.MaTheLoai" method="post" class="d-inline">
             @Html.AntiForgeryToken()
-            <button type="submit" class="btn btn-danger">Xóa</button>
+            <button type="button" class="btn btn-danger"
+                    data-confirm-form="#formXoaTheLoai"
+                    data-confirm-title="Xác nhận xóa thể loại"
+                    data-confirm-message="Bạn có chắc chắn muốn xóa thể loại này?"
+                    data-confirm-ok="Xóa thể loại"
+                    data-confirm-class="btn-danger">Xóa</button>
         </form>
     </div>
 </div>

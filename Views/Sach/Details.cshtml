@@ -8,51 +8,54 @@
     ViewData["Title"] = "Chi tiết sách";
 }
 @inject QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.ICurrentUserService Current
-<div class="breadcrumb-lite mb-3"><a asp-action="Catalog">Kho sách</a> / <span>@Model.TenSach</span></div>
-<partial name="_AlertsPartial" />
-@if (Current.IsAuthenticated && (Current.IsInRole(VaiTro.Admin) || Current.IsInRole(VaiTro.ThuThu)))
-{
-    <div class="surface-card d-flex flex-wrap gap-2 align-items-center mb-3">
-        <span class="fw-semibold me-2">Thao tác nhân viên:</span>
-        <a asp-action="Edit" asp-route-id="@Model.MaSach" class="btn btn-sm btn-outline-primary">Sửa</a>
-        @if (Model.TrangThai is TrangThaiSach.DangPhucVu or TrangThaiSach.TamNgung)
-        {
-            <form asp-action="ToggleTrangThai" asp-route-id="@Model.MaSach" method="post" class="d-inline"
-                  onsubmit="return confirm('Đổi trạng thái phục vụ của sách này?');">
-                @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-sm btn-outline-secondary">@(Model.TrangThai == TrangThaiSach.DangPhucVu ? "Tạm ngưng" : "Mở lại")</button>
-            </form>
-        }
-        <a asp-action="Delete" asp-route-id="@Model.MaSach" class="btn btn-sm btn-outline-danger">Xóa</a>
-    </div>
+@{
+    var isStaff = Current.IsAuthenticated && Current.IsInRole(VaiTro.Admin, VaiTro.ThuThu);
 }
-<section class="book-detail">
-    <div class="book-detail-cover">
-        @if (!string.IsNullOrWhiteSpace(Model.ImgPath))
-        { <img src="@Model.ImgPath" alt="Bìa sách @Model.TenSach" /> }
-        else { <strong>@Model.TenSach</strong><span>@Model.TacGia</span> }
+<div class="app-form-card app-detail-card @(isStaff ? "app-detail-card--staff" : "")">
+    <div class="app-form-header">
+        <h1>@(isStaff ? "Chi tiết sách" : Model.TenSach)</h1>
+        <a asp-action="@(isStaff ? "Index" : "Catalog")" class="btn app-btn-soft ms-auto">← Quay lại</a>
     </div>
-    <article>
-        <span class="status-badge">@Model.TrangThai.GetDisplayName()</span>
-        <h1 class="mt-3">@Model.TenSach</h1>
-        <p class="text-muted">Tác giả: <strong class="text-dark">@Model.TacGia</strong></p>
-        <dl class="detail-meta">
-            <dt>Thể loại</dt><dd>@Model.TenTheLoai</dd>
-            <dt>Nhà xuất bản</dt><dd>@(Model.NhaXuatBan ?? "Đang cập nhật")</dd>
-            <dt>Năm xuất bản</dt><dd>@Model.NamXuatBan</dd>
-            <dt>Số lượng</dt><dd>@Model.SoLuongTong cuốn</dd>
-            <dt>Vị trí kệ</dt><dd>@(Model.ViTriKe ?? "Đang cập nhật")</dd>
-            <dt>Giá bìa</dt><dd>@Model.GiaBia.ToString("N0") đ</dd>
-        </dl>
-        <h2 class="h5">Giới thiệu sách</h2>
-        <p class="text-muted">@(string.IsNullOrWhiteSpace(Model.MoTa) ? "Nội dung mô tả đang được cập nhật." : Model.MoTa)</p>
-    </article>
-    <aside class="borrow-panel surface-card">
-        <div class="loan-steps">
-            <div class="loan-step active"><span></span>Đăng ký</div>
-            <div class="loan-step"><span></span>Xác nhận</div>
-            <div class="loan-step"><span></span>Hoàn tất</div>
+    <partial name="_AlertsPartial" />
+    <div class="app-detail-content">
+        <div class="app-detail-cover">
+            @if (!string.IsNullOrWhiteSpace(Model.ImgPath))
+            { <img src="@Model.ImgPath" alt="Bìa sách @Model.TenSach" /> }
+            else { <strong>@Model.TenSach</strong><span>@Model.TacGia</span> }
         </div>
+        <div class="app-detail-info">
+            <dl class="app-detail-grid">
+                <dt>Tên sách</dt><dd>@Model.TenSach</dd>
+                <dt>Tác giả</dt><dd>@Model.TacGia</dd>
+                <dt>Thể loại</dt><dd>@Model.TenTheLoai</dd>
+                <dt>Nhà xuất bản</dt><dd>@(Model.NhaXuatBan ?? "—")</dd>
+                <dt>Năm xuất bản</dt><dd>@Model.NamXuatBan</dd>
+                <dt>Tổng số lượng</dt><dd>@Model.SoLuongTong</dd>
+                <dt>Còn lại</dt><dd>@Math.Max(0, Model.SoLuongConLai)</dd>
+                <dt>Giá bìa</dt><dd>@Model.GiaBia.ToString("N0") ₫</dd>
+                <dt>Vị trí kệ</dt><dd>@(Model.ViTriKe ?? "—")</dd>
+                <dt class="app-detail-span">Mô tả</dt><dd class="app-detail-span">@(string.IsNullOrWhiteSpace(Model.MoTa) ? "—" : Model.MoTa)</dd>
+            </dl>
+        </div>
+    </div>
+    @if (isStaff)
+    {
+        <div class="app-form-footer app-detail-actions">
+            <a asp-action="Edit" asp-route-id="@Model.MaSach" class="btn app-btn-soft">Sửa</a>
+            @if (Model.TrangThai is TrangThaiSach.DangPhucVu or TrangThaiSach.TamNgung)
+            {
+                <form asp-action="ToggleTrangThai" asp-route-id="@Model.MaSach" method="post" class="d-inline"
+                      onsubmit="return confirm('Đổi trạng thái phục vụ của sách này?');">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn app-btn-soft">@(Model.TrangThai == TrangThaiSach.DangPhucVu ? "Tạm ngưng" : "Mở lại")</button>
+                </form>
+            }
+            <a asp-action="Delete" asp-route-id="@Model.MaSach" class="btn btn-outline-danger">Xóa</a>
+        </div>
+    }
+    else
+    {
+        <div class="borrow-panel surface-card">
         @if (Model.TrangThai == TrangThaiSach.DangPhucVu)
         {
             @if (Current.IsInRole(VaiTro.BanDoc))
@@ -82,5 +85,6 @@
             <button class="btn btn-secondary w-100" disabled>Hiện không thể mượn</button>
         }
         <small class="text-muted d-block mt-3">Thời hạn mượn mặc định: 14 ngày. Thủ thư sẽ xác nhận trước khi giao sách.</small>
-    </aside>
-</section>
+        </div>
+    }
+</div>

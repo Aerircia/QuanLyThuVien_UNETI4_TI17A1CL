@@ -14,7 +14,7 @@
         <a asp-action="Index" class="btn app-btn-soft">← Quay lại</a>
     </div>
 
-    <form asp-action="Create" method="post" enctype="multipart/form-data">
+    <form id="formLuuSachMoi" asp-action="Create" method="post" enctype="multipart/form-data">
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
         <div class="app-form-cover">
@@ -93,7 +93,11 @@
 
         <div class="app-form-footer">
             <a asp-action="Index" class="btn app-btn-soft">Hủy</a>
-            <button type="submit" class="btn btn-primary">Lưu</button>
+            <button type="button" class="btn btn-primary"
+                    data-confirm-form="#formLuuSachMoi"
+                    data-confirm-title="Xác nhận thêm sách"
+                    data-confirm-message="Bạn có chắc chắn muốn thêm sách này?"
+                    data-confirm-ok="Thêm sách">Lưu</button>
         </div>
     </form>
 </div>

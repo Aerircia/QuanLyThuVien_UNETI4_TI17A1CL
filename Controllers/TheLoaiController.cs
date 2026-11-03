@@ -113,7 +113,7 @@ public class TheLoaiController : Controller
         }
 
         TempData["ThongBao"] = "Đã cập nhật thể loại.";
-        return RedirectToAction(nameof(Details), new { id });
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpGet]

@@ -95,6 +95,11 @@ public sealed class SachService : ISachService
                 s.NhaXuatBan,
                 s.NamXuatBan,
                 s.SoLuongTong,
+                s.SoLuongTong
+                    - s.PhieuMuons.Count(p => p.TrangThai == TrangThaiPhieuMuon.DaDuyet || p.TrangThai == TrangThaiPhieuMuon.DangMuon)
+                    - s.PhieuMuons.Count(p => p.TrangThai == TrangThaiPhieuMuon.DaTra &&
+                                              p.TraSach != null &&
+                                              p.TraSach.TinhTrangSach == TinhTrangSach.Mat),
                 s.GiaBia,
                 s.ViTriKe,
                 s.MoTa,
