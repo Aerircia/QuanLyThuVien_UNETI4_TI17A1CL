@@ -90,6 +90,7 @@ public class PhieuMuonController : Controller
             ViTriKe = sach.ViTriKe,
             NhaXuatBan = sach.NhaXuatBan,
             MoTa = sach.MoTa,
+            ImgPath = sach.ImgPath,
             SoLuongTong = sach.SoLuongTong,
             SoLuongConLai = check.SoLuongConLai,
 
@@ -143,6 +144,7 @@ public class PhieuMuonController : Controller
             model.NamXuatBan = sach?.NamXuatBan ?? 0;
             model.GiaBia = sach?.GiaBia ?? 0;
             model.ViTriKe = sach?.ViTriKe;
+            model.ImgPath = sach?.ImgPath;
             model.SoLuongTong = sach?.SoLuongTong ?? 0;
             model.SoLuongConLai = check.SoLuongConLai;
             model.HoTenBanDoc = banDoc.HoTen;
@@ -157,8 +159,32 @@ public class PhieuMuonController : Controller
             return View(model);
         }
 
-        TempData["ThongBao"] = "Đăng ký mượn sách thành công! Phiếu mượn đang ở trạng thái 'Chờ duyệt', vui lòng theo dõi thông báo từ thủ thư.";
-        return RedirectToAction(nameof(MyLoans));
+        return RedirectToAction(nameof(RegisterSuccess), new { id = result.Value });
+    }
+
+    [AuthorizeRole(VaiTro.BanDoc)]
+    [HttpGet]
+    public async Task<IActionResult> RegisterSuccess(int id)
+    {
+        var user = _current.User!;
+        var banDoc = await _db.BanDocs.AsNoTracking()
+            .FirstOrDefaultAsync(b => b.MaTaiKhoan == user.MaTaiKhoan, HttpContext.RequestAborted);
+        if (banDoc is null)
+            return NotFound();
+
+        var phieu = await _db.PhieuMuons
+            .AsNoTracking()
+            .Include(p => p.Sach)
+            .FirstOrDefaultAsync(p => p.MaPhieuMuon == id && p.MaBanDoc == banDoc.MaBanDoc, HttpContext.RequestAborted);
+        if (phieu is null)
+            return NotFound();
+
+        return View(new PhieuMuonRegisterSuccessViewModel
+        {
+            MaPhieuMuon = phieu.MaPhieuMuon,
+            TenSach = phieu.Sach?.TenSach ?? string.Empty,
+            ViTriKe = phieu.Sach?.ViTriKe
+        });
     }
 
     // 7.5. THEO DÕI PHIẾU MƯỢN CỦA BẠN ĐỌC

@@ -60,15 +60,10 @@
         {
             @if (Current.IsInRole(VaiTro.BanDoc))
             {
-                <form asp-controller="PhieuMuon" asp-action="Register" method="post">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="maSach" value="@Model.MaSach" />
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Ghi chú khi đăng ký</label>
-                        <textarea name="ghiChu" class="form-control" rows="3" maxlength="100" placeholder="Ví dụ: cần lấy sách vào buổi chiều"></textarea>
-                    </div>
-                    <button class="btn btn-primary w-100 btn-lg" type="submit">Đăng ký mượn sách</button>
-                </form>
+                <a asp-controller="PhieuMuon" asp-action="Register" asp-route-id="@Model.MaSach"
+                   class="btn btn-primary w-100 btn-lg">
+                    Đăng ký mượn sách
+                </a>
             }
             else if (!Current.IsAuthenticated)
             {
