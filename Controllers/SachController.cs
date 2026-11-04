@@ -232,6 +232,8 @@ public class SachController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
+        // Đọc đường dẫn ảnh TRƯỚC khi xóa, vì xóa cứng rồi thì GetAsync không còn dữ liệu để lấy ImgPath
+        var detail = await _sachService.GetAsync(id, HttpContext.RequestAborted);
         var result = await _sachService.DeleteAsync(id, HttpContext.RequestAborted);
         if (!result.Succeeded)
         {
@@ -241,7 +243,6 @@ public class SachController : Controller
 
         if (result.Value)
         {
-            var detail = await _sachService.GetAsync(id, HttpContext.RequestAborted);
             if (detail?.ImgPath is { } imgPath)
                 _anhBiaService.Delete(imgPath);
             TempData["ThongBao"] = "Đã xóa sách.";

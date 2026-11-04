@@ -16,12 +16,16 @@
     <a asp-action="Create" class="btn btn-primary">+ Thêm thể loại</a>
 </div>
 <partial name="_AlertsPartial" />
-<form id="bo-loc-the-loai" method="get" asp-action="Index" class="surface-card filter-card row g-2">
-    <input type="hidden" name="pageSize" value="@Model.PageSize" />
-    <div class="col-md-6"><input name="search" value="@ViewBag.Search" class="form-control" placeholder="Tên, mô tả hoặc khu vực lưu trữ" /></div>
-    <div class="col-md-4"><select name="trangThai" class="form-select" asp-items="statuses"><option value="">Mọi trạng thái</option></select></div>
-    <div class="col-md-2 d-grid"><button type="submit" class="btn btn-outline-primary">Lọc</button></div>
-</form>
+<div class="card mb-3">
+    <div class="card-body">
+        <form id="bo-loc-the-loai" method="get" asp-action="Index" class="row g-2 align-items-center">
+            <input type="hidden" name="pageSize" value="@Model.PageSize" />
+            <div class="col-md-6"><input name="search" value="@ViewBag.Search" class="form-control" placeholder="Tên, mô tả hoặc khu vực lưu trữ" /></div>
+            <div class="col-md-4"><select name="trangThai" class="form-select" asp-items="statuses"><option value="">Mọi trạng thái</option></select></div>
+            <div class="col-md-2 d-grid"><button type="submit" class="btn btn-outline-primary">Lọc</button></div>
+        </form>
+    </div>
+</div>
 @* Vùng kết quả được thay bằng partial _BangTheLoai khi lọc/tìm kiếm/phân trang qua AJAX *@
 <div id="vung-ket-qua-the-loai">
     <partial name="_BangTheLoai" model="Model" />

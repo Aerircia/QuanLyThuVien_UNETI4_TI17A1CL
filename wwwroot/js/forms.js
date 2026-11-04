@@ -4,6 +4,12 @@
 (() => {
   'use strict';
 
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.resultModal').forEach((modalEl) => {
+      if (window.bootstrap) bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    });
+  });
+
   let pendingForm = null;
 
   const getConfirmEl = () => document.getElementById('confirmModal');

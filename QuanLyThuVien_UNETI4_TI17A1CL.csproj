@@ -5,6 +5,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>6ec73f05-5b5a-4843-a419-e660d4320f78</UserSecretsId>
+    <!-- Ảnh bìa do runtime ghi vào wwwroot/uploads: loại khỏi item graph để dotnet watch
+         không dò file upload mới (tránh crash HotReloadMSBuildWorkspace). StaticFiles vẫn serve bình thường. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);wwwroot\uploads\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>

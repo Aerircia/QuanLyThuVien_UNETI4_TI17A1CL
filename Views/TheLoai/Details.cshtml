@@ -20,13 +20,4 @@
         <dt class="col-sm-5">Khu vực lưu trữ</dt><dd class="col-sm-7">@(Model.KhuVucLuuTru ?? "—")</dd>
         <dt class="col-sm-5">Mô tả</dt><dd class="col-sm-7">@(Model.MoTa ?? "—")</dd>
     </dl>
-    <div class="app-form-footer">
-        <a asp-action="Edit" asp-route-id="@Model.MaTheLoai" class="btn app-btn-soft">Sửa</a>
-        <form asp-action="ToggleTrangThai" asp-route-id="@Model.MaTheLoai" method="post" class="d-inline"
-              onsubmit="return confirm('@(Model.TrangThai == TrangThaiTheLoai.HoatDong ? "Ngưng hoạt động thể loại này?" : "Kích hoạt lại thể loại này?")');">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="btn app-btn-soft">Đổi trạng thái</button>
-        </form>
-        <a asp-action="Delete" asp-route-id="@Model.MaTheLoai" class="btn btn-outline-danger">Xóa</a>
-    </div>
 </div>

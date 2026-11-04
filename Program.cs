@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using QuanLyThuVien_UNETI4_TI17A1CL.Data;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services;
 
@@ -29,6 +30,19 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Ảnh bìa upload lúc runtime không nằm trong static assets manifest (build-time),
+// nên MapStaticAssets không serve được -> serve thư mục uploads bằng StaticFiles middleware.
+var thuMucUploads = Path.Combine(
+    app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot"),
+    "uploads", "bia");
+Directory.CreateDirectory(thuMucUploads); // PhysicalFileProvider yêu cầu thư mục phải tồn tại
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(thuMucUploads),
+    RequestPath = "/uploads/bia"
+});
+
 app.UseRouting();
 app.UseSession();
 app.UseAuthorization();

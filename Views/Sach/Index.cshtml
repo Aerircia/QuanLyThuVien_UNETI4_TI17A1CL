@@ -18,44 +18,48 @@
 </div>
 <partial name="_AlertsPartial" />
 
-<form id="bo-loc-sach" method="get" asp-action="Index" class="surface-card filter-card row g-2 align-items-end">
-    <input type="hidden" name="pageSize" value="@Model.PageSize" />
-    <div class="col-lg-3 col-md-6">
-        <label class="form-label small fw-semibold">Tìm kiếm (sách, tác giả, NXB)</label>
-        <input name="search" value="@ViewBag.Search" class="form-control" placeholder="Nhập từ khóa" />
+<div class="card mb-3">
+    <div class="card-body">
+        <form id="bo-loc-sach" method="get" asp-action="Index" class="row g-2 align-items-end">
+            <input type="hidden" name="pageSize" value="@Model.PageSize" />
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label small fw-semibold">Tìm kiếm (sách, tác giả, NXB)</label>
+                <input name="search" value="@ViewBag.Search" class="form-control" placeholder="Nhập từ khóa" />
+            </div>
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label small fw-semibold">Thể loại</label>
+                <select name="maTheLoai" class="form-select" asp-items="(IEnumerable<SelectListItem>)ViewBag.TheLoaiOptions">
+                    <option value="">Tất cả</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label small fw-semibold">Tác giả</label>
+                <select name="tacGia" class="form-select">
+                    <option value="">Tất cả</option>
+                    @foreach (var tacGia in (IEnumerable<string>)ViewBag.TacGiaOptions)
+                    {
+                        <option value="@tacGia" selected="@(ViewBag.TacGia as string == tacGia)">@tacGia</option>
+                    }
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label small fw-semibold">Trạng thái sách</label>
+                <select name="trangThai" class="form-select" asp-items="statuses"><option value="">Tất cả</option></select>
+            </div>
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label small fw-semibold">Năm xuất bản</label>
+                <div class="d-flex gap-2">
+                    <input type="number" name="namTu" value="@ViewBag.NamTu" class="form-control" placeholder="Từ" min="1900" max="2100" />
+                    <input type="number" name="namDen" value="@ViewBag.NamDen" class="form-control" placeholder="Đến" min="1900" max="2100" />
+                </div>
+            </div>
+            <div class="col-lg-1 col-md-6 d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Lọc</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Xóa bộ lọc</a>
+            </div>
+        </form>
     </div>
-    <div class="col-lg-2 col-md-6">
-        <label class="form-label small fw-semibold">Thể loại</label>
-        <select name="maTheLoai" class="form-select" asp-items="(IEnumerable<SelectListItem>)ViewBag.TheLoaiOptions">
-            <option value="">Tất cả</option>
-        </select>
-    </div>
-    <div class="col-lg-2 col-md-6">
-        <label class="form-label small fw-semibold">Tác giả</label>
-        <select name="tacGia" class="form-select">
-            <option value="">Tất cả</option>
-            @foreach (var tacGia in (IEnumerable<string>)ViewBag.TacGiaOptions)
-            {
-                <option value="@tacGia" selected="@(ViewBag.TacGia as string == tacGia)">@tacGia</option>
-            }
-        </select>
-    </div>
-    <div class="col-lg-2 col-md-6">
-        <label class="form-label small fw-semibold">Trạng thái sách</label>
-        <select name="trangThai" class="form-select" asp-items="statuses"><option value="">Tất cả</option></select>
-    </div>
-    <div class="col-lg-2 col-md-6">
-        <label class="form-label small fw-semibold">Năm xuất bản</label>
-        <div class="d-flex gap-2">
-            <input type="number" name="namTu" value="@ViewBag.NamTu" class="form-control" placeholder="Từ" min="1900" max="2100" />
-            <input type="number" name="namDen" value="@ViewBag.NamDen" class="form-control" placeholder="Đến" min="1900" max="2100" />
-        </div>
-    </div>
-    <div class="col-lg-1 col-md-6 d-grid gap-2">
-        <button type="submit" class="btn btn-primary">Lọc</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Xóa bộ lọc</a>
-    </div>
-</form>
+</div>
 
 @* Vùng kết quả được thay bằng partial _BangSach khi lọc/tìm kiếm/phân trang qua AJAX *@
 <div id="vung-ket-qua-sach">

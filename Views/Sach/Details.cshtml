@@ -38,22 +38,7 @@
             </dl>
         </div>
     </div>
-    @if (isStaff)
-    {
-        <div class="app-form-footer app-detail-actions">
-            <a asp-action="Edit" asp-route-id="@Model.MaSach" class="btn app-btn-soft">Sửa</a>
-            @if (Model.TrangThai is TrangThaiSach.DangPhucVu or TrangThaiSach.TamNgung)
-            {
-                <form asp-action="ToggleTrangThai" asp-route-id="@Model.MaSach" method="post" class="d-inline"
-                      onsubmit="return confirm('Đổi trạng thái phục vụ của sách này?');">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="btn app-btn-soft">@(Model.TrangThai == TrangThaiSach.DangPhucVu ? "Tạm ngưng" : "Mở lại")</button>
-                </form>
-            }
-            <a asp-action="Delete" asp-route-id="@Model.MaSach" class="btn btn-outline-danger">Xóa</a>
-        </div>
-    }
-    else
+    @if (!isStaff)
     {
         <div class="borrow-panel surface-card">
         @if (Model.TrangThai == TrangThaiSach.DangPhucVu)

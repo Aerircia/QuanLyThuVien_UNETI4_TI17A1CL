@@ -9,15 +9,6 @@
 <div class="app-form-card">
     <div class="app-form-header">
         <h1>Xóa sách</h1>
-        <a asp-action="Details" asp-route-id="@Model.MaSach" class="btn app-btn-soft">← Quay lại</a>
-    </div>
-    <div class="alert alert-warning">
-        Bạn có chắc muốn xóa sách <strong>@Model.TenSach</strong> (@Model.TacGia) không?
-        <ul class="mb-0 mt-2">
-            <li>Sách chưa từng mượn sẽ bị <strong>xóa thật</strong>.</li>
-            <li>Sách đã có lịch sử mượn sẽ được chuyển sang <strong>Ngừng phục vụ</strong>, dữ liệu được giữ lại.</li>
-            <li>Sách còn phiếu mượn đang hiệu lực sẽ <strong>không thể xóa</strong>.</li>
-        </ul>
     </div>
     <div class="app-form-footer">
         <a asp-action="Details" asp-route-id="@Model.MaSach" class="btn app-btn-soft">Hủy</a>
@@ -26,7 +17,7 @@
             <button type="button" class="btn btn-danger"
                     data-confirm-form="#formXoaSach"
                     data-confirm-title="Xác nhận xóa sách"
-                    data-confirm-message="Bạn có chắc chắn muốn xóa sách này? Thao tác có thể không thể hoàn tác."
+                    data-confirm-message="Bạn có chắc chắn muốn xóa sách '@Model.TenSach'? Sách chưa từng mượn sẽ bị xóa thật; sách đã có lịch sử mượn sẽ chuyển sang Ngừng phục vụ."
                     data-confirm-ok="Xóa sách"
                     data-confirm-class="btn-danger">Xóa</button>
         </form>

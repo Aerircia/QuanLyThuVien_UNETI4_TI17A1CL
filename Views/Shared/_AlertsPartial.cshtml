@@ -1,5 +1,37 @@
 @* Họ và tên: Vũ Tiến Thành *@
 @* Mã sinh viên: 23103100257 *@
 @* Nội dung thực hiện: Partial hiển thị thông báo TempData dùng chung (ThongBao = thành công, Loi = lỗi) *@
-@if (TempData["ThongBao"] is string thongBao) { <div class="alert alert-success">@thongBao</div> }
-@if (TempData["Loi"] is string loi) { <div class="alert alert-danger">@loi</div> }
+@if (TempData["ThongBao"] is string thongBao)
+{
+    <div class="modal fade resultModal" tabindex="-1" aria-hidden="true" data-result-type="success">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5">Thành công</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">@thongBao</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+@if (TempData["Loi"] is string loi)
+{
+    <div class="modal fade resultModal" tabindex="-1" aria-hidden="true" data-result-type="danger">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5 text-danger">Thông báo lỗi</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">@loi</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

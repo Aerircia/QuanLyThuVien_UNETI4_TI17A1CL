@@ -34,8 +34,27 @@ public sealed class AnhBiaService : IAnhBiaService
 
         Directory.CreateDirectory(thuMucBia);
         var tenFile = $"{Guid.NewGuid():N}{duoi}";
-        await using var stream = File.Create(Path.Combine(thuMucBia, tenFile));
-        await file.CopyToAsync(stream, ct);
+        var duongDanDay = Path.Combine(thuMucBia, tenFile);
+        try
+        {
+            await using (var stream = File.Create(duongDanDay))
+            {
+                await file.CopyToAsync(stream, ct);
+            }
+        }
+        catch
+        {
+            // Copy hỏng (vd. client ngắt kết nối) -> dọn file rỗng, không để rác trên đĩa
+            try
+            {
+                File.Delete(duongDanDay);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // Không che giấu lỗi upload/cancel ban đầu nếu file không thể xóa ngay.
+            }
+            throw;
+        }
 
         return ServiceResult<string>.Ok($"/uploads/bia/{tenFile}");
     }
@@ -56,9 +75,9 @@ public sealed class AnhBiaService : IAnhBiaService
             if (File.Exists(fullPath))
                 File.Delete(fullPath);
         }
-        catch (IOException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            // Xóa ảnh cũ là thao tác phụ; bỏ qua nếu file đang bị khóa.
+            // Xóa ảnh cũ là thao tác phụ; bỏ qua nếu file đang bị khóa hoặc không truy cập được.
         }
     }
 }

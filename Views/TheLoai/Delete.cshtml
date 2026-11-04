@@ -9,11 +9,6 @@
 <div class="app-form-card">
     <div class="app-form-header">
         <h1>Xóa thể loại</h1>
-        <a asp-action="Details" asp-route-id="@Model.MaTheLoai" class="btn app-btn-soft">← Quay lại</a>
-    </div>
-    <div class="alert alert-warning">
-        Bạn có chắc muốn xóa thể loại <strong>@Model.TenTheLoai</strong> không?
-        Thể loại đang có sách sẽ không thể xóa — hãy chuyển thể loại sang <em>Ngừng hoạt động</em> thay vì xóa.
     </div>
     <div class="app-form-footer">
         <a asp-action="Details" asp-route-id="@Model.MaTheLoai" class="btn app-btn-soft">Hủy</a>
@@ -22,7 +17,7 @@
             <button type="button" class="btn btn-danger"
                     data-confirm-form="#formXoaTheLoai"
                     data-confirm-title="Xác nhận xóa thể loại"
-                    data-confirm-message="Bạn có chắc chắn muốn xóa thể loại này?"
+                    data-confirm-message="Bạn có chắc chắn muốn xóa thể loại '@Model.TenTheLoai'? Thể loại đang có sách sẽ không thể xóa."
                     data-confirm-ok="Xóa thể loại"
                     data-confirm-class="btn-danger">Xóa</button>
         </form>
