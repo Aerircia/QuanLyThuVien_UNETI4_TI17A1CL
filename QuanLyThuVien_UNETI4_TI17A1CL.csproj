@@ -1,10 +1,13 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>6ec73f05-5b5a-4843-a419-e660d4320f78</UserSecretsId>
+    <!-- Ảnh bìa do runtime ghi vào wwwroot/uploads: loại khỏi item graph để dotnet watch
+         không dò file upload mới (tránh crash HotReloadMSBuildWorkspace). StaticFiles vẫn serve bình thường. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);wwwroot\uploads\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,11 +27,5 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="Uploads\Book\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </None>
-  </ItemGroup>
 
 </Project>

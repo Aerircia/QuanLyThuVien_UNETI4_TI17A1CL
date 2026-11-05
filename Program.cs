@@ -30,13 +30,17 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-//Dẫn đường đến thư mục chứa ảnh bìa sách
-var bookCoverDirectory = Path.Combine(app.Environment.ContentRootPath, "Uploads", "Book");
-Directory.CreateDirectory(bookCoverDirectory);
+
+// Ảnh bìa upload lúc runtime không nằm trong static assets manifest (build-time),
+// nên MapStaticAssets không serve được -> serve thư mục uploads bằng StaticFiles middleware.
+var thuMucUploads = Path.Combine(
+    app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot"),
+    "uploads", "bia");
+Directory.CreateDirectory(thuMucUploads); // PhysicalFileProvider yêu cầu thư mục phải tồn tại
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(bookCoverDirectory),
-    RequestPath = "/book-covers"
+    FileProvider = new PhysicalFileProvider(thuMucUploads),
+    RequestPath = "/uploads/bia"
 });
 
 app.UseRouting();

@@ -1,13 +1,23 @@
 @* Họ và tên: Nguyễn Hữu Tuấn *@
 @* Mã sinh viên: 23103100136 *@
 @* Nội dung thực hiện: View đăng ký mượn sách (PhieuMuon/Register) *@
+
+@* Họ và tên: Vũ Tiến Thành*@
+@* Mã sinh viên: 23103100257*@
+@* Nội dung thực hiện: Bổ sung View đăng ký mượn sách (PhieuMuon/Register) với các thông tin chi tiết về sách và bạn đọc, kiểm tra điều kiện mượn, và form xác nhận đăng ký mượn. *@
+
 @model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.PhieuMuonRegisterViewModel
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
 @{
     ViewData["Title"] = "Đăng ký mượn sách - " + Model.TenSach;
 }
 
-<div class="container py-3">
+<div class="container py-3 borrow-register-page">
+    <div class="borrow-flow-steps" aria-label="Các bước đăng ký mượn">
+        <span class="active">1 - Chọn sách ✓</span>
+        <span class="active">2 - Xác nhận</span>
+        <span>3 - Hoàn tất</span>
+    </div>
     <div class="row justify-content-center">
         <div class="col-lg-9">
             <nav aria-label="breadcrumb" class="mb-3">
@@ -30,14 +40,23 @@
             <div class="row g-3">
                 <!-- Cột thông tin sách -->
                 <div class="col-md-5">
-                    <div class="app-card h-100">
-                        <div class="book-cover-mock mb-3 text-center">
-                            <small class="text-uppercase tracking-wider">@(Model.TheLoai ?? "SÁCH THƯ VIỆN")</small>
-                            <div>
-                                <h5 class="text-white">@Model.TenSach</h5>
-                                <small class="text-white-50">@Model.TacGia</small>
-                            </div>
-                            <small>UNETI Library</small>
+                    <div class="app-card h-100 borrow-register-book">
+                        <div class="borrow-register-cover">
+                            @if (!string.IsNullOrWhiteSpace(Model.ImgPath))
+                            {
+                                <img src="@Model.ImgPath" alt="Bìa sách @Model.TenSach" />
+                            }
+                            else
+                            {
+                                <div class="book-cover-mock text-center">
+                                    <small class="text-uppercase tracking-wider">@(Model.TheLoai ?? "SÁCH THƯ VIỆN")</small>
+                                    <div>
+                                        <h5 class="text-white">@Model.TenSach</h5>
+                                        <small class="text-white-50">@Model.TacGia</small>
+                                    </div>
+                                    <small>UNETI Library</small>
+                                </div>
+                            }
                         </div>
 
                         <h5 class="h6 fw-bold mb-2">@Model.TenSach</h5>
@@ -70,8 +89,9 @@
 
                         @if (!string.IsNullOrWhiteSpace(Model.MoTa))
                         {
-                            <div class="small text-muted border-top pt-2">
-                                <strong>Mô tả:</strong> @Model.MoTa
+                            <div class="borrow-register-description">
+                                <span class="fw-semibold d-block mb-1">Mô tả sách</span>
+                                <p class="text-muted mb-0">@Model.MoTa</p>
                             </div>
                         }
                     </div>
@@ -79,7 +99,7 @@
 
                 <!-- Cột thông tin bạn đọc & form xác nhận -->
                 <div class="col-md-7">
-                    <div class="app-card mb-3">
+                    <div class="app-card h-100">
                         <h6 class="fw-bold text-muted text-uppercase small mb-3">1. Thông tin bạn đọc mượn</h6>
                         <div class="p-3 bg-light rounded border mb-3">
                             <div class="row g-2 small">
@@ -91,7 +111,7 @@
                             </div>
                         </div>
 
-                        <h6 class="fw-bold text-muted text-uppercase small mb-3">2. Kiểm tra điều kiện mượn (EF Core / LINQ)</h6>
+                        <h6 class="fw-bold text-muted text-uppercase small mb-3">2. Kiểm tra điều kiện mượn</h6>
                         @if (!Model.DuDieuKienMuon)
                         {
                             <div class="alert alert-danger" role="alert">
@@ -117,7 +137,7 @@
                             Ngày đăng ký do hệ thống tự động xác định là ngày hôm nay. Ngày mượn và hạn trả sẽ do thủ thư ghi nhận khi bạn đến nhận sách. Phiếu mới tạo sẽ ở trạng thái <strong>Chờ duyệt</strong>.
                         </p>
 
-                        <form asp-action="Register" asp-route-id="@Model.MaSach" method="post">
+                        <form asp-action="Register" asp-route-id="@Model.MaSach" method="post" id="registerLoanForm">
                             <div class="mb-3">
                                 <label asp-for="GhiChu" class="form-label fw-semibold"></label>
                                 <textarea asp-for="GhiChu" class="form-control" rows="3" placeholder="Nhập ghi chú cho thủ thư nếu có..."></textarea>
@@ -126,7 +146,13 @@
 
                             <div class="d-flex justify-content-end gap-2 pt-2 border-top">
                                 <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Hủy bỏ</a>
-                                <button type="submit" class="btn btn-primary px-4" @(Model.DuDieuKienMuon ? "" : "disabled")>
+                                <button type="button" class="btn btn-primary px-4"
+                                        data-confirm-form="#registerLoanForm"
+                                        data-confirm-title="Xác nhận đăng ký mượn"
+                                        data-confirm-message="Bạn có chắc chắn muốn gửi đăng ký mượn sách này?"
+                                        data-confirm-ok="Xác nhận đăng ký"
+                                        data-confirm-class="btn-primary"
+                                        @(Model.DuDieuKienMuon ? "" : "disabled")>
                                     Xác nhận đăng ký mượn
                                 </button>
                             </div>

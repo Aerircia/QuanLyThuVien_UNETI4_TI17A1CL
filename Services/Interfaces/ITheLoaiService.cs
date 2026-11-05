@@ -55,4 +55,6 @@ public interface ITheLoaiService
     Task<ServiceResult> UpdateAsync(UpdateTheLoaiInput input, CancellationToken ct = default);
 
     Task<ServiceResult> DeleteAsync(int maTheLoai, CancellationToken ct = default);
+
+    Task<ServiceResult> SetTrangThaiAsync(int maTheLoai, TrangThaiTheLoai trangThai, CancellationToken ct = default);
 }
