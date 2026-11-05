@@ -4,7 +4,7 @@
 ## Get latest from `dotnet new gitignore`
 
 #upload files
-#wwwroot/uploads/bia/
+wwwroot/uploads/bia/
 
 # dotenv files
 .env
