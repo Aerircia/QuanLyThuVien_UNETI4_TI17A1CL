@@ -1,0 +1,89 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100257 *@
+@* Nội dung thực hiện: Partial bảng + phân trang sách, dùng cho render thường và AJAX; bảng/nút/badge theo BanDoc/Index, giữ kiểu xếp chồng trên mobile (rtb) *@
+
+@model QuanLyThuVien_UNETI4_TI17A1CL.Services.Common.PagedResult<QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.SachListItem>
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@using QuanLyThuVien_UNETI4_TI17A1CL.ViewModels
+@{
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+    string BadgeClass(TrangThaiSach trangThai) => trangThai switch
+    {
+        TrangThaiSach.DangPhucVu => "badge-soft-success",
+        TrangThaiSach.TamNgung => "badge-soft-warning",
+        _ => "badge-soft-secondary"
+    };
+}
+<div class="table-responsive admin-table-card rtb">
+    <table class="table table-striped align-middle mb-0">
+        <thead>
+            <tr>
+                <th>Bìa</th>
+                <th>Tên sách</th>
+                <th>Tác giả</th>
+                <th>Thể loại</th>
+                <th>Nhà xuất bản</th>
+                <th>Năm</th>
+                <th class="text-end">Tổng</th>
+                <th class="text-end">Còn</th>
+                <th>Trạng thái</th>
+                <th class="text-end">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var book in Model.Items)
+        {
+            var off = book.TrangThai != TrangThaiSach.DangPhucVu;
+            var coTheDoi = book.TrangThai is TrangThaiSach.DangPhucVu or TrangThaiSach.TamNgung;
+            var tamNgung = book.TrangThai == TrangThaiSach.DangPhucVu;
+            <tr>
+                <td data-label="Bìa">
+                    <a asp-action="Details" asp-route-id="@book.MaSach"
+                       class="cv-thumb @(off ? "cv-thumb--off" : "") @(string.IsNullOrWhiteSpace(book.ImgPath) ? "cv-thumb--empty" : "")"
+                       title="Xem chi tiết @book.TenSach">
+                        @if (!string.IsNullOrWhiteSpace(book.ImgPath))
+                        { <img src="@book.ImgPath" alt="Bìa @book.TenSach" loading="lazy" /> }
+                        else
+                        { <span aria-hidden="true">📚</span> }
+                    </a>
+                </td>
+                <td data-label="Tên sách">
+                    <a asp-action="Details" asp-route-id="@book.MaSach" class="fw-bold text-decoration-none text-dark">@book.TenSach</a>
+                </td>
+                <td data-label="Tác giả">@book.TacGia</td>
+                <td data-label="Thể loại">@book.TenTheLoai</td>
+                <td data-label="NXB">@(book.NhaXuatBan ?? "—")</td>
+                <td data-label="Năm">@book.NamXuatBan</td>
+                <td data-label="Tổng" class="text-end">@book.SoLuongTong</td>
+                <td data-label="Còn" class="text-end fw-semibold @(book.SoLuongConLai <= 0 ? "text-danger" : "")">@Math.Max(0, book.SoLuongConLai)</td>
+                <td data-label="Trạng thái"><span class="badge @BadgeClass(book.TrangThai)">@book.TrangThai.GetDisplayName()</span></td>
+                <td data-label="" class="text-end text-nowrap khong-nhan">
+                    <a asp-action="Details" asp-route-id="@book.MaSach" class="btn btn-sm btn-outline-primary">Chi tiết</a>
+                    <a asp-action="Edit" asp-route-id="@book.MaSach" class="btn btn-sm btn-outline-secondary">Sửa</a>
+                    @if (coTheDoi)
+                    {
+                        <form asp-action="ToggleTrangThai" asp-route-id="@book.MaSach" method="post" class="d-inline" id="toggleSachForm-@book.MaSach">
+                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                            <button type="button" class="btn btn-sm @(tamNgung ? "btn-outline-danger" : "btn-outline-primary")"
+                                    data-confirm-form="#toggleSachForm-@book.MaSach"
+                                    data-confirm-title="@(tamNgung ? "Tạm ngưng sách" : "Mở lại sách")"
+                                    data-confirm-message="@(tamNgung ? $"Bạn có chắc muốn tạm ngưng sách '{book.TenSach}'?" : $"Bạn có chắc muốn mở lại sách '{book.TenSach}'?")"
+                                    data-confirm-ok="@(tamNgung ? "Tạm ngưng" : "Mở lại")"
+                                    data-confirm-class="@(tamNgung ? "btn-danger" : "btn-primary")">@(tamNgung ? "Tạm ngưng" : "Mở lại")</button>
+                        </form>
+                    }
+                    <a asp-action="Delete" asp-route-id="@book.MaSach" class="btn btn-sm btn-outline-danger">Xóa</a>
+                </td>
+            </tr>
+        }
+        @if (!Model.Items.Any())
+        {
+            <tr><td colspan="10" class="text-center text-muted py-4">Không có sách phù hợp.</td></tr>
+        }
+        </tbody>
+    </table>
+</div>
+<p class="text-muted small mt-2 mb-0">@Model.TotalCount đầu sách</p>
+<div class="phan-trang mt-3">
+    <partial name="_PagerPartial" model="(PagerViewModel)ViewBag.Pager" />
+</div>

@@ -1,6 +1,6 @@
 @* Họ và tên: Vũ Tiến Thành *@
 @* Mã sinh viên: 23103100257 *@
-@* Nội dung thực hiện: Xây dựng view cho việc liệt kê thể loại (Admin) *@
+@* Nội dung thực hiện: View liệt kê thể loại (Admin), cấu trúc đồng bộ với BanDoc/Index *@
 
 @model QuanLyThuVien_UNETI4_TI17A1CL.Services.Common.PagedResult<QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.TheLoaiListItem>
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
@@ -11,36 +11,83 @@
     foreach (var option in statuses)
         option.Selected = ViewBag.TrangThai is TrangThaiTheLoai selected && option.Value == ((int)selected).ToString();
 }
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0">Quản lý thể loại</h1>
-    <a asp-action="Create" class="btn btn-primary">Thêm thể loại</a>
+
+<div class="container-fluid py-2">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h4 mb-0">Quản lý thể loại</h1>
+            <p class="text-muted small mb-0">Phân loại sách và khu vực lưu trữ trên giá.</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary">+ Thêm thể loại</a>
+    </div>
+
+    <partial name="_AlertsPartial" />
+
+    <!-- Bộ lọc tìm kiếm -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form id="bo-loc-the-loai" method="get" asp-action="Index" class="row g-2 align-items-center">
+                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                <div class="col-md-5">
+                    <input name="search" value="@ViewBag.Search" class="form-control" placeholder="Tìm theo tên, mô tả hoặc khu vực lưu trữ..." />
+                </div>
+                <div class="col-md-4">
+                    <select name="trangThai" class="form-select" asp-items="statuses"><option value="">Tất cả trạng thái</option></select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">Lọc</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary flex-fill">Xóa lọc</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* Vùng kết quả được thay bằng partial _BangTheLoai khi lọc/tìm kiếm/phân trang qua AJAX *@
+    <div id="vung-ket-qua-the-loai">
+        <partial name="_BangTheLoai" model="Model" />
+    </div>
 </div>
-@if (TempData["ThongBao"] is string notice) { <div class="alert alert-success">@notice</div> }
-@if (TempData["Loi"] is string error) { <div class="alert alert-danger">@error</div> }
-<form method="get" asp-action="Index" class="row g-2 mb-3">
-    <input type="hidden" name="pageSize" value="@Model.PageSize" />
-    <div class="col-md-6"><input name="search" value="@ViewBag.Search" class="form-control" placeholder="Tên, mô tả hoặc khu vực lưu trữ" /></div>
-    <div class="col-md-4"><select name="trangThai" class="form-select" asp-items="statuses"><option value="">Mọi trạng thái</option></select></div>
-    <div class="col-md-2 d-grid"><button type="submit" class="btn btn-outline-primary">Lọc</button></div>
-</form>
-<div class="table-responsive">
-    <table class="table table-hover align-middle">
-        <thead><tr><th>Tên thể loại</th><th>Khu vực</th><th>Số sách</th><th>Trạng thái</th><th></th></tr></thead>
-        <tbody>
-        @foreach (var category in Model.Items)
-        {
-            <tr>
-                <td>@category.TenTheLoai</td><td>@category.KhuVucLuuTru</td><td>@category.SoLuongSach</td>
-                <td>@category.TrangThai.GetDisplayName()</td>
-                <td class="text-end text-nowrap">
-                    <a asp-action="Details" asp-route-id="@category.MaTheLoai" class="btn btn-sm btn-outline-secondary">Chi tiết</a>
-                    <a asp-action="Edit" asp-route-id="@category.MaTheLoai" class="btn btn-sm btn-outline-primary">Sửa</a>
-                    <a asp-action="Delete" asp-route-id="@category.MaTheLoai" class="btn btn-sm btn-outline-danger">Xóa</a>
-                </td>
-            </tr>
+
+@section Scripts {
+<script>
+    // Lọc/tìm kiếm/phân trang bằng AJAX: server trả về partial _BangTheLoai (header X-Requested-With).
+    (function () {
+        var vung = document.getElementById('vung-ket-qua-the-loai');
+        var form = document.getElementById('bo-loc-the-loai');
+        if (!vung || !form) return;
+
+        function nap(url, push) {
+            vung.style.opacity = '0.55';
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.text(); })
+                .then(function (html) {
+                    vung.innerHTML = html;
+                    vung.style.opacity = '1';
+                    if (push) history.pushState(null, '', url);
+                })
+                .catch(function () { vung.style.opacity = '1'; });
         }
-        @if (!Model.Items.Any()) { <tr><td colspan="5" class="text-center text-muted py-4">Không tìm thấy thể loại phù hợp.</td></tr> }
-        </tbody>
-    </table>
-</div>
-<partial name="_PagerPartial" model="(PagerViewModel)ViewBag.Pager" />
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            nap(form.getAttribute('action') + '?' + new URLSearchParams(new FormData(form)).toString(), true);
+        });
+
+        form.addEventListener('click', function (e) {
+            var a = e.target.closest('a[href]');
+            if (!a) return;
+            e.preventDefault();
+            nap(a.getAttribute('href'), true);
+        });
+
+        vung.addEventListener('click', function (e) {
+            var a = e.target.closest('a[href]');
+            if (!a || !a.closest('.phan-trang')) return;
+            e.preventDefault();
+            nap(a.getAttribute('href'), true);
+        });
+
+        window.addEventListener('popstate', function () { nap(location.href, false); });
+    })();
+</script>
+}

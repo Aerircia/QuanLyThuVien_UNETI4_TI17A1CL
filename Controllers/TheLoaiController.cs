@@ -37,10 +37,14 @@ public class TheLoaiController : Controller
         var routeValues = new Dictionary<string, string>();
         if (search is not null) routeValues["search"] = search;
         if (trangThai.HasValue) routeValues["trangThai"] = trangThai.Value.ToString();
+        ViewBag.Pager = PagerViewModel.From(result, "TheLoai", nameof(Index), routeValues);
+
+        // Lọc/tìm kiếm/phân trang qua AJAX: chỉ trả về partial bảng + phân trang.
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView("_BangTheLoai", result);
 
         ViewBag.Search = search;
         ViewBag.TrangThai = trangThai;
-        ViewBag.Pager = PagerViewModel.From(result, "TheLoai", nameof(Index), routeValues);
         return View(result);
     }
 
@@ -109,7 +113,7 @@ public class TheLoaiController : Controller
         }
 
         TempData["ThongBao"] = "Đã cập nhật thể loại.";
-        return RedirectToAction(nameof(Details), new { id });
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpGet]
@@ -135,6 +139,32 @@ public class TheLoaiController : Controller
         TempData["Loi"] = result.FirstError;
         return RedirectToAction(nameof(Details), new { id });
     }
+
+    [HttpPost]
+    [AuthorizeRole(VaiTro.Admin)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleTrangThai(int id, string? returnUrl)
+    {
+        var detail = await _service.GetAsync(id, HttpContext.RequestAborted);
+        if (detail is null)
+            return NotFound();
+
+        var trangThaiMoi = detail.TrangThai == TrangThaiTheLoai.HoatDong
+            ? TrangThaiTheLoai.NgungHoatDong
+            : TrangThaiTheLoai.HoatDong;
+        var result = await _service.SetTrangThaiAsync(id, trangThaiMoi, HttpContext.RequestAborted);
+        if (result.Succeeded)
+            TempData["ThongBao"] = trangThaiMoi == TrangThaiTheLoai.HoatDong
+                ? "Đã kích hoạt lại thể loại."
+                : "Đã ngưng hoạt động thể loại.";
+        else
+            TempData["Loi"] = result.FirstError;
+
+        return LocalRedirectOrIndex(returnUrl);
+    }
+
+    private IActionResult LocalRedirectOrIndex(string? returnUrl) =>
+        Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : RedirectToAction(nameof(Index));
 
     private static TheLoai ToModel(TheLoaiDetail detail) => new()
     {

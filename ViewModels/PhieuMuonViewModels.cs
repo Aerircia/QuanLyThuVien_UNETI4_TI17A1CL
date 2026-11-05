@@ -20,6 +20,7 @@ public sealed class PhieuMuonRegisterViewModel
     public string? ViTriKe { get; set; }
     public string? NhaXuatBan { get; set; }
     public string? MoTa { get; set; }
+    public string? ImgPath { get; set; }
     public int SoLuongTong { get; set; }
     public int SoLuongConLai { get; set; }
 
@@ -41,6 +42,14 @@ public sealed class PhieuMuonRegisterViewModel
     // Kết quả kiểm tra điều kiện mượn sách bằng EF Core/LINQ
     public bool DuDieuKienMuon { get; set; }
     public List<string> LyDoKhongDuDieuKien { get; set; } = new();
+}
+
+public sealed class PhieuMuonRegisterSuccessViewModel
+{
+    public int MaPhieuMuon { get; set; }
+    public string TenSach { get; set; } = string.Empty;
+    public string? ViTriKe { get; set; }
+    public string TrangThai { get; set; } = "Chờ duyệt";
 }
 
 public sealed class PhieuMuonItemViewModel

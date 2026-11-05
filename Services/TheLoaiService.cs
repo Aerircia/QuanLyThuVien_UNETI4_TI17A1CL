@@ -77,8 +77,8 @@ public sealed class TheLoaiService : ITheLoaiService
     {
         var ten = (input.TenTheLoai ?? string.Empty).Trim();
         var result = Validate(ten, input.MoTa, input.KhuVucLuuTru, input.TrangThai);
-        if (await _db.TheLoais.AnyAsync(t => t.TenTheLoai == ten, ct))
-            result.AddError(nameof(input.TenTheLoai), "Tên thể loại đã tồn tại.");
+        if (await TenDaTonTaiAsync(ten, null, ct))
+            result.AddError(nameof(input.TenTheLoai), TenTrungLoi);
 
         if (!result.Succeeded)
             return result;
@@ -98,10 +98,10 @@ public sealed class TheLoaiService : ITheLoaiService
         }
         catch (DbUpdateException)
         {
-            if (await _db.TheLoais.AnyAsync(t => t.TenTheLoai == ten, ct))
+            if (await TenDaTonTaiAsync(ten, null, ct))
             {
                 _db.Entry(theLoai).State = EntityState.Detached;
-                return ServiceResult<int>.Error(nameof(input.TenTheLoai), "Tên thể loại đã tồn tại.");
+                return ServiceResult<int>.Error(nameof(input.TenTheLoai), TenTrungLoi);
             }
             throw;
         }
@@ -117,8 +117,8 @@ public sealed class TheLoaiService : ITheLoaiService
 
         var ten = (input.TenTheLoai ?? string.Empty).Trim();
         var result = Validate(ten, input.MoTa, input.KhuVucLuuTru, input.TrangThai);
-        if (await _db.TheLoais.AnyAsync(t => t.MaTheLoai != input.MaTheLoai && t.TenTheLoai == ten, ct))
-            result.AddError(nameof(input.TenTheLoai), "Tên thể loại đã tồn tại.");
+        if (await TenDaTonTaiAsync(ten, input.MaTheLoai, ct))
+            result.AddError(nameof(input.TenTheLoai), TenTrungLoi);
 
         if (!result.Succeeded)
             return result;
@@ -134,10 +134,10 @@ public sealed class TheLoaiService : ITheLoaiService
         }
         catch (DbUpdateException)
         {
-            if (await _db.TheLoais.AnyAsync(t => t.MaTheLoai != input.MaTheLoai && t.TenTheLoai == ten, ct))
+            if (await TenDaTonTaiAsync(ten, input.MaTheLoai, ct))
             {
                 _db.Entry(theLoai).State = EntityState.Detached;
-                return ServiceResult.Fail(nameof(input.TenTheLoai), "Tên thể loại đã tồn tại.");
+                return ServiceResult.Fail(nameof(input.TenTheLoai), TenTrungLoi);
             }
             throw;
         }
@@ -166,6 +166,31 @@ public sealed class TheLoaiService : ITheLoaiService
             throw;
         }
         return ServiceResult.Success();
+    }
+
+    public async Task<ServiceResult> SetTrangThaiAsync(int maTheLoai, TrangThaiTheLoai trangThai, CancellationToken ct = default)
+    {
+        var theLoai = await _db.TheLoais.FirstOrDefaultAsync(t => t.MaTheLoai == maTheLoai, ct);
+        if (theLoai is null)
+            return ServiceResult.Fail("Không tìm thấy thể loại.");
+
+        if (!Enum.IsDefined(trangThai))
+            return ServiceResult.Fail(nameof(TheLoai.TrangThai), "Trạng thái thể loại không hợp lệ.");
+        if (theLoai.TrangThai == trangThai)
+            return ServiceResult.Fail("Thể loại đang ở trạng thái này.");
+
+        theLoai.TrangThai = trangThai;
+        await _db.SaveChangesAsync(ct);
+        return ServiceResult.Success();
+    }
+
+    private const string TenTrungLoi = "Tên thể loại đã tồn tại.";
+
+    private Task<bool> TenDaTonTaiAsync(string ten, int? excludeMaTheLoai, CancellationToken ct)
+    {
+        var exclude = excludeMaTheLoai;
+        return _db.TheLoais.AnyAsync(t =>
+            t.TenTheLoai == ten && (exclude == null || t.MaTheLoai != exclude), ct);
     }
 
     private static ServiceResult<int> Validate(

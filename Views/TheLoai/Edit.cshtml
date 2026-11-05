@@ -1,21 +1,68 @@
 @* Họ và tên: Vũ Tiến Thành *@
 @* Mã sinh viên: 23103100257 *@
-@* Nội dung thực hiện: Xây dựng view cho việc sửa thể loại (Admin) *@
+@* Nội dung thực hiện: Form sửa thể loại, cấu trúc đồng bộ với BanDoc/Edit, xác nhận lưu bằng _ConfirmModal *@
 
 @model QuanLyThuVien_UNETI4_TI17A1CL.Models.TheLoai
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
 @{
     ViewData["Title"] = "Sửa thể loại";
 }
-<h1 class="h4 mb-3">Sửa thể loại #@Model.MaTheLoai</h1>
-<form asp-action="Edit" asp-route-id="@Model.MaTheLoai" method="post">
-    <input asp-for="MaTheLoai" type="hidden" />
-    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
-    <div class="mb-3"><label asp-for="TenTheLoai" class="form-label"></label><input asp-for="TenTheLoai" class="form-control" /><span asp-validation-for="TenTheLoai" class="text-danger"></span></div>
-    <div class="mb-3"><label asp-for="KhuVucLuuTru" class="form-label"></label><input asp-for="KhuVucLuuTru" class="form-control" /><span asp-validation-for="KhuVucLuuTru" class="text-danger"></span></div>
-    <div class="mb-3"><label asp-for="MoTa" class="form-label"></label><textarea asp-for="MoTa" class="form-control" rows="4"></textarea><span asp-validation-for="MoTa" class="text-danger"></span></div>
-    <div class="mb-3"><label asp-for="TrangThai" class="form-label"></label><select asp-for="TrangThai" asp-items="Html.GetEnumSelectList<TrangThaiTheLoai>()" class="form-select"></select></div>
-    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
-    <a asp-action="Details" asp-route-id="@Model.MaTheLoai" class="btn btn-outline-secondary">Hủy</a>
-</form>
-@section Scripts { <partial name="_ValidationScriptsPartial" /> }
+
+<div class="container py-3">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h1 class="h4 mb-0">Chỉnh sửa thể loại: @Model.TenTheLoai</h1>
+                    <span class="small text-muted font-monospace">Mã thể loại TL@(Model.MaTheLoai.ToString("D2"))</span>
+                </div>
+                <a asp-action="Index" class="btn btn-outline-secondary">← Quay lại danh sách</a>
+            </div>
+
+            <div class="app-card">
+                <form id="formSuaTheLoai" asp-action="Edit" asp-route-id="@Model.MaTheLoai" method="post">
+                    <input asp-for="MaTheLoai" type="hidden" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <h5 class="h6 text-muted mb-3 text-uppercase">1. Thông tin thể loại</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="TenTheLoai" class="form-label fw-semibold">Tên thể loại</label> <span class="text-danger">*</span>
+                            <input asp-for="TenTheLoai" class="form-control" />
+                            <span asp-validation-for="TenTheLoai" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="KhuVucLuuTru" class="form-label fw-semibold">Khu vực lưu trữ (tối đa 100 ký tự)</label>
+                            <input asp-for="KhuVucLuuTru" class="form-control" placeholder="VD: Khu A" />
+                            <span asp-validation-for="KhuVucLuuTru" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="TrangThai" class="form-label fw-semibold">Trạng thái</label>
+                            <select asp-for="TrangThai" asp-items="Html.GetEnumSelectList<TrangThaiTheLoai>()" class="form-select"></select>
+                            <span asp-validation-for="TrangThai" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="MoTa" class="form-label fw-semibold">Mô tả</label>
+                            <textarea asp-for="MoTa" class="form-control" rows="4"></textarea>
+                            <span asp-validation-for="MoTa" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4 pt-2 border-top">
+                        <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+                        <button type="button" class="btn btn-primary px-4"
+                                data-confirm-form="#formSuaTheLoai"
+                                data-confirm-title="Xác nhận sửa thể loại"
+                                data-confirm-message="Bạn có chắc chắn muốn lưu các thay đổi của thể loại này?"
+                                data-confirm-ok="Lưu thay đổi"
+                                data-confirm-class="btn-primary">Lưu thay đổi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

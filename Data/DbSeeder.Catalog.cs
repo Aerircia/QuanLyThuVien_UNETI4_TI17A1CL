@@ -51,7 +51,7 @@ public static partial class DbSeeder
         for (var i = 0; i < SampleBooks.Length; i++)
         {
             var b = SampleBooks[i];
-            var imagePath = $"/book-covers/{Uri.EscapeDataString(b.ImageFile)}";
+            var imagePath = $"wwwroot/uploads/bia/{Uri.EscapeDataString(b.ImageFile)}";
 
             // Bổ sung ảnh cho dữ liệu cũ nếu chưa có, không ghi đè ảnh thủ thư đã cập nhật.
             if (existing.TryGetValue(b.Title, out var existingBook))

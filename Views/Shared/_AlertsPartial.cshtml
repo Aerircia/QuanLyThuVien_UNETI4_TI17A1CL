@@ -1,0 +1,17 @@
+@* Họ và tên: Vũ Tiến Thành *@
+@* Mã sinh viên: 23103100257 *@
+@* Nội dung thực hiện: Partial thông báo TempData dạng alert nội dòng, đồng bộ với view BanDoc (ThongBao = thành công, Loi = lỗi) *@
+@if (TempData["ThongBao"] is string thongBao)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <strong>Thành công!</strong> @thongBao
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+    </div>
+}
+@if (TempData["Loi"] is string loi)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Lỗi!</strong> @loi
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+    </div>
+}
