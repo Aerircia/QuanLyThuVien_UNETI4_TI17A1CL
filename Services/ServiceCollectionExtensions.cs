@@ -3,6 +3,7 @@ using QuanLyThuVien_UNETI4_TI17A1CL.Models;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Auth;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Email;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces;
+using QuanLyThuVien_UNETI4_TI17A1CL.Services.Payment;
 
 namespace QuanLyThuVien_UNETI4_TI17A1CL.Services;
 
@@ -90,6 +91,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IBanDocService, BanDocService>();
         services.AddScoped<IPhieuMuonService, PhieuMuonService>();
         services.AddScoped<ICauHinhThuVienService, CauHinhThuVienService>();
+        services.AddOptions<PayOsSettings>().Bind(configuration.GetSection(PayOsSettings.SectionName)); // không ValidateOnStart
+        services.AddSingleton<IPaymentGateway, PayOsGateway>();
+        services.AddScoped<IThanhToanService, ThanhToanService>();
 
         services.AddScoped<IGiaHanMuonService, GiaHanMuonService>();
         services.AddScoped<ITraSachService, TraSachService>();

@@ -16,12 +16,14 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Controllers;
 public class PhieuMuonController : Controller
 {
     private readonly IPhieuMuonService _phieuMuonService;
+    private readonly IThanhToanService _thanhToanService;
     private readonly ICurrentUserService _current;
     private readonly AppDbContext _db;
 
-    public PhieuMuonController(IPhieuMuonService phieuMuonService, ICurrentUserService current, AppDbContext db)
+    public PhieuMuonController(IPhieuMuonService phieuMuonService, IThanhToanService thanhToanService, ICurrentUserService current, AppDbContext db)
     {
         _phieuMuonService = phieuMuonService;
+        _thanhToanService = thanhToanService;
         _current = current;
         _db = db;
     }
@@ -290,6 +292,9 @@ public class PhieuMuonController : Controller
         }
 
         var model = await _phieuMuonService.GetMyFinesAsync(banDoc.MaBanDoc, HttpContext.RequestAborted);
+        ViewBag.PendingFineIds = await _thanhToanService.GetPendingFineIdsAsync(banDoc.MaBanDoc, HttpContext.RequestAborted);
+        ViewBag.PayEnabled = _thanhToanService.IsOnlineEnabled;
+
         return View(model);
     }
 
