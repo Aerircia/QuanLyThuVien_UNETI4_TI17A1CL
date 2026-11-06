@@ -1,23 +1,57 @@
 @* Họ và tên: Vũ Tiến Thành *@
 @* Mã sinh viên: 23103100257 *@
-@* Nội dung thực hiện: Chi tiết thể loại theo mẫu library_demo - 1 card, header + Quay lại, footer phải *@
+@* Nội dung thực hiện: Chi tiết thể loại, cấu trúc đồng bộ với BanDoc/Details; nút quản trị chỉ hiện với Admin *@
 
 @model QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.TheLoaiDetail
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@inject QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.ICurrentUserService Current
 @{
-    ViewData["Title"] = "Chi tiết thể loại";
+    ViewData["Title"] = "Chi tiết thể loại - " + Model.TenTheLoai;
+    var isAdmin = Current.IsInRole(VaiTro.Admin);
+    var hoatDong = Model.TrangThai == TrangThaiTheLoai.HoatDong;
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
 }
-<div class="app-form-card">
-    <div class="app-form-header">
-        <h1>Chi tiết thể loại</h1>
-        <span class="badge @(Model.TrangThai == TrangThaiTheLoai.HoatDong ? "badge-soft-success" : "badge-soft-secondary")">@Model.TrangThai.GetDisplayName()</span>
-        <a asp-action="Index" class="btn app-btn-soft ms-auto">← Quay lại</a>
+
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="h4 mb-0">Thể loại: @Model.TenTheLoai</h1>
+            <span class="text-muted small font-monospace">Mã thể loại TL@(Model.MaTheLoai.ToString("D2"))</span>
+        </div>
+        @if (isAdmin)
+        {
+            <div class="d-flex gap-2">
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm">← Danh sách</a>
+                <a asp-action="Edit" asp-route-id="@Model.MaTheLoai" class="btn btn-outline-primary btn-sm">Sửa thể loại</a>
+                <form asp-action="ToggleTrangThai" asp-route-id="@Model.MaTheLoai" method="post" class="d-inline" id="toggleTheLoaiDetails">
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <button type="button" class="btn btn-sm @(hoatDong ? "btn-outline-danger" : "btn-outline-primary")"
+                            data-confirm-form="#toggleTheLoaiDetails"
+                            data-confirm-title="@(hoatDong ? "Ngưng hoạt động thể loại" : "Kích hoạt lại thể loại")"
+                            data-confirm-message="Bạn có chắc muốn @(hoatDong ? "ngưng hoạt động" : "kích hoạt lại") thể loại này?"
+                            data-confirm-ok="@(hoatDong ? "Ngưng hoạt động" : "Kích hoạt")"
+                            data-confirm-class="@(hoatDong ? "btn-danger" : "btn-primary")">@(hoatDong ? "Ngưng hoạt động" : "Kích hoạt")</button>
+                </form>
+                <a asp-action="Delete" asp-route-id="@Model.MaTheLoai" class="btn btn-outline-danger btn-sm">Xóa</a>
+            </div>
+        }
     </div>
+
     <partial name="_AlertsPartial" />
-    <dl class="row mb-0">
-        <dt class="col-sm-5">Mã thể loại</dt><dd class="col-sm-7">TL@(Model.MaTheLoai.ToString("D2"))</dd>
-        <dt class="col-sm-5">Tên thể loại</dt><dd class="col-sm-7">@Model.TenTheLoai</dd>
-        <dt class="col-sm-5">Khu vực lưu trữ</dt><dd class="col-sm-7">@(Model.KhuVucLuuTru ?? "—")</dd>
-        <dt class="col-sm-5">Mô tả</dt><dd class="col-sm-7">@(Model.MoTa ?? "—")</dd>
-    </dl>
+
+    <div class="card">
+        <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+            <span>Thông tin chi tiết</span>
+            <span class="badge @(hoatDong ? "badge-soft-success" : "badge-soft-secondary")">@Model.TrangThai.GetDisplayName()</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-sm-6"><small class="text-muted d-block">Mã thể loại</small><span class="font-monospace">TL@(Model.MaTheLoai.ToString("D2"))</span></div>
+                <div class="col-sm-6"><small class="text-muted d-block">Tên thể loại</small><span class="fw-semibold">@Model.TenTheLoai</span></div>
+                <div class="col-sm-6"><small class="text-muted d-block">Khu vực lưu trữ</small><span>@(Model.KhuVucLuuTru ?? "—")</span></div>
+                <div class="col-sm-6"><small class="text-muted d-block">Trạng thái</small><span>@Model.TrangThai.GetDisplayName()</span></div>
+                <div class="col-12"><small class="text-muted d-block">Mô tả</small><span>@(string.IsNullOrWhiteSpace(Model.MoTa) ? "—" : Model.MoTa)</span></div>
+            </div>
+        </div>
+    </div>
 </div>

@@ -1,6 +1,6 @@
 @* Họ và tên: Vũ Tiến Thành *@
 @* Mã sinh viên: 23103100257 *@
-@* Nội dung thực hiện: Form sửa sách theo mẫu library_demo - 1 card, bìa hiện tại hoặc mock tự động *@
+@* Nội dung thực hiện: Form sửa sách, cấu trúc đồng bộ với BanDoc/Edit, giữ ảnh bìa và xem phóng to *@
 
 @model QuanLyThuVien_UNETI4_TI17A1CL.Models.Sach
 @using Microsoft.AspNetCore.Mvc.Rendering
@@ -9,102 +9,119 @@
     ViewData["Title"] = "Sửa sách";
     bool coAnh = !string.IsNullOrWhiteSpace(Model.ImgPath);
 }
-<div class="app-form-card">
-    <div class="app-form-header">
-        <h1>Sửa sách</h1>
-        <a asp-action="Index" class="btn app-btn-soft">← Quay lại</a>
+
+<div class="container py-3">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h1 class="h4 mb-0">Chỉnh sửa sách: @Model.TenSach</h1>
+                    <span class="small text-muted font-monospace">Mã sách #@Model.MaSach</span>
+                </div>
+                <a asp-action="Index" class="btn btn-outline-secondary">← Quay lại danh sách</a>
+            </div>
+
+            <div class="app-card">
+                <form id="formSuaSach" asp-action="Edit" asp-route-id="@Model.MaSach" method="post" enctype="multipart/form-data" data-ajax-crud="form">
+                    <input asp-for="MaSach" type="hidden" />
+                    <input asp-for="ImgPath" type="hidden" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <h5 class="h6 text-muted mb-3 text-uppercase">1. Ảnh bìa</h5>
+                    <div class="mb-4">
+                        <div class="app-form-cover">
+                            <div class="app-cover-frame">
+                                <button type="button" id="phongToBiaBtn" class="app-cover-preview @(coAnh ? "" : "d-none")" title="Xem ảnh bìa">
+                                    <img id="anhBiaPreview" src="@(coAnh ? Model.ImgPath : "")" alt="Xem trước bìa sách" class="@(coAnh ? "" : "d-none")" />
+                                </button>
+                                <div id="anhBiaMock" class="book-cover-mock @(coAnh ? "d-none" : "")">
+                                    <h5 id="biaMockTitle">@Model.TenSach</h5>
+                                    <small>UNETI Library</small>
+                                </div>
+                            </div>
+                            <div class="app-form-cover-actions">
+                                <strong>Ảnh bìa sách</strong>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <label class="btn btn-outline-primary btn-sm mb-0">
+                                        Tải ảnh lên
+                                        <input type="file" id="anhBiaInput" name="anhBia" accept="image/*" class="d-none" />
+                                    </label>
+                                    <button type="button" id="xoaAnhBtn" class="btn btn-outline-secondary btn-sm">Dùng bìa mặc định</button>
+                                </div>
+                                <small class="app-form-hint">JPG/PNG/WEBP, tối đa 2MB. Chọn "Dùng bìa mặc định" để bỏ ảnh hiện tại.</small>
+                            </div>
+                        </div>
+                        <input type="hidden" id="xoaAnhHidden" name="xoaAnh" value="false" />
+                    </div>
+
+                    <h5 class="h6 text-muted mb-3 text-uppercase">2. Thông tin sách</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="TenSach" class="form-label fw-semibold"></label> <span class="text-danger">*</span>
+                            <input asp-for="TenSach" class="form-control" />
+                            <span asp-validation-for="TenSach" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="TacGia" class="form-label fw-semibold"></label> <span class="text-danger">*</span>
+                            <input asp-for="TacGia" class="form-control" />
+                            <span asp-validation-for="TacGia" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="MaTheLoai" class="form-label fw-semibold">Thể loại</label> <span class="text-danger">*</span>
+                            <select asp-for="MaTheLoai" asp-items="(IEnumerable<SelectListItem>)ViewBag.TheLoaiOptions" class="form-select">
+                            </select>
+                            <span asp-validation-for="MaTheLoai" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="NhaXuatBan" class="form-label fw-semibold">Nhà xuất bản</label>
+                            <input asp-for="NhaXuatBan" class="form-control" />
+                            <span asp-validation-for="NhaXuatBan" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="NamXuatBan" class="form-label fw-semibold">Năm xuất bản (1900 – nay)</label>
+                            <input asp-for="NamXuatBan" class="form-control" type="number" min="1900" max="@DateTime.Today.Year" />
+                            <span asp-validation-for="NamXuatBan" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="SoLuongTong" class="form-label fw-semibold">Số lượng tổng (&gt; 0)</label>
+                            <input asp-for="SoLuongTong" class="form-control" type="number" min="1" />
+                            <span asp-validation-for="SoLuongTong" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="GiaBia" class="form-label fw-semibold">Giá bìa (₫, ≥ 0)</label>
+                            <input asp-for="GiaBia" class="form-control" type="number" min="0" step="any" />
+                            <span asp-validation-for="GiaBia" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ViTriKe" class="form-label fw-semibold">Vị trí kệ</label>
+                            <input asp-for="ViTriKe" class="form-control" placeholder="VD: K2 - Giá 3" />
+                            <span asp-validation-for="ViTriKe" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="TrangThai" class="form-label fw-semibold">Trạng thái</label>
+                            <select asp-for="TrangThai" asp-items="Html.GetEnumSelectList<TrangThaiSach>()" class="form-select"></select>
+                            <span asp-validation-for="TrangThai" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="MoTa" class="form-label fw-semibold">Mô tả</label>
+                            <textarea asp-for="MoTa" class="form-control" rows="4"></textarea>
+                            <span asp-validation-for="MoTa" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4 pt-2 border-top">
+                        <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+                        <button type="button" class="btn btn-primary px-4"
+                                data-confirm-form="#formSuaSach"
+                                data-confirm-title="Xác nhận sửa sách"
+                                data-confirm-message="Bạn có chắc chắn muốn lưu các thay đổi của sách này?"
+                                data-confirm-ok="Lưu thay đổi"
+                                data-confirm-class="btn-primary">Lưu thay đổi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-
-    <form id="formSuaSach" asp-action="Edit" asp-route-id="@Model.MaSach" method="post" enctype="multipart/form-data" data-ajax-crud="form">
-        <input asp-for="MaSach" type="hidden" />
-        <input asp-for="ImgPath" type="hidden" />
-        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-
-        <div class="app-form-cover">
-            <div class="app-cover-frame">
-                <button type="button" id="phongToBiaBtn" class="app-cover-preview @(coAnh ? "" : "d-none")"
-                        title="Xem ảnh bìa">
-                    <img id="anhBiaPreview" src="@(coAnh ? Model.ImgPath : "")" alt="Xem trước bìa sách"
-                         class="@(coAnh ? "" : "d-none")" />
-                </button>
-                <div id="anhBiaMock" class="book-cover-mock @(coAnh ? "d-none" : "")">
-                    <h5 id="biaMockTitle">@Model.TenSach</h5>
-                    <small>UNETI Library</small>
-                </div>
-            </div>
-            <div class="app-form-cover-actions">
-                <strong>Ảnh bìa sách</strong>
-                <div class="d-flex gap-2 flex-wrap">
-                    <label class="btn app-btn-soft mb-0">
-                        Tải ảnh lên
-                        <input type="file" id="anhBiaInput" name="anhBia" accept="image/*" class="d-none" />
-                    </label>
-                    <button type="button" id="xoaAnhBtn" class="btn app-btn-soft">Dùng bìa mặc định</button>
-                </div>
-                <small class="app-form-hint">JPG/PNG/WEBP, tối đa 2MB. Chọn "Dùng bìa mặc định" để bỏ ảnh hiện tại.</small>
-            </div>
-        </div>
-        <input type="hidden" id="xoaAnhHidden" name="xoaAnh" value="false" />
-
-        <div class="mb-3">
-            <label asp-for="TenSach" class="form-label">Tên sách <span class="text-danger">*</span></label>
-            <input asp-for="TenSach" class="form-control" />
-            <span asp-validation-for="TenSach" class="text-danger small"></span>
-        </div>
-        <div class="mb-3">
-            <label asp-for="TacGia" class="form-label">Tác giả <span class="text-danger">*</span></label>
-            <input asp-for="TacGia" class="form-control" />
-            <span asp-validation-for="TacGia" class="text-danger small"></span>
-        </div>
-        <div class="mb-3">
-            <label asp-for="MaTheLoai" class="form-label">Thể loại</label>
-            <select asp-for="MaTheLoai" asp-items="(IEnumerable<SelectListItem>)ViewBag.TheLoaiOptions" class="form-select"></select>
-            <span asp-validation-for="MaTheLoai" class="text-danger small"></span>
-        </div>
-        <div class="mb-3">
-            <label asp-for="NhaXuatBan" class="form-label">Nhà xuất bản</label>
-            <input asp-for="NhaXuatBan" class="form-control" />
-            <span asp-validation-for="NhaXuatBan" class="text-danger small"></span>
-        </div>
-        <div class="mb-3">
-            <label asp-for="NamXuatBan" class="form-label">Năm xuất bản (1900 – nay)</label>
-            <input asp-for="NamXuatBan" class="form-control" type="number" min="1900" max="@DateTime.Today.Year" />
-            <span asp-validation-for="NamXuatBan" class="text-danger small"></span>
-        </div>
-        <div class="mb-3">
-            <label asp-for="SoLuongTong" class="form-label">Số lượng tổng (&gt; 0)</label>
-            <input asp-for="SoLuongTong" class="form-control" type="number" min="1" />
-            <span asp-validation-for="SoLuongTong" class="text-danger small"></span>
-        </div>
-        <div class="mb-3">
-            <label asp-for="GiaBia" class="form-label">Giá bìa (₫, ≥ 0)</label>
-            <input asp-for="GiaBia" class="form-control" type="number" min="0" step="any" />
-            <span asp-validation-for="GiaBia" class="text-danger small"></span>
-        </div>
-        <div class="mb-3">
-            <label asp-for="ViTriKe" class="form-label">Vị trí kệ</label>
-            <input asp-for="ViTriKe" class="form-control" placeholder="VD: K2 - Giá 3" />
-            <span asp-validation-for="ViTriKe" class="text-danger small"></span>
-        </div>
-        <div class="mb-3">
-            <label asp-for="TrangThai" class="form-label">Trạng thái</label>
-            <select asp-for="TrangThai" asp-items="Html.GetEnumSelectList<TrangThaiSach>()" class="form-select"></select>
-        </div>
-        <div class="mb-3">
-            <label asp-for="MoTa" class="form-label">Mô tả</label>
-            <textarea asp-for="MoTa" class="form-control" rows="4"></textarea>
-            <span asp-validation-for="MoTa" class="text-danger small"></span>
-        </div>
-
-        <div class="app-form-footer">
-            <a asp-action="Index" class="btn app-btn-soft">Hủy</a>
-            <button type="button" class="btn btn-primary"
-                    data-confirm-form="#formSuaSach"
-                    data-confirm-title="Xác nhận sửa sách"
-                    data-confirm-message="Bạn có chắc chắn muốn lưu các thay đổi của sách này?"
-                    data-confirm-ok="Lưu thay đổi">Lưu</button>
-        </div>
-    </form>
 </div>
 
 <div id="xemBiaSachModal" class="app-cover-modal" role="dialog" aria-modal="true" aria-label="Xem ảnh bìa">
@@ -161,38 +178,7 @@
                 hienMock();
             });
 
-            if (zoomBtn && zoomImage && zoomModal) zoomBtn.addEventListener('click', function () {
-                if (coAnh && preview.src) zoomImage.src = preview.src;
-                datLaiPhongTo();
-                zoomModal.classList.add('is-open');
-            });
-
-            function datLaiPhongTo() {
-                zoomScale = 1;
-                zoomImage.style.transform = 'scale(1)';
-                zoomLabel.textContent = '100%';
-            }
-
-            document.querySelectorAll('[data-cover-zoom]').forEach(function (button) {
-                button.addEventListener('click', function () {
-                    zoomScale = Math.min(3, Math.max(0.5, zoomScale + Number(button.dataset.coverZoom)));
-                    zoomImage.style.transform = 'scale(' + zoomScale + ')';
-                    zoomLabel.textContent = Math.round(zoomScale * 100) + '%';
-                });
-            });
-
-            function dongPhongTo() { zoomModal.classList.remove('is-open'); }
-            if (closeZoomBtn) closeZoomBtn.addEventListener('click', dongPhongTo);
-            if (resetZoomBtn) resetZoomBtn.addEventListener('click', datLaiPhongTo);
-            if (zoomModal) zoomModal.addEventListener('click', function (e) {
-                if (e.target === zoomModal) dongPhongTo();
-            });
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape' && zoomModal.classList.contains('is-open')) dongPhongTo();
-            });
-
-
-            // Bìa mặc định hiển thị tên sách đang gõ, giống cơ chế tự tạo bìa của mẫu thiết kế.
+            // Bìa mặc định hiển thị tên sách đang gõ.
             if (tenInput && mockTitle) tenInput.addEventListener('input', function () {
                 if (!coAnh) mockTitle.textContent = tenInput.value.trim() || 'Tên sách';
             });
@@ -205,6 +191,31 @@
                 coAnh = false;
                 if (tenInput && mockTitle) mockTitle.textContent = (tenInput.value || 'Tên sách').trim() || 'Tên sách';
             }
+
+            if (zoomBtn && zoomImage && zoomModal) zoomBtn.addEventListener('click', function () {
+                if (coAnh && preview.src) zoomImage.src = preview.src;
+                datLaiPhongTo();
+                zoomModal.classList.add('is-open');
+            });
+            function datLaiPhongTo() {
+                zoomScale = 1;
+                zoomImage.style.transform = 'scale(1)';
+                zoomLabel.textContent = '100%';
+            }
+            document.querySelectorAll('[data-cover-zoom]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    zoomScale = Math.min(3, Math.max(0.5, zoomScale + Number(button.dataset.coverZoom)));
+                    zoomImage.style.transform = 'scale(' + zoomScale + ')';
+                    zoomLabel.textContent = Math.round(zoomScale * 100) + '%';
+                });
+            });
+            function dongPhongTo() { zoomModal.classList.remove('is-open'); }
+            if (closeZoomBtn) closeZoomBtn.addEventListener('click', dongPhongTo);
+            if (resetZoomBtn) resetZoomBtn.addEventListener('click', datLaiPhongTo);
+            if (zoomModal) zoomModal.addEventListener('click', function (e) { if (e.target === zoomModal) dongPhongTo(); });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && zoomModal.classList.contains('is-open')) dongPhongTo();
+            });
         })();
     </script>
 }

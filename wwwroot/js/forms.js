@@ -4,16 +4,38 @@
 (() => {
   'use strict';
 
-  document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.resultModal').forEach((modalEl) => {
-      if (window.bootstrap) bootstrap.Modal.getOrCreateInstance(modalEl).show();
-    });
-  });
+  // Chặn nạp hai lần (layout và view cùng nhúng file này sẽ làm nút hiện/ẩn bật rồi tắt ngay).
+  if (window.__formsJsLoaded) return;
+  window.__formsJsLoaded = true;
 
   let pendingForm = null;
 
   const getConfirmEl = () => document.getElementById('confirmModal');
   const getConfirmOk = () => document.getElementById('confirmOk');
+
+  // ---------- Hiện/ẩn mật khẩu ----------
+  // Đổi icon bằng JS để không phụ thuộc vào CSS :last-child.
+  const setPwState = (btn, show) => {
+    btn.classList.toggle('is-visible', show);
+    btn.setAttribute('aria-pressed', String(show));
+    btn.setAttribute('aria-label', show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+    const icons = btn.querySelectorAll('.ico');
+    if (icons.length >= 2) {
+      icons[0].style.display = show ? 'none' : 'block';
+      icons[1].style.display = show ? 'block' : 'none';
+    }
+  };
+
+  // Đồng bộ icon theo type thực tế của ô nhập (lúc tải trang và khi quay lại bằng nút Back).
+  const syncPasswordButtons = () => {
+    document.querySelectorAll('[data-toggle-password]').forEach((btn) => {
+      const input = document.querySelector(btn.dataset.togglePassword);
+      if (input) setPwState(btn, input.type !== 'password');
+    });
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', syncPasswordButtons);
+  else syncPasswordButtons();
 
   document.addEventListener('click', (e) => {
     // 1. Nút Hiện/Ẩn mật khẩu: data-toggle-password="#idInput"
@@ -22,10 +44,12 @@
       const input = document.querySelector(toggle.dataset.togglePassword);
       if (!input) return;
       const show = input.type === 'password';
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
       input.type = show ? 'text' : 'password';
-      toggle.classList.toggle('is-visible', show);
-      toggle.setAttribute('aria-pressed', String(show));
-      toggle.setAttribute('aria-label', show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+      setPwState(toggle, show);
+      input.focus({ preventScroll: true });
+      try { input.setSelectionRange(start, end); } catch { /* một số trình duyệt không hỗ trợ */ }
       return;
     }
 
@@ -91,8 +115,9 @@
     }, 0);
   });
 
-  // 5. Quay lại bằng nút Back (bfcache): bật lại các nút đã bị khóa.
+  // 5. Quay lại bằng nút Back (bfcache): bật lại các nút đã bị khóa, đồng bộ lại icon mật khẩu.
   window.addEventListener('pageshow', (e) => {
+    syncPasswordButtons();
     if (!e.persisted) return;
     document.querySelectorAll('button[type="submit"]').forEach((b) => { b.disabled = false; });
     const confirmOk = getConfirmOk();
@@ -137,7 +162,7 @@
       window.location.reload();
       return;
     } finally {
-      submitButtons.forEach((button) => { button.disabdled = false; });
+      submitButtons.forEach((button) => { button.disabled = false; });
     }
   });
 })();

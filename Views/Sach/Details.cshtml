@@ -1,70 +1,130 @@
 @* Họ và tên: Vũ Tiến Thành *@
 @* Mã sinh viên: 23103100257 *@
-@* Nội dung thực hiện: Xây dựng view cho việc xem chi tiết sách (Admin, Thủ thư) *@
+@* Nội dung thực hiện: Chi tiết sách (Admin, Thủ thư và khách xem), cấu trúc đồng bộ với BanDoc/Details *@
 
 @model QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.SachDetail
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
-@{
-    ViewData["Title"] = "Chi tiết sách";
-}
 @inject QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.ICurrentUserService Current
 @{
     var isStaff = Current.IsAuthenticated && Current.IsInRole(VaiTro.Admin, VaiTro.ThuThu);
-}
-<div class="app-form-card app-detail-card @(isStaff ? "app-detail-card--staff" : "")">
-    <div class="app-form-header">
-        <h1>@(isStaff ? "Chi tiết sách" : Model.TenSach)</h1>
-        <a asp-action="@(isStaff ? "Index" : "Catalog")" class="btn app-btn-soft ms-auto">← Quay lại</a>
-    </div>
-    <partial name="_AlertsPartial" />
-    <div class="app-detail-content">
-        <div class="app-detail-cover">
-            @if (!string.IsNullOrWhiteSpace(Model.ImgPath))
-            { <img src="@Model.ImgPath" alt="Bìa sách @Model.TenSach" /> }
-            else { <strong>@Model.TenSach</strong><span>@Model.TacGia</span> }
-        </div>
-        <div class="app-detail-info">
-            <dl class="app-detail-grid">
-                <dt>Tên sách</dt><dd>@Model.TenSach</dd>
-                <dt>Tác giả</dt><dd>@Model.TacGia</dd>
-                <dt>Thể loại</dt><dd>@Model.TenTheLoai</dd>
-                <dt>Nhà xuất bản</dt><dd>@(Model.NhaXuatBan ?? "—")</dd>
-                <dt>Năm xuất bản</dt><dd>@Model.NamXuatBan</dd>
-                <dt>Tổng số lượng</dt><dd>@Model.SoLuongTong</dd>
-                <dt>Còn lại</dt><dd>@Math.Max(0, Model.SoLuongConLai)</dd>
-                <dt>Giá bìa</dt><dd>@Model.GiaBia.ToString("N0") ₫</dd>
-                <dt>Vị trí kệ</dt><dd>@(Model.ViTriKe ?? "—")</dd>
-                <dt class="app-detail-span">Mô tả</dt><dd class="app-detail-span">@(string.IsNullOrWhiteSpace(Model.MoTa) ? "—" : Model.MoTa)</dd>
-            </dl>
-        </div>
-    </div>
-    @if (!isStaff)
+    ViewData["Title"] = isStaff ? "Chi tiết sách" : Model.TenSach;
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var tamNgung = Model.TrangThai == TrangThaiSach.DangPhucVu;
+    var coTheDoi = Model.TrangThai is TrangThaiSach.DangPhucVu or TrangThaiSach.TamNgung;
+    var conLai = Math.Max(0, Model.SoLuongConLai);
+    var badge = Model.TrangThai switch
     {
-        <div class="borrow-panel surface-card">
-        @if (Model.TrangThai == TrangThaiSach.DangPhucVu)
-        {
-            @if (Current.IsInRole(VaiTro.BanDoc))
+        TrangThaiSach.DangPhucVu => "badge-soft-success",
+        TrangThaiSach.TamNgung => "badge-soft-warning",
+        _ => "badge-soft-secondary"
+    };
+}
+
+<div class="@(isStaff ? "container-fluid" : "container") py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="h4 mb-0">@(isStaff ? $"Sách: {Model.TenSach}" : Model.TenSach)</h1>
+            @if (isStaff)
             {
-                <a asp-controller="PhieuMuon" asp-action="Register" asp-route-id="@Model.MaSach"
-                   class="btn btn-primary w-100 btn-lg">
-                    Đăng ký mượn sách
-                </a>
+                <span class="text-muted small font-monospace">Mã sách #@Model.MaSach · Kệ: @(Model.ViTriKe ?? "Chưa xếp")</span>
             }
-            else if (!Current.IsAuthenticated)
-            {
-                <a asp-controller="TaiKhoan" asp-action="Login" asp-route-returnUrl="@Context.Request.Path"
-                   class="btn btn-primary w-100 btn-lg">Đăng nhập để đăng ký mượn</a>
-            }
-            else
-            {
-                <div class="alert alert-light border mb-0">Tài khoản nhân viên sử dụng chức năng quản lý phiếu mượn.</div>
-            }
-        }
-        else
-        {
-            <button class="btn btn-secondary w-100" disabled>Hiện không thể mượn</button>
-        }
-        <small class="text-muted d-block mt-3">Thời hạn mượn mặc định: 14 ngày. Thủ thư sẽ xác nhận trước khi giao sách.</small>
         </div>
-    }
+        <div class="d-flex gap-2">
+            <a asp-action="@(isStaff ? "Index" : "Catalog")" class="btn btn-outline-secondary btn-sm">← @(isStaff ? "Danh sách" : "Kho sách")</a>
+            @if (isStaff)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.MaSach" class="btn btn-outline-primary btn-sm">Sửa sách</a>
+                @if (coTheDoi)
+                {
+                    <form asp-action="ToggleTrangThai" asp-route-id="@Model.MaSach" method="post" class="d-inline" id="toggleSachDetails">
+                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                        <button type="button" class="btn btn-sm @(tamNgung ? "btn-outline-danger" : "btn-outline-primary")"
+                                data-confirm-form="#toggleSachDetails"
+                                data-confirm-title="@(tamNgung ? "Tạm ngưng sách" : "Mở lại sách")"
+                                data-confirm-message="Bạn có chắc muốn @(tamNgung ? "tạm ngưng" : "mở lại") sách này?"
+                                data-confirm-ok="@(tamNgung ? "Tạm ngưng" : "Mở lại")"
+                                data-confirm-class="@(tamNgung ? "btn-danger" : "btn-primary")">@(tamNgung ? "Tạm ngưng" : "Mở lại")</button>
+                    </form>
+                }
+                <a asp-action="Delete" asp-route-id="@Model.MaSach" class="btn btn-outline-danger btn-sm">Xóa</a>
+            }
+        </div>
+    </div>
+
+    <partial name="_AlertsPartial" />
+
+    <div class="row g-3">
+        <!-- Cột bìa + tóm tắt -->
+        <div class="col-lg-4">
+            <div class="app-detail-cover mb-3">
+                @if (!string.IsNullOrWhiteSpace(Model.ImgPath))
+                { <img src="@Model.ImgPath" alt="Bìa sách @Model.TenSach" /> }
+                else { <strong>@Model.TenSach</strong><span>@Model.TacGia</span> }
+            </div>
+
+            <div class="card">
+                <div class="card-header fw-bold">Tóm tắt tình trạng</div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush small">
+                        <div class="list-group-item d-flex justify-content-between px-0">
+                            <span>Trạng thái:</span>
+                            <span class="badge @badge">@Model.TrangThai.GetDisplayName()</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between px-0">
+                            <span>Tổng số lượng:</span>
+                            <span class="fw-bold">@Model.SoLuongTong</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between px-0">
+                            <span>Còn lại:</span>
+                            <span class="fw-bold @(conLai == 0 ? "text-danger" : "text-primary")">@conLai</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between px-0">
+                            <span>Giá bìa:</span>
+                            <span class="fw-bold">@Model.GiaBia.ToString("N0") ₫</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột thông tin chi tiết -->
+        <div class="col-lg-8">
+            <div class="card h-100">
+                <div class="card-header fw-bold">Thông tin chi tiết</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-sm-6"><small class="text-muted d-block">Tên sách</small><span class="fw-semibold">@Model.TenSach</span></div>
+                        <div class="col-sm-6"><small class="text-muted d-block">Tác giả</small><span>@Model.TacGia</span></div>
+                        <div class="col-sm-6"><small class="text-muted d-block">Thể loại</small><span>@Model.TenTheLoai</span></div>
+                        <div class="col-sm-6"><small class="text-muted d-block">Nhà xuất bản</small><span>@(Model.NhaXuatBan ?? "—")</span></div>
+                        <div class="col-sm-6"><small class="text-muted d-block">Năm xuất bản</small><span>@Model.NamXuatBan</span></div>
+                        <div class="col-sm-6"><small class="text-muted d-block">Vị trí kệ</small><span>@(Model.ViTriKe ?? "—")</span></div>
+                        <div class="col-12"><small class="text-muted d-block">Mô tả</small><span>@(string.IsNullOrWhiteSpace(Model.MoTa) ? "—" : Model.MoTa)</span></div>
+                    </div>
+
+                    @if (!isStaff)
+                    {
+                        <div class="borrow-panel mt-4 pt-3 border-top">
+                            @if (Model.TrangThai == TrangThaiSach.DangPhucVu)
+                            {
+                                @if (Current.IsInRole(VaiTro.BanDoc))
+                                {
+                                    <a asp-controller="PhieuMuon" asp-action="Register" asp-route-id="@Model.MaSach" class="btn btn-primary w-100 btn-lg">Đăng ký mượn sách</a>
+                                }
+                                else if (!Current.IsAuthenticated)
+                                {
+                                    <a asp-controller="TaiKhoan" asp-action="Login" asp-route-returnUrl="@Context.Request.Path" class="btn btn-primary w-100 btn-lg">Đăng nhập để đăng ký mượn</a>
+                                }
+                            }
+                            else
+                            {
+                                <button class="btn btn-secondary w-100" disabled>Hiện không thể mượn</button>
+                            }
+                            <small class="text-muted d-block mt-3">Thời hạn mượn mặc định: 14 ngày. Thủ thư sẽ xác nhận trước khi giao sách.</small>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

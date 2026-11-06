@@ -1,6 +1,6 @@
 @* Họ và tên: Vũ Tiến Thành *@
 @* Mã sinh viên: 23103100257 *@
-@* Nội dung thực hiện: Xây dựng view cho việc liệt kê thể loại (Admin) *@
+@* Nội dung thực hiện: View liệt kê thể loại (Admin), cấu trúc đồng bộ với BanDoc/Index *@
 
 @model QuanLyThuVien_UNETI4_TI17A1CL.Services.Common.PagedResult<QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.TheLoaiListItem>
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
@@ -11,30 +11,46 @@
     foreach (var option in statuses)
         option.Selected = ViewBag.TrangThai is TrangThaiTheLoai selected && option.Value == ((int)selected).ToString();
 }
-<div class="page-heading">
-    <div><span class="text-uppercase text-muted small fw-bold">Danh mục thư viện</span><h1>Quản lý thể loại</h1><p>Phân loại sách và khu vực lưu trữ trên giá.</p></div>
-    <a asp-action="Create" class="btn btn-primary">+ Thêm thể loại</a>
-</div>
-<partial name="_AlertsPartial" />
-<div class="card mb-3">
-    <div class="card-body">
-        <form id="bo-loc-the-loai" method="get" asp-action="Index" class="row g-2 align-items-center">
-            <input type="hidden" name="pageSize" value="@Model.PageSize" />
-            <div class="col-md-6"><input name="search" value="@ViewBag.Search" class="form-control" placeholder="Tên, mô tả hoặc khu vực lưu trữ" /></div>
-            <div class="col-md-4"><select name="trangThai" class="form-select" asp-items="statuses"><option value="">Mọi trạng thái</option></select></div>
-            <div class="col-md-2 d-grid"><button type="submit" class="btn btn-outline-primary">Lọc</button></div>
-        </form>
+
+<div class="container-fluid py-2">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h4 mb-0">Quản lý thể loại</h1>
+            <p class="text-muted small mb-0">Phân loại sách và khu vực lưu trữ trên giá.</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary">+ Thêm thể loại</a>
     </div>
-</div>
-@* Vùng kết quả được thay bằng partial _BangTheLoai khi lọc/tìm kiếm/phân trang qua AJAX *@
-<div id="vung-ket-qua-the-loai">
-    <partial name="_BangTheLoai" model="Model" />
+
+    <partial name="_AlertsPartial" />
+
+    <!-- Bộ lọc tìm kiếm -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form id="bo-loc-the-loai" method="get" asp-action="Index" class="row g-2 align-items-center">
+                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                <div class="col-md-5">
+                    <input name="search" value="@ViewBag.Search" class="form-control" placeholder="Tìm theo tên, mô tả hoặc khu vực lưu trữ..." />
+                </div>
+                <div class="col-md-4">
+                    <select name="trangThai" class="form-select" asp-items="statuses"><option value="">Tất cả trạng thái</option></select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">Lọc</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary flex-fill">Xóa lọc</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* Vùng kết quả được thay bằng partial _BangTheLoai khi lọc/tìm kiếm/phân trang qua AJAX *@
+    <div id="vung-ket-qua-the-loai">
+        <partial name="_BangTheLoai" model="Model" />
+    </div>
 </div>
 
 @section Scripts {
 <script>
-    // Lọc/tìm kiếm/phân trang bằng AJAX: server trả về partial _BangTheLoai (header X-Requested-With),
-    // JS chỉ thay vùng kết quả; URL vẫn cập nhật để chia sẻ và nút Back hoạt động.
+    // Lọc/tìm kiếm/phân trang bằng AJAX: server trả về partial _BangTheLoai (header X-Requested-With).
     (function () {
         var vung = document.getElementById('vung-ket-qua-the-loai');
         var form = document.getElementById('bo-loc-the-loai');
@@ -54,8 +70,14 @@
 
         form.addEventListener('submit', function (e) {
             e.preventDefault();
-            var qs = new URLSearchParams(new FormData(form)).toString();
-            nap(form.getAttribute('action') + '?' + qs, true);
+            nap(form.getAttribute('action') + '?' + new URLSearchParams(new FormData(form)).toString(), true);
+        });
+
+        form.addEventListener('click', function (e) {
+            var a = e.target.closest('a[href]');
+            if (!a) return;
+            e.preventDefault();
+            nap(a.getAttribute('href'), true);
         });
 
         vung.addEventListener('click', function (e) {
@@ -65,7 +87,6 @@
             nap(a.getAttribute('href'), true);
         });
 
-        // Nút Back/Forward của trình duyệt vẫn hoạt động.
         window.addEventListener('popstate', function () { nap(location.href, false); });
     })();
 </script>
