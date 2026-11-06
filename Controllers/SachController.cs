@@ -77,17 +77,6 @@ public class SachController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Catalog(string? search, int page = 1)
-    {
-        search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
-        var result = await _sachService.GetListAsync(
-            new SachFilter(search, null, TrangThaiSach.DangPhucVu, page, 12),
-            HttpContext.RequestAborted);
-        ViewBag.Search = search;
-        return View(result);
-    }
-
-    [HttpGet]
     [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
     public async Task<IActionResult> Create()
     {
@@ -103,6 +92,8 @@ public class SachController : Controller
         if (!ModelState.IsValid)
         {
             ViewBag.TheLoaiOptions = await GetCategoryOptionsAsync(model.MaTheLoai);
+            if (IsAjaxRequest())
+                return PartialView(nameof(Create), model);
             return View(model);
         }
 
@@ -130,10 +121,14 @@ public class SachController : Controller
         {
             result.AddTo(ModelState);
             ViewBag.TheLoaiOptions = await GetCategoryOptionsAsync(model.MaTheLoai);
+            if (IsAjaxRequest())
+                return PartialView(nameof(Create), model);
             return View(model);
         }
 
         TempData["ThongBao"] = "Đã thêm sách.";
+        if (IsAjaxRequest())
+            return Json(new { success = true, redirectUrl = Url.Action(nameof(Index)), message = "Đã thêm sách." });
         return RedirectToAction(nameof(Index));
     }
 
@@ -163,6 +158,8 @@ public class SachController : Controller
         if (!ModelState.IsValid)
         {
             ViewBag.TheLoaiOptions = await GetCategoryOptionsAsync(model.MaTheLoai);
+            if (IsAjaxRequest())
+                return PartialView(nameof(Edit), model);
             return View(model);
         }
 
@@ -191,10 +188,14 @@ public class SachController : Controller
         {
             result.AddTo(ModelState);
             ViewBag.TheLoaiOptions = await GetCategoryOptionsAsync(model.MaTheLoai);
+            if (IsAjaxRequest())
+                return PartialView(nameof(Edit), model);
             return View(model);
         }
 
         TempData["ThongBao"] = "Đã cập nhật sách.";
+        if (IsAjaxRequest())
+            return Json(new { success = true, redirectUrl = Url.Action(nameof(Index)), message = "Đã cập nhật sách." });
         return RedirectToAction(nameof(Index));
     }
 
@@ -216,6 +217,15 @@ public class SachController : Controller
             TempData["Loi"] = result.FirstError;
         }
 
+        if (IsAjaxRequest())
+        {
+            return Json(new
+            {
+                success = result.Succeeded,
+                redirectUrl = result.Succeeded ? Url.Action(nameof(Index)) : Url.Action(nameof(Details), new { id }),
+                message = result.Succeeded ? TempData["ThongBao"]?.ToString() : result.FirstError
+            });
+        }
         return Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : RedirectToAction(nameof(Index));
     }
 
@@ -238,6 +248,8 @@ public class SachController : Controller
         if (!result.Succeeded)
         {
             TempData["Loi"] = result.FirstError;
+            if (IsAjaxRequest())
+                return Json(new { success = false, redirectUrl = Url.Action(nameof(Details), new { id }), message = result.FirstError });
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -251,8 +263,13 @@ public class SachController : Controller
         {
             TempData["ThongBao"] = "Sách đã có lịch sử mượn → chuyển Ngừng phục vụ, giữ dữ liệu.";
         }
+        if (IsAjaxRequest())
+            return Json(new { success = true, redirectUrl = Url.Action(nameof(Index)), message = TempData["ThongBao"]?.ToString() });
         return RedirectToAction(nameof(Index));
     }
+
+    private bool IsAjaxRequest() =>
+        string.Equals(Request.Headers.XRequestedWith, "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
 
     // Trả về đường dẫn ảnh mới (hoặc null khi xóa/không đổi); lỗi upload được nạp vào ModelState.
     private async Task<string?> XuLyAnhBiaAsync(IFormFile? anhBia, bool xoaAnh, string? imgPathCu)

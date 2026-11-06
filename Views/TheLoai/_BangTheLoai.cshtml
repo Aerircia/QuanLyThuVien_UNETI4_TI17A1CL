@@ -23,7 +23,7 @@
                 <td data-label="" class="text-end text-nowrap khong-nhan">
                     <a asp-action="Edit" asp-route-id="@category.MaTheLoai" class="btn btn-sm btn-outline-primary">Sửa</a>
                     <form asp-action="ToggleTrangThai" asp-route-id="@category.MaTheLoai" asp-route-returnUrl="@returnUrl" method="post"
-                          class="d-inline" id="toggleTheLoaiForm-@category.MaTheLoai">
+                          class="d-inline" id="toggleTheLoaiForm-@category.MaTheLoai" data-ajax-crud="form">
                         @Html.AntiForgeryToken()
                         <button type="button" class="btn btn-sm btn-outline-secondary"
                                 data-confirm-form="#toggleTheLoaiForm-@category.MaTheLoai"

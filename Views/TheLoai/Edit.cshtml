@@ -13,7 +13,7 @@
         <a asp-action="Index" class="btn app-btn-soft">← Quay lại</a>
     </div>
 
-    <form id="formSuaTheLoai" asp-action="Edit" asp-route-id="@Model.MaTheLoai" method="post">
+    <form id="formSuaTheLoai" asp-action="Edit" asp-route-id="@Model.MaTheLoai" method="post" data-ajax-crud="form">
         <input asp-for="MaTheLoai" type="hidden" />
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
         <div class="mb-3">

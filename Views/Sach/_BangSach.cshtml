@@ -45,7 +45,7 @@
                     @if (book.TrangThai is TrangThaiSach.DangPhucVu or TrangThaiSach.TamNgung)
                     {
                         <form asp-action="ToggleTrangThai" asp-route-id="@book.MaSach" asp-route-returnUrl="@returnUrl" method="post"
-                              class="d-inline" id="toggleSachForm-@book.MaSach">
+                              class="d-inline" id="toggleSachForm-@book.MaSach" data-ajax-crud="form">
                             @Html.AntiForgeryToken()
                             <button type="button" class="btn btn-sm btn-outline-secondary"
                                     data-confirm-form="#toggleSachForm-@book.MaSach"

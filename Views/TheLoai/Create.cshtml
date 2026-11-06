@@ -13,7 +13,7 @@
         <a asp-action="Index" class="btn app-btn-soft">← Quay lại</a>
     </div>
 
-    <form id="formLuuTheLoaiMoi" asp-action="Create" method="post">
+    <form id="formLuuTheLoaiMoi" asp-action="Create" method="post" data-ajax-crud="form">
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
         <div class="mb-3">
             <label asp-for="TenTheLoai" class="form-label">Tên thể loại <span class="text-danger">*</span></label>

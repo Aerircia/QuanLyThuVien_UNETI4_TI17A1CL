@@ -15,7 +15,7 @@
         <a asp-action="Index" class="btn app-btn-soft">← Quay lại</a>
     </div>
 
-    <form id="formSuaSach" asp-action="Edit" asp-route-id="@Model.MaSach" method="post" enctype="multipart/form-data">
+    <form id="formSuaSach" asp-action="Edit" asp-route-id="@Model.MaSach" method="post" enctype="multipart/form-data" data-ajax-crud="form">
         <input asp-for="MaSach" type="hidden" />
         <input asp-for="ImgPath" type="hidden" />
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>

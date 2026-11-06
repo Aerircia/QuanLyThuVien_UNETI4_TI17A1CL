@@ -12,7 +12,7 @@
     </div>
     <div class="app-form-footer">
         <a asp-action="Details" asp-route-id="@Model.MaTheLoai" class="btn app-btn-soft">Hủy</a>
-        <form id="formXoaTheLoai" asp-action="Delete" asp-route-id="@Model.MaTheLoai" method="post" class="d-inline">
+        <form id="formXoaTheLoai" asp-action="Delete" asp-route-id="@Model.MaTheLoai" method="post" class="d-inline" data-ajax-crud="form">
             @Html.AntiForgeryToken()
             <button type="button" class="btn btn-danger"
                     data-confirm-form="#formXoaTheLoai"

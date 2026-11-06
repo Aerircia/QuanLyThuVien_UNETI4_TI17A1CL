@@ -66,17 +66,25 @@ public class TheLoaiController : Controller
     public async Task<IActionResult> Create(TheLoai model)
     {
         if (!ModelState.IsValid)
+        {
+            if (IsAjaxRequest())
+                return PartialView(nameof(Create), model);
             return View(model);
+        }
 
         var result = await _service.CreateAsync(new CreateTheLoaiInput(
             model.TenTheLoai, model.MoTa, model.KhuVucLuuTru, model.TrangThai), HttpContext.RequestAborted);
         if (!result.Succeeded)
         {
             result.AddTo(ModelState);
+            if (IsAjaxRequest())
+                return PartialView(nameof(Create), model);
             return View(model);
         }
 
         TempData["ThongBao"] = "Đã thêm thể loại.";
+        if (IsAjaxRequest())
+            return Json(new { success = true, redirectUrl = Url.Action(nameof(Index)), message = "Đã thêm thể loại." });
         return RedirectToAction(nameof(Index));
     }
 
@@ -101,7 +109,11 @@ public class TheLoaiController : Controller
         model.MaTheLoai = id;
 
         if (!ModelState.IsValid)
+        {
+            if (IsAjaxRequest())
+                return PartialView(nameof(Edit), model);
             return View(model);
+        }
 
         var result = await _service.UpdateAsync(new UpdateTheLoaiInput(
             id, model.TenTheLoai, model.MoTa, model.KhuVucLuuTru, model.TrangThai),
@@ -109,10 +121,14 @@ public class TheLoaiController : Controller
         if (!result.Succeeded)
         {
             result.AddTo(ModelState);
+            if (IsAjaxRequest())
+                return PartialView(nameof(Edit), model);
             return View(model);
         }
 
         TempData["ThongBao"] = "Đã cập nhật thể loại.";
+        if (IsAjaxRequest())
+            return Json(new { success = true, redirectUrl = Url.Action(nameof(Index)), message = "Đã cập nhật thể loại." });
         return RedirectToAction(nameof(Index));
     }
 
@@ -133,10 +149,14 @@ public class TheLoaiController : Controller
         if (result.Succeeded)
         {
             TempData["ThongBao"] = "Đã xóa thể loại.";
+            if (IsAjaxRequest())
+                return Json(new { success = true, redirectUrl = Url.Action(nameof(Index)), message = "Đã xóa thể loại." });
             return RedirectToAction(nameof(Index));
         }
 
         TempData["Loi"] = result.FirstError;
+        if (IsAjaxRequest())
+            return Json(new { success = false, redirectUrl = Url.Action(nameof(Details), new { id }), message = result.FirstError });
         return RedirectToAction(nameof(Details), new { id });
     }
 
@@ -160,11 +180,21 @@ public class TheLoaiController : Controller
         else
             TempData["Loi"] = result.FirstError;
 
+        if (IsAjaxRequest())
+            return Json(new
+            {
+                success = result.Succeeded,
+                redirectUrl = Url.Action(nameof(Index)),
+                message = result.Succeeded ? TempData["ThongBao"]?.ToString() : result.FirstError
+            });
         return LocalRedirectOrIndex(returnUrl);
     }
 
     private IActionResult LocalRedirectOrIndex(string? returnUrl) =>
         Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : RedirectToAction(nameof(Index));
+
+    private bool IsAjaxRequest() =>
+        string.Equals(Request.Headers.XRequestedWith, "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
 
     private static TheLoai ToModel(TheLoaiDetail detail) => new()
     {
