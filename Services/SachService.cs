@@ -124,7 +124,7 @@ public sealed class SachService : ISachService
             MaTheLoai = input.MaTheLoai,
             TenSach = input.TenSach.Trim(),
             TacGia = input.TacGia.Trim(),
-            NhaXuatBan = Normalize(input.NhaXuatBan),
+            NhaXuatBan = Normalize(input.NhaXuatBan) ?? string.Empty,
             NamXuatBan = input.NamXuatBan,
             SoLuongTong = input.SoLuongTong,
             GiaBia = input.GiaBia,
@@ -166,7 +166,7 @@ public sealed class SachService : ISachService
         sach.MaTheLoai = input.MaTheLoai;
         sach.TenSach = input.TenSach.Trim();
         sach.TacGia = input.TacGia.Trim();
-        sach.NhaXuatBan = Normalize(input.NhaXuatBan);
+        sach.NhaXuatBan = Normalize(input.NhaXuatBan) ?? string.Empty;
         sach.NamXuatBan = input.NamXuatBan;
         sach.SoLuongTong = input.SoLuongTong;
         sach.GiaBia = input.GiaBia;
