@@ -35,10 +35,10 @@
                     <span class="badge @(hoatDong ? "badge-soft-success" : "badge-soft-secondary")">@category.TrangThai.GetDisplayName()</span>
                 </td>
                 <td data-label="" class="text-end text-nowrap khong-nhan">
-                    <a asp-action="Details" asp-route-id="@category.MaTheLoai" class="btn btn-sm btn-outline-primary">Chi tiết</a>
-                    <a asp-action="Edit" asp-route-id="@category.MaTheLoai" class="btn btn-sm btn-outline-secondary">Sửa</a>
-                    <form asp-action="ToggleTrangThai" asp-route-id="@category.MaTheLoai" method="post" class="d-inline" id="toggleTheLoaiForm-@category.MaTheLoai">
-                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <a asp-action="Edit" asp-route-id="@category.MaTheLoai" class="btn btn-sm btn-outline-primary">Sửa</a>
+                    <form asp-action="ToggleTrangThai" asp-route-id="@category.MaTheLoai" asp-route-returnUrl="@returnUrl" method="post"
+                          class="d-inline" id="toggleTheLoaiForm-@category.MaTheLoai" data-ajax-crud="form">
+                        @Html.AntiForgeryToken()
                         <button type="button" class="btn btn-sm @(hoatDong ? "btn-outline-danger" : "btn-outline-primary")"
                                 data-confirm-form="#toggleTheLoaiForm-@category.MaTheLoai"
                                 data-confirm-title="@(hoatDong ? "Ngưng hoạt động thể loại" : "Kích hoạt lại thể loại")"

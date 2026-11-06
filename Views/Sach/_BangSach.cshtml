@@ -62,8 +62,9 @@
                     <a asp-action="Edit" asp-route-id="@book.MaSach" class="btn btn-sm btn-outline-secondary">Sửa</a>
                     @if (coTheDoi)
                     {
-                        <form asp-action="ToggleTrangThai" asp-route-id="@book.MaSach" method="post" class="d-inline" id="toggleSachForm-@book.MaSach">
-                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                        <form asp-action="ToggleTrangThai" asp-route-id="@book.MaSach" asp-route-returnUrl="@returnUrl" method="post"
+                              class="d-inline" id="toggleSachForm-@book.MaSach" data-ajax-crud="form">
+                            @Html.AntiForgeryToken()
                             <button type="button" class="btn btn-sm @(tamNgung ? "btn-outline-danger" : "btn-outline-primary")"
                                     data-confirm-form="#toggleSachForm-@book.MaSach"
                                     data-confirm-title="@(tamNgung ? "Tạm ngưng sách" : "Mở lại sách")"

@@ -6,7 +6,6 @@
 @{
     ViewData["Title"] = "Xóa sách";
 }
-
 <div class="container py-3">
     <div class="row justify-content-center">
         <div class="col-lg-7">
@@ -35,7 +34,8 @@
 
                 <div class="d-flex justify-content-end gap-2 mt-4 pt-2 border-top">
                     <a asp-action="Details" asp-route-id="@Model.MaSach" class="btn btn-outline-secondary">Hủy</a>
-                    <form id="formXoaSach" asp-action="Delete" asp-route-id="@Model.MaSach" method="post" class="d-inline">
+                    <form id="formXoaSach" asp-action="Delete" asp-route-id="@Model.MaSach" method="post" class="d-inline" data-ajax-crud="form">
+                        @Html.AntiForgeryToken()
                         <button type="button" class="btn btn-danger px-4"
                                 data-confirm-form="#formXoaSach"
                                 data-confirm-title="Xác nhận xóa sách"

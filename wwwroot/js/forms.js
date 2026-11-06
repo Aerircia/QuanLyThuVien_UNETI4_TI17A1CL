@@ -98,7 +98,11 @@
       bootstrap.Modal.getInstance(confirmEl)?.hide();
     }
 
-    pendingForm.submit();
+    if (typeof pendingForm.requestSubmit === 'function') {
+      pendingForm.requestSubmit();
+    } else {
+      pendingForm.submit();
+    }
   });
 
   // 4. Chặn bấm gửi nhiều lần cho form POST. Đợi hết vòng submit để biết validation có chặn hay không.
@@ -118,5 +122,47 @@
     document.querySelectorAll('button[type="submit"]').forEach((b) => { b.disabled = false; });
     const confirmOk = getConfirmOk();
     if (confirmOk) confirmOk.disabled = false;
+  });
+
+  // Gửi CRUD mà không tải lại trang; thành công điều hướng về danh sách, lỗi trả lại nội dung form để hiện validation.
+  document.addEventListener('submit', async (e) => {
+    const form = e.target;
+    if (!(form instanceof HTMLFormElement) || !form.matches('[data-ajax-crud="form"]')) return;
+
+    e.preventDefault();
+    const submitButtons = Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"], button[type="button"]'));
+    submitButtons.forEach((button) => { button.disabled = true; });
+
+    try {
+      const response = await fetch(form.action, {
+        method: form.method || 'POST',
+        body: new FormData(form),
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json, text/html;q=0.9' }
+      });
+
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const result = await response.json();
+        if (result.redirectUrl) {
+          window.location.assign(result.redirectUrl);
+          return;
+        }
+      } else {
+        const html = await response.text();
+        const parsed = new DOMParser().parseFromString(html, 'text/html');
+        const newCard = parsed.querySelector('.app-form-card');
+        const currentCard = document.querySelector('.app-form-card');
+        if (newCard && currentCard) {
+          currentCard.replaceWith(newCard);
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('CRUD AJAX failed', error);
+      window.location.reload();
+      return;
+    } finally {
+      submitButtons.forEach((button) => { button.disabled = false; });
+    }
   });
 })();

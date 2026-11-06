@@ -6,40 +6,20 @@
 @{
     ViewData["Title"] = "Xóa thể loại";
 }
-
-<div class="container py-3">
-    <div class="row justify-content-center">
-        <div class="col-lg-7">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h1 class="h4 mb-0">Xóa thể loại</h1>
-                <a asp-action="Details" asp-route-id="@Model.MaTheLoai" class="btn btn-outline-secondary">← Quay lại</a>
-            </div>
-
-            <partial name="_AlertsPartial" />
-
-            <div class="app-card">
-                <div class="alert alert-warning" role="alert">
-                    <h6 class="alert-heading fw-bold mb-1">Bạn sắp xóa thể loại này</h6>
-                    <div class="small">Thể loại đang có sách không thể xóa; hãy chuyển sang ngưng hoạt động thay vì xóa.</div>
-                </div>
-
-                <div class="row g-3 small">
-                    <div class="col-sm-6"><small class="text-muted d-block">Tên thể loại</small><span class="fw-semibold">@Model.TenTheLoai</span></div>
-                    <div class="col-sm-6"><small class="text-muted d-block">Khu vực lưu trữ</small><span>@(Model.KhuVucLuuTru ?? "—")</span></div>
-                </div>
-
-                <div class="d-flex justify-content-end gap-2 mt-4 pt-2 border-top">
-                    <a asp-action="Details" asp-route-id="@Model.MaTheLoai" class="btn btn-outline-secondary">Hủy</a>
-                    <form id="formXoaTheLoai" asp-action="Delete" asp-route-id="@Model.MaTheLoai" method="post" class="d-inline">
-                        <button type="button" class="btn btn-danger px-4"
-                                data-confirm-form="#formXoaTheLoai"
-                                data-confirm-title="Xác nhận xóa thể loại"
-                                data-confirm-message="Bạn có chắc chắn muốn xóa thể loại '@Model.TenTheLoai'?"
-                                data-confirm-ok="Xóa thể loại"
-                                data-confirm-class="btn-danger">Xóa thể loại</button>
-                    </form>
-                </div>
-            </div>
-        </div>
+<div class="app-form-card">
+    <div class="app-form-header">
+        <h1>Xóa thể loại</h1>
+    </div>
+    <div class="app-form-footer">
+        <a asp-action="Details" asp-route-id="@Model.MaTheLoai" class="btn app-btn-soft">Hủy</a>
+        <form id="formXoaTheLoai" asp-action="Delete" asp-route-id="@Model.MaTheLoai" method="post" class="d-inline" data-ajax-crud="form">
+            @Html.AntiForgeryToken()
+            <button type="button" class="btn btn-danger"
+                    data-confirm-form="#formXoaTheLoai"
+                    data-confirm-title="Xác nhận xóa thể loại"
+                    data-confirm-message="Bạn có chắc chắn muốn xóa thể loại '@Model.TenTheLoai'? Thể loại đang có sách sẽ không thể xóa."
+                    data-confirm-ok="Xóa thể loại"
+                    data-confirm-class="btn-danger">Xóa</button>
+        </form>
     </div>
 </div>
