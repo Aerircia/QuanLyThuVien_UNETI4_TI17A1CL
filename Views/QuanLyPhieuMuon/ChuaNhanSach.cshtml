@@ -1,0 +1,86 @@
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Danh sách phiếu đã duyệt quá số ngày quy định mà bạn đọc chưa đến nhận sách *@
+@model List<QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.PhieuMuonItemViewModel>
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces
+@{
+    ViewData["Title"] = "Phiếu đã duyệt chưa nhận sách";
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var today = DateOnly.FromDateTime(DateTime.Today);
+}
+
+<div class="container-fluid py-2">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h1 class="h4 mb-0">Phiếu đã duyệt chưa nhận sách</h1>
+            <p class="text-muted small mb-0">
+                Các phiếu ở trạng thái Đã duyệt quá @LoanRules.UncollectedDays ngày mà bạn đọc chưa đến quầy. Mỗi phiếu vẫn đang giữ một bản sách.
+            </p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">← Quản lý phiếu mượn</a>
+    </div>
+
+    @if (TempData["ThongBao"] is string thongBao)
+    {
+        <div class="alert alert-success" role="status">@thongBao</div>
+    }
+    @if (TempData["Loi"] is string loi)
+    {
+        <div class="alert alert-danger" role="alert">@loi</div>
+    }
+
+    <div class="app-card p-0 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã</th>
+                        <th>Bạn đọc</th>
+                        <th>Đầu sách</th>
+                        <th>Ngày duyệt</th>
+                        <th>Đã chờ</th>
+                        <th>Nhận xét thủ thư</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        var since = item.NgayXuLy ?? item.NgayDangKy;
+                        var days = today.DayNumber - since.DayNumber;
+                        <tr>
+                            <td><a asp-action="Details" asp-route-id="@item.MaPhieuMuon" class="font-monospace fw-bold text-decoration-none">#@item.MaPhieuMuon</a></td>
+                            <td>
+                                <div class="fw-bold">@item.HoTenBanDoc</div>
+                                <span class="badge bg-light text-dark border font-monospace small">@(item.MaSoThe ?? "Chưa cấp")</span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@item.TenSach</div>
+                                <small class="text-muted">@item.TacGia · Kệ @(item.ViTriKe ?? "—")</small>
+                            </td>
+                            <td>@since.ToString("dd/MM/yyyy")</td>
+                            <td><span class="badge badge-soft-warning">@days ngày</span></td>
+                            <td class="small text-muted">@(item.NhanXetThuThu ?? "—")</td>
+                            <td class="text-end text-nowrap">
+                                <form asp-action="GiaoSach" asp-route-id="@item.MaPhieuMuon" method="post" class="d-inline" id="giaoSachLate-@item.MaPhieuMuon">
+                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                    <button type="button" class="btn btn-sm btn-primary"
+                                            data-confirm-form="#giaoSachLate-@item.MaPhieuMuon"
+                                            data-confirm-title="Xác nhận giao sách"
+                                            data-confirm-message="Xác nhận đã giao sách '@item.TenSach' cho bạn đọc @item.HoTenBanDoc? Hạn trả bắt đầu tính từ hôm nay."
+                                            data-confirm-ok="Giao sách"
+                                            data-confirm-class="btn-primary">Giao sách</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-4">Không có phiếu nào đã duyệt quá @LoanRules.UncollectedDays ngày mà chưa nhận sách.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

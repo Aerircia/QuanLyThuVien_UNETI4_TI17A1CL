@@ -2,12 +2,13 @@
 @* Mã sinh viên: 23103100136 *@
 @* Nội dung thực hiện: View quản lý phiếu mượn (Thủ thư & Admin) - duyệt mượn, từ chối, giao sách *@
 @model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.PhieuMuonManageListViewModel
-@using QuanLyThuVien_UNETI4_TI17A1CL.Models
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces
 @{
     ViewData["Title"] = "Quản lý phiếu mượn";
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
-    var theLoais = ViewBag.TheLoais as List<TheLoai> ?? new();
+    var theLoais = ViewBag.TheLoais as IReadOnlyList<TheLoaiOption> ?? new List<TheLoaiOption>();
+    int chuaNhan = ViewBag.ChuaNhanSach is int n ? n : 0;
 
     var trangThaiItems = Html.GetEnumSelectList<TrangThaiPhieuMuon>().ToList();
     foreach (var item in trangThaiItems)
@@ -15,11 +16,14 @@
 }
 
 <div class="container-fluid py-2">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
         <div>
             <h1 class="h4 mb-0">Quản lý phiếu mượn</h1>
             <p class="text-muted small mb-0">Xử lý yêu cầu đăng ký mượn sách, xác nhận duyệt, giao sách và giám sát hạn trả.</p>
         </div>
+        <a asp-action="ChuaNhanSach" class="btn @(chuaNhan > 0 ? "btn-warning" : "btn-outline-secondary")">
+            Đã duyệt nhưng chưa nhận sách (@chuaNhan)
+        </a>
     </div>
 
     @if (TempData["ThongBao"] is string thongBao)
@@ -180,7 +184,7 @@
                                         <button type="button" class="btn btn-sm btn-success"
                                                 data-confirm-form="#duyetLoanForm-@item.MaPhieuMuon"
                                                 data-confirm-title="Duyệt phiếu mượn"
-                                                data-confirm-message="Duyệt cho bạn đọc @item.HoTenBanDoc mượn cuốn sách '@item.TenSach'?"
+                                                data-confirm-message="Duyệt cho bạn đọc @item.HoTenBanDoc mượn cuốn sách '@item.TenSach'? Hệ thống sẽ kiểm tra lại thẻ, tiền phạt, sách quá hạn và số bản còn lại; nếu có điều kiện không đạt phiếu sẽ không được duyệt."
                                                 data-confirm-ok="Duyệt phiếu"
                                                 data-confirm-class="btn-success">
 
@@ -205,8 +209,8 @@
                                                     <div class="modal-body">
                                                         <p>Bạn đọc: <strong>@item.HoTenBanDoc</strong><br>Sách: <strong>@item.TenSach</strong></p>
                                                         <div class="mb-3">
-                                                            <label class="form-label">Lý do từ chối:</label>
-                                                            <textarea name="nhanXet" class="form-control" rows="3" placeholder="Nhập lý do từ chối (ví dụ: Sách đang bảo quản, bạn đọc chưa hoàn tất thủ tục...)"></textarea>
+                                                            <label class="form-label">Lý do từ chối <span class="text-danger">*</span></label>
+                                                            <textarea name="nhanXet" class="form-control" rows="3" required maxlength="100" placeholder="Bắt buộc nhập lý do (tối đa 100 ký tự), ví dụ: Sách đang bảo quản, bạn đọc chưa hoàn tất thủ tục..."></textarea>
                                                         </div>
                                                     </div>
                                                     <div class="modal-footer">

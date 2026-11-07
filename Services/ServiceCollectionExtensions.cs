@@ -18,9 +18,6 @@ public static class ServiceCollectionExtensions
         IConfiguration configuration,
         IWebHostEnvironment environment)
     {
-        
-        // MVC + Database
-        services.AddControllersWithViews();
 
         // Session + đăng nhập
         services.AddDistributedMemoryCache();

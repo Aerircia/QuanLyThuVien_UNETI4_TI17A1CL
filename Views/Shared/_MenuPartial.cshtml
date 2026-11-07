@@ -33,8 +33,8 @@
         </a>
 
         <span class="app-nav-heading">Nghiệp vụ thư viện</span>
-        <a class="app-nav-link @(controller == "PhieuMuon" ? "is-active" : "")"
-           asp-controller="PhieuMuon" asp-action="Index" aria-current="@(controller == "PhieuMuon" ? "page" : null)">
+        <a class="app-nav-link @(controller == "QuanLyPhieuMuon" ? "is-active" : "")"
+           asp-controller="QuanLyPhieuMuon" asp-action="Index" aria-current="@(controller == "QuanLyPhieuMuon" ? "page" : null)">
             <span class="app-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v13H3V6a2 2 0 0 1 2-2Z"/><path d="M8 4V2h8v2M7 9h10M7 13h7"/></svg></span><span>Quản lý phiếu mượn</span>
         </a>
         <a class="app-nav-link @(controller == "Sach" ? "is-active" : "")"
@@ -54,7 +54,7 @@
             <span class="app-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.5-3"/></svg></span><span>Yêu cầu gia hạn</span>
         </a>
         <a class="app-nav-link @(controller == "TraSach" ? "is-active" : "")"
-           asp-controller="TraSach" asp-action="Index" aria-current="@(controller == "TraSach" ? "page" : null)">
+           asp-controller="TraSach" asp-action="ChoTra" aria-current="@(controller == "TraSach" ? "page" : null)">
             <span class="app-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4v6h-6M20 10 13 3M4 14v6h6M4 20l7-7"/></svg></span><span>Trả sách</span>
         </a>
         <a class="app-nav-link @(controller == "QuanLyLichSuThanhToan" ? "is-active" : "")"
@@ -88,13 +88,10 @@ else
             <a class="nav-link @(controller == "Home" && action == "Index" ? "is-active" : "")" asp-controller="Home" asp-action="Index"
                aria-current="@(controller == "Home" && action == "Index" ? "page" : null)">Trang chủ</a>
         </li>
-        @if (!Current.IsInRole(VaiTro.BanDoc) || hasActiveCard)
-        {
-            <li class="nav-item">
-                <a class="nav-link @(controller == "Home" && (action == "Catalog" || action == "Book") ? "is-active" : "")" asp-controller="Home" asp-action="Catalog"
-                   aria-current="@(controller == "Home" && action == "Catalog" ? "page" : null)">Kho sách</a>
-            </li>
-        }
+        <li class="nav-item">
+            <a class="nav-link @(controller == "Home" && (action == "Catalog" || action == "Book") ? "is-active" : "")" asp-controller="Home" asp-action="Catalog"
+               aria-current="@(controller == "Home" && action == "Catalog" ? "page" : null)">Kho sách</a>
+        </li>
         @if (Current.IsInRole(VaiTro.BanDoc))
         {
             if (hasActiveCard)
