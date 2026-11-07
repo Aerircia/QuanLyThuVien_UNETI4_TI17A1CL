@@ -23,6 +23,13 @@ public class TraSachController : Controller
         _thanhToanService = thanhToanService;
         _current = current;
     }
+    private bool IsAjax => Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+    private IActionResult AjaxLoi(string macDinh = "Không thể ghi nhận trả sách.")
+    {
+        var loi = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
+            .Where(m => !string.IsNullOrWhiteSpace(m)).ToList();
+        return Json(new { success = false, message = loi.Count > 0 ? string.Join(" ", loi) : macDinh });
+    }
 
 // Lịch sử trả sách và tiền phạt 
     [HttpGet]
@@ -44,7 +51,7 @@ public class TraSachController : Controller
         if (search is not null) routeValues["search"] = search;
         if (tinhTrang.HasValue) routeValues["tinhTrang"] = tinhTrang.Value.ToString();
         if (trangThaiPhat.HasValue) routeValues["trangThaiPhat"] = trangThaiPhat.Value.ToString();
-        return View(new TraSachListViewModel
+        var vm = new TraSachListViewModel
         {
             Search = search,
             TinhTrang = tinhTrang,
@@ -52,7 +59,13 @@ public class TraSachController : Controller
             PageSize = result.PageSize,
             Result = result,
             Pager = PagerViewModel.From(result, "TraSach", nameof(Index), routeValues)
-        });
+        };
+
+        // AJAX (tìm/lọc/phân trang): chỉ trả partial bảng + phân trang
+        if (IsAjax)
+            return PartialView("_BangTraSach", vm);
+
+        return View(vm);
     }
 // Phiếu đang mượn chờ nhận trả
     [HttpGet]
@@ -71,14 +84,19 @@ public class TraSachController : Controller
         if (search is not null) routeValues["search"] = search;
         if (chiQuaHan) routeValues["chiQuaHan"] = "true";
 
-        return View(new PhieuChoTraListViewModel
+        var vm = new PhieuChoTraListViewModel
         {
             Search = search,
             ChiQuaHan = chiQuaHan,
             PageSize = result.PageSize,
             Result = result,
             Pager = PagerViewModel.From(result, "TraSach", nameof(ChoTra), routeValues)
-        });
+        };
+
+        if (IsAjax)
+            return PartialView("_BangChoTra", vm);
+
+        return View(vm);
     }
 
 //Nhận trả sách 
@@ -102,7 +120,7 @@ public class TraSachController : Controller
         model.Preview = preview;
 
         if (!ModelState.IsValid)
-            return View(model);
+            return IsAjax ? AjaxLoi("Dữ liệu không hợp lệ.") : View(model);
 
         var result = await _service.CreateAsync(
             new TraSachInput(maPhieuMuon, model.TinhTrang, model.GhiChu),
@@ -112,10 +130,18 @@ public class TraSachController : Controller
         if (!result.Succeeded)
         {
             result.AddTo(ModelState);
-            return View(model);
+            return IsAjax ? AjaxLoi() : View(model);
         }
 
         TempData["ThongBao"] = "Đã ghi nhận trả sách.";
+        if (IsAjax)
+            return Json(new
+            {
+                success = true,
+                message = "Đã ghi nhận trả sách.",
+                redirectUrl = Url.Action(nameof(Details), new { id = result.Value })
+            });
+
         return RedirectToAction(nameof(Details), new { id = result.Value });
     }
 
@@ -136,7 +162,12 @@ public class TraSachController : Controller
     public async Task<IActionResult> MarkPaid(int id)
     {
         var result = await _thanhToanService.RecordCounterAsync(new[] { id }, _current.User!.MaTaiKhoan, HttpContext.RequestAborted);
-
+        if (IsAjax)
+            return Json(new
+            {
+                success = result.Succeeded,
+                message = result.Succeeded ? "Đã ghi nhận nộp phạt." : result.FirstError
+            });
         if (result.Succeeded)
             TempData["ThongBao"] = "Đã ghi nhận nộp phạt.";
         else
