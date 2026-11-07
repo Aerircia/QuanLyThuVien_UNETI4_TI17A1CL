@@ -6,48 +6,52 @@
 @{
     ViewData["Title"] = "Kết quả thanh toán";
     var pending = Model.TrangThai == TrangThaiGiaoDich.ChoThanhToan;
+    var (tone, icon, title, text) = Model.TrangThai switch
+    {
+        TrangThaiGiaoDich.ThanhCong => ("ok", "✓", "Thanh toán thành công", "Các khoản phạt đã được ghi nhận là đã nộp."),
+        TrangThaiGiaoDich.ChoThanhToan => ("wait", "…", "Đang chờ thanh toán",
+            $"Trang tự cập nhật khi payOS xác nhận. Giao dịch hết hạn lúc {Model.NgayHetHan?.ToString("HH:mm dd/MM/yyyy")}."),
+        TrangThaiGiaoDich.CanDoiSoat => ("warn", "!", "Cần đối soát", "Vui lòng liên hệ thủ thư để được hỗ trợ."),
+        _ => ("off", "✕", Model.TrangThai.GetDisplayName(), "Các khoản phạt chưa được thanh toán; bạn có thể thử lại.")
+    };
 }
 @section Styles { <link rel="stylesheet" href="~/css/thanhtoan.css" asp-append-version="true" /> }
 <partial name="_AlertsPartial" />
-<div class="pay-result mb-3">
-    @switch (Model.TrangThai)
-    {
-        case TrangThaiGiaoDich.ThanhCong:
-            <div class="alert alert-success"><strong>Thanh toán thành công.</strong> Các khoản phạt đã được ghi nhận là đã nộp.</div>
-            break;
-        case TrangThaiGiaoDich.ChoThanhToan:
-            <div class="alert alert-info"
-                 data-pay-status-url="@Url.Action("Status", "ThanhToan", new { orderCode = Model.OrderCode })"
-                 data-expires="@Model.NgayHetHan?.ToString("o")">
-                <strong>Đang chờ thanh toán.</strong> Trang này tự cập nhật khi payOS xác nhận. Giao dịch hết hạn lúc @Model.NgayHetHan?.ToString("HH:mm dd/MM/yyyy").
-                <span data-pay-status-label class="ms-2"></span>
+<div class="row g-3 pay-layout">
+    <div class="col-lg-5">
+        <div class="card pay-card h-100">
+            <div class="card-body">
+                @* thuộc tính null thì Razor bỏ hẳn, nên chỉ trạng thái chờ mới được thanhtoan.js polling *@
+                <div class="pay-status pay-status--@tone"
+                     data-pay-status-url="@(pending ? Url.Action("Status", "ThanhToan", new { orderCode = Model.OrderCode }) : null)"
+                     data-expires="@(pending ? Model.NgayHetHan?.ToString("o") : null)">
+                    <div class="pay-status-ic" aria-hidden="true">@icon</div>
+                    <h2 class="pay-status-title">@title</h2>
+                    <p class="pay-status-text">@text</p>
+                    @if (pending) { <p class="pay-status-text mb-0" data-pay-status-label></p> }
+                </div>
+                <partial name="_GiaoDichInfo" model="Model" />
             </div>
-            break;
-        case TrangThaiGiaoDich.CanDoiSoat:
-            <div class="alert alert-warning"><strong>Cần đối soát.</strong> Vui lòng liên hệ thủ thư. @Model.GhiChu</div>
-            break;
-        default:
-            <div class="alert alert-secondary"><strong>@Model.TrangThai.GetDisplayName().</strong> Các khoản phạt chưa được thanh toán; bạn có thể thử lại.</div>
-            break;
-    }
-</div>
-<partial name="_ChiTietGiaoDich" model="Model" />
-<div class="d-flex gap-2 mt-3">
-    <a asp-controller="PhieuMuon" asp-action="MyFines" class="btn btn-primary">Về Tiền phạt của tôi</a>
-    <a asp-action="LichSu" class="btn btn-outline-secondary">Lịch sử thanh toán</a>
-    @if (pending)
-    {
-        @if (!string.IsNullOrEmpty(Model.CheckoutUrl))
-        {
-            <a href="@Model.CheckoutUrl" class="btn btn-outline-primary">Mở lại trang thanh toán</a>
-        }
-        <form asp-action="HuyGiaoDich" asp-route-orderCode="@Model.OrderCode" method="post" id="huyGiaoDichForm" class="d-inline">
-            <button type="button" class="btn btn-outline-danger"
-                    data-confirm-form="#huyGiaoDichForm"
-                    data-confirm-title="Hủy giao dịch"
-                    data-confirm-message="Bạn có chắc muốn hủy giao dịch thanh toán này?"
-                    data-confirm-ok="Hủy giao dịch" data-confirm-class="btn-danger">Hủy giao dịch</button>
-        </form>
-    }
+            <div class="card-footer pay-actions">
+                <a asp-controller="PhieuMuon" asp-action="MyFines" class="btn btn-primary">Về Tiền phạt của tôi</a>
+                <a asp-action="LichSu" class="btn btn-outline-secondary">Lịch sử thanh toán</a>
+                @if (pending)
+                {
+                    @if (!string.IsNullOrEmpty(Model.CheckoutUrl))
+                    {
+                        <a href="@Model.CheckoutUrl" class="btn btn-outline-primary">Mở lại trang thanh toán</a>
+                    }
+                    <form asp-action="HuyGiaoDich" asp-route-orderCode="@Model.OrderCode" method="post" id="huyGiaoDichForm">
+                        <button type="button" class="btn btn-outline-danger"
+                                data-confirm-form="#huyGiaoDichForm"
+                                data-confirm-title="Hủy giao dịch"
+                                data-confirm-message="Bạn có chắc muốn hủy giao dịch thanh toán này?"
+                                data-confirm-ok="Hủy giao dịch" data-confirm-class="btn-danger">Hủy giao dịch</button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7"><partial name="_GiaoDichKhoanPhat" model="Model" /></div>
 </div>
 @section Scripts { <script src="~/js/thanhtoan.js" asp-append-version="true"></script> }

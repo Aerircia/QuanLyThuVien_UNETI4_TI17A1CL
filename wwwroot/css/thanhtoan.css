@@ -13,3 +13,31 @@
   .pay-bar { justify-content: space-between; }
   .pay-bar .btn { flex: 1 1 100%; }
 }
+
+/* ---- Trang kết quả / chi tiết giao dịch: bố cục 2 cột theo demo_v36 ---- */
+.pay-layout { --bs-gutter-y: 1rem; }
+
+.pay-status { text-align: center; padding: 6px 0 18px; margin-bottom: 14px; border-bottom: 1px solid var(--app-line); }
+.pay-status-ic { display: grid; place-items: center; width: 68px; height: 68px; margin: 0 auto 12px; border-radius: 50%; font-size: 32px; font-weight: 800; line-height: 1; color: var(--app-success); background: var(--app-success-bg); }
+.pay-status--wait .pay-status-ic { color: var(--app-info); background: var(--app-info-bg); animation: pay-pulse 1.6s ease-in-out infinite; }
+.pay-status--warn .pay-status-ic { color: var(--app-warning); background: var(--app-warning-bg); }
+.pay-status--off .pay-status-ic { color: var(--app-danger); background: var(--app-danger-bg); }
+.pay-status-title { margin: 0 0 4px; font-size: 1.2rem; }
+.pay-status-text { margin: 0 0 4px; color: var(--app-muted); font-size: 13px; }
+@keyframes pay-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(39, 107, 136, .25); } 50% { box-shadow: 0 0 0 10px rgba(39, 107, 136, 0); } }
+@media (prefers-reduced-motion: reduce) { .pay-status-ic { animation: none !important; } }
+
+.pay-kv { width: 100%; border-collapse: collapse; }
+.pay-kv th, .pay-kv td { padding: 9px 0; border-bottom: 1px solid var(--app-line); vertical-align: top; }
+.pay-kv th { width: 36%; padding-right: 12px; color: var(--app-muted); font-size: 12px; font-weight: 600; text-align: left; }
+.pay-kv tr:last-child th, .pay-kv tr:last-child td { border-bottom: 0; }
+.pay-amount { color: var(--app-ac-hover); font-size: 1.1rem; }
+.pay-code { display: inline-block; padding: 2px 9px; border-radius: 8px; background: var(--app-ac-soft); color: var(--app-ac-hover); font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; word-break: break-all; }
+
+.pay-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.pay-actions form { display: inline-flex; margin: 0; }
+
+body.app-body .pay-lines-scroll { max-height: min(62vh, 540px); overflow: auto; border: 0; border-radius: 0; }
+.pay-lines thead th { position: sticky; top: 0; z-index: 1; }
+.pay-lines .pay-book { min-width: 140px; }
+.pay-lines tfoot td { padding: 12px 13px; background: var(--app-ac-soft); border-top: 1px solid var(--app-line); }

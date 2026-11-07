@@ -18,7 +18,6 @@ public sealed class ThanhToanService : IThanhToanService
 {
     private const int MaxFinesPerPayment = 50;
     private const string ProviderName = "payOS";
-    private const string PayDescription = "Thanh toan phat TV"; // payOS giới hạn độ dài mô tả, dùng ASCII ngắn
 
     private readonly AppDbContext _db;
     private readonly IPaymentGateway _gateway;
@@ -66,7 +65,7 @@ public sealed class ThanhToanService : IThanhToanService
             from t in _db.TraSachs
             join p in _db.PhieuMuons on t.MaPhieuMuon equals p.MaPhieuMuon
             where ids.Contains(t.MaTra) && p.MaBanDoc == maBanDoc
-            select new { t.MaTra, t.TienPhat, t.TrangThaiPhat }).ToListAsync(ct);
+            select new { t.MaTra, p.MaPhieuMuon, t.TienPhat, t.TrangThaiPhat }).ToListAsync(ct);
 
         if (fines.Count != ids.Count)
             return Fail<string>("Có khoản phạt không hợp lệ hoặc không thuộc về bạn.");
@@ -137,10 +136,12 @@ public sealed class ThanhToanService : IThanhToanService
             return Fail<string>("Không tạo được giao dịch. Vui lòng thử lại.");
 
         var baseUrl = _settings.PublicBaseUrl!.TrimEnd('/');
+        // Nội dung CK chứa mã phiếu của mọi khoản phạt (hoặc mã giao dịch nếu quá dài); xem PayDescriptionBuilder.
+        var description = PayDescriptionBuilder.ForGateway(gd.MaGiaoDich, fines.Select(f => f.MaPhieuMuon));
         try
         {
             var link = await _gateway.CreateLinkAsync(new CreateLinkRequest(
-                gd.OrderCode!.Value, (int)total, PayDescription,
+                gd.OrderCode!.Value, (int)total, description,
                 $"{baseUrl}/ThanhToan/Return", $"{baseUrl}/ThanhToan/Cancel"), ct);
 
             gd.CheckoutUrl = link.CheckoutUrl;
@@ -503,7 +504,9 @@ public sealed class ThanhToanService : IThanhToanService
             join t in _db.TraSachs on c.MaTra equals t.MaTra
             join p in _db.PhieuMuons on t.MaPhieuMuon equals p.MaPhieuMuon
             orderby c.MaChiTiet
-            select new GiaoDichLine(c.MaTra, p.MaPhieuMuon, p.Sach!.TenSach, c.SoTien)).ToListAsync(ct);
+            select new GiaoDichLine(
+                c.MaTra, p.MaPhieuMuon, p.Sach!.TenSach, c.SoTien,
+                t.NgayTra, t.TinhTrangSach, t.SoNgayTre, t.TrangThaiPhat)).ToListAsync(ct);
 
         return new GiaoDichDetail(
             h.MaGiaoDich, h.OrderCode, h.MaBanDoc, h.HoTen, h.MaSoThe, h.TongTien, h.PhuongThuc, h.TrangThai,
