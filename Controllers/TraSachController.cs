@@ -14,11 +14,13 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Controllers;
 public class TraSachController : Controller
 {
     private readonly ITraSachService _service;
+    private readonly IThanhToanService _thanhToanService;
     private readonly ICurrentUserService _current;
 
-    public TraSachController(ITraSachService service, ICurrentUserService current)
+    public TraSachController(ITraSachService service, IThanhToanService thanhToanService, ICurrentUserService current)
     {
         _service = service;
+        _thanhToanService = thanhToanService;
         _current = current;
     }
     private bool IsAjax => Request.Headers["X-Requested-With"] == "XMLHttpRequest";
@@ -159,14 +161,13 @@ public class TraSachController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkPaid(int id)
     {
-        var result = await _service.MarkPaidAsync(id, HttpContext.RequestAborted);
+        var result = await _thanhToanService.RecordCounterAsync(new[] { id }, _current.User!.MaTaiKhoan, HttpContext.RequestAborted);
         if (IsAjax)
             return Json(new
             {
                 success = result.Succeeded,
                 message = result.Succeeded ? "Đã ghi nhận nộp phạt." : result.FirstError
             });
-
         if (result.Succeeded)
             TempData["ThongBao"] = "Đã ghi nhận nộp phạt.";
         else

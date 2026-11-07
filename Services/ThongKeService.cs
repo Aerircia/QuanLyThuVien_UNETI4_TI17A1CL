@@ -31,7 +31,8 @@ public sealed class ThongKeService : IThongKeService
         var tongTheLoai = await _db.TheLoais.CountAsync(ct);
         var tongDauSach = await _db.Sachs.CountAsync(ct);
         var tongCuonSach = await _db.Sachs.SumAsync(s => (int?)s.SoLuongTong, ct) ?? 0;
-        var tongBanDoc = await _db.BanDocs.CountAsync(ct);
+        var tongBanDoc = await _db.BanDocs.CountAsync(
+            b => b.TrangThai == TrangThaiBanDoc.HoatDong || b.TrangThai == TrangThaiBanDoc.NgungHoatDong, ct);
         var tongPhieuMuon = await _db.PhieuMuons.CountAsync(ct);
         var choDuyet = await _db.PhieuMuons.CountAsync(
             p => p.TrangThai == TrangThaiPhieuMuon.ChoDuyet, ct);

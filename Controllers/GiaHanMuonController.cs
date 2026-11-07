@@ -41,6 +41,7 @@ public class GiaHanMuonController : Controller
 // Bạn đọc gửi yêu cầu gia hạn 
     [HttpGet("GiaHanMuon/Create/{maPhieuMuon:int}")]
     [AuthorizeRole(VaiTro.BanDoc)]
+    [RequireActiveCard]
     public async Task<IActionResult> Create(int maPhieuMuon)
     {
         var maBanDoc = await _current.GetMaBanDocAsync(HttpContext.RequestAborted);
@@ -59,6 +60,7 @@ public class GiaHanMuonController : Controller
 
     [HttpPost("GiaHanMuon/Create/{maPhieuMuon:int}")]
     [AuthorizeRole(VaiTro.BanDoc)]
+    [RequireActiveCard]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(int maPhieuMuon, GiaHanMuonCreateViewModel model)
     {

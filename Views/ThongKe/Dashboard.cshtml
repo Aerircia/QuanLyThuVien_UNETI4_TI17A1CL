@@ -14,23 +14,27 @@
     var statusTotal = Math.Max(report.PhieuMuonTheoTrangThai.Sum(x => x.SoPhieu), 1);
     var cards = new[]
     {
-        new { Label = "Tổng đầu sách", Value = summary.TongDauSach.ToString("N0"), Note = $"{summary.TongTheLoai:N0} thể loại", Tone = "violet", Icon = "fa-solid fa-book" },
-        new { Label = "Bạn đọc", Value = summary.TongBanDoc.ToString("N0"), Note = "Tài khoản bạn đọc", Tone = "green", Icon = "fa-solid fa-users" },
-        new { Label = "Tổng số cuốn", Value = summary.TongCuonSach.ToString("N0"), Note = "Quy mô kho sách", Tone = "cyan", Icon = "fa-solid fa-layer-group" },
-        new { Label = "Đang mượn", Value = summary.SoPhieuDangMuon.ToString("N0"), Note = "Phiếu đã giao sách", Tone = "amber", Icon = "fa-solid fa-book-open" },
-        new { Label = "Quá hạn", Value = summary.SoPhieuQuaHan.ToString("N0"), Note = "Cần theo dõi", Tone = "red", Icon = "fa-solid fa-triangle-exclamation" }
+        new { Label = "Tổng thể loại", Value = summary.TongTheLoai.ToString("N0"), Note = "Nhóm đầu sách", Tone = "violet", Icon = "folder" },
+        new { Label = "Tổng đầu sách", Value = summary.TongDauSach.ToString("N0"), Note = "Số tên sách trong kho", Tone = "violet", Icon = "book" },
+        new { Label = "Tổng số cuốn", Value = summary.TongCuonSach.ToString("N0"), Note = "Quy mô kho sách", Tone = "cyan", Icon = "layers" },
+        new { Label = "Bạn đọc", Value = summary.TongBanDoc.ToString("N0"), Note = "Thẻ đã được cấp", Tone = "green", Icon = "users" },
+        new { Label = "Tổng phiếu mượn", Value = summary.TongPhieuMuon.ToString("N0"), Note = "Mọi trạng thái", Tone = "cyan", Icon = "clipboard" },
+        new { Label = "Chờ duyệt", Value = summary.SoPhieuChoDuyet.ToString("N0"), Note = "Cần thủ thư xử lý", Tone = "amber", Icon = "clock" },
+        new { Label = "Đang mượn", Value = summary.SoPhieuDangMuon.ToString("N0"), Note = "Phiếu đã giao sách", Tone = "green", Icon = "book" },
+        new { Label = "Quá hạn", Value = summary.SoPhieuQuaHan.ToString("N0"), Note = "Cần theo dõi", Tone = "red", Icon = "alert" },
+        new { Label = "Tiền phạt tháng này", Value = summary.TienPhatThangNay.ToString("N0") + " đ", Note = "Theo ngày trả sách", Tone = "amber", Icon = "cash" }
     };
 }
 
 <div class="la-dashboard">
     <div class="la-page-toolbar">
         <div>
-            <span class="la-page-kicker"><i class="fa-solid fa-gauge-high"></i> UNETI LIBRARY</span>
+            <span class="la-page-kicker">UNETI LIBRARY</span>
             <h1>Tổng quan thư viện</h1>
             <p>Theo dõi nhanh tình hình kho sách, bạn đọc và hoạt động mượn trả.</p>
         </div>
         <div class="la-page-toolbar-actions">
-            <span class="la-dash-date"><i class="fa-regular fa-calendar"></i> @DateTime.Today.ToString("dd/MM/yyyy")</span>
+            <span class="la-dash-date"><partial name="_Icon" model='"calendar"' /> @DateTime.Today.ToString("dd/MM/yyyy")</span>
         </div>
     </div>
 
@@ -38,7 +42,7 @@
         @foreach (var card in cards)
         {
             <article class="la-dash-kpi la-dash-@card.Tone">
-                <span class="la-dash-kpi-icon" aria-hidden="true"><i class="@card.Icon"></i></span>
+                <span class="la-dash-kpi-icon" aria-hidden="true"><partial name="_Icon" model="card.Icon" /></span>
                 <div class="la-dash-kpi-value">@card.Value</div>
                 <div class="la-dash-kpi-label">@card.Label</div>
                 <div class="la-dash-kpi-note">@card.Note</div>
@@ -84,7 +88,7 @@
             </div>
 
             <article class="la-dash-panel la-dash-status-panel">
-                <div class="la-dash-panel-heading"><div><span class="la-dash-overline">LIBRARY ACTIVITY</span><h2>Tình hình phiếu mượn</h2></div><a asp-controller="PhieuMuon" asp-action="Index" class="la-dash-view-all">Quản lý phiếu mượn <i class="fa-solid fa-arrow-right"></i></a></div>
+                <div class="la-dash-panel-heading"><div><span class="la-dash-overline">LIBRARY ACTIVITY</span><h2>Tình hình phiếu mượn</h2></div><a asp-controller="QuanLyPhieuMuon" asp-action="Index" class="la-dash-view-all">Quản lý phiếu mượn <partial name="_Icon" model='"arrow-r"' /></a></div>
                 <div class="la-dash-status-table-wrap"><table class="la-dash-status-table"><thead><tr><th>Trạng thái</th><th>Số lượng</th><th>Tỷ trọng</th><th>Tiến độ</th></tr></thead><tbody>
                 @foreach (var item in report.PhieuMuonTheoTrangThai)
                 {

@@ -1,0 +1,53 @@
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Xây dựng kết quả thanh toán *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.GiaoDichDetail
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Kết quả thanh toán";
+    var pending = Model.TrangThai == TrangThaiGiaoDich.ChoThanhToan;
+}
+@section Styles { <link rel="stylesheet" href="~/css/thanhtoan.css" asp-append-version="true" /> }
+<partial name="_AlertsPartial" />
+<div class="pay-result mb-3">
+    @switch (Model.TrangThai)
+    {
+        case TrangThaiGiaoDich.ThanhCong:
+            <div class="alert alert-success"><strong>Thanh toán thành công.</strong> Các khoản phạt đã được ghi nhận là đã nộp.</div>
+            break;
+        case TrangThaiGiaoDich.ChoThanhToan:
+            <div class="alert alert-info"
+                 data-pay-status-url="@Url.Action("Status", "ThanhToan", new { orderCode = Model.OrderCode })"
+                 data-expires="@Model.NgayHetHan?.ToString("o")">
+                <strong>Đang chờ thanh toán.</strong> Trang này tự cập nhật khi payOS xác nhận. Giao dịch hết hạn lúc @Model.NgayHetHan?.ToString("HH:mm dd/MM/yyyy").
+                <span data-pay-status-label class="ms-2"></span>
+            </div>
+            break;
+        case TrangThaiGiaoDich.CanDoiSoat:
+            <div class="alert alert-warning"><strong>Cần đối soát.</strong> Vui lòng liên hệ thủ thư. @Model.GhiChu</div>
+            break;
+        default:
+            <div class="alert alert-secondary"><strong>@Model.TrangThai.GetDisplayName().</strong> Các khoản phạt chưa được thanh toán; bạn có thể thử lại.</div>
+            break;
+    }
+</div>
+<partial name="_ChiTietGiaoDich" model="Model" />
+<div class="d-flex gap-2 mt-3">
+    <a asp-controller="PhieuMuon" asp-action="MyFines" class="btn btn-primary">Về Tiền phạt của tôi</a>
+    <a asp-action="LichSu" class="btn btn-outline-secondary">Lịch sử thanh toán</a>
+    @if (pending)
+    {
+        @if (!string.IsNullOrEmpty(Model.CheckoutUrl))
+        {
+            <a href="@Model.CheckoutUrl" class="btn btn-outline-primary">Mở lại trang thanh toán</a>
+        }
+        <form asp-action="HuyGiaoDich" asp-route-orderCode="@Model.OrderCode" method="post" id="huyGiaoDichForm" class="d-inline">
+            <button type="button" class="btn btn-outline-danger"
+                    data-confirm-form="#huyGiaoDichForm"
+                    data-confirm-title="Hủy giao dịch"
+                    data-confirm-message="Bạn có chắc muốn hủy giao dịch thanh toán này?"
+                    data-confirm-ok="Hủy giao dịch" data-confirm-class="btn-danger">Hủy giao dịch</button>
+        </form>
+    }
+</div>
+@section Scripts { <script src="~/js/thanhtoan.js" asp-append-version="true"></script> }

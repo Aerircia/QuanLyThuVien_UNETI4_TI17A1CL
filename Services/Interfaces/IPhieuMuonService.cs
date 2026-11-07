@@ -7,6 +7,14 @@ using QuanLyThuVien_UNETI4_TI17A1CL.ViewModels;
 
 namespace QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces;
 
+public sealed record PhieuMuonManageSummary(int ChoDuyet, int DaDuyet, int DangMuon, int QuaHan, int ChuaNhanSach);
+
+public static class LoanRules
+{
+    /// <summary>Phiếu Đã duyệt quá số ngày này mà bạn đọc chưa đến nhận sách thì được liệt kê ở danh sách "chưa nhận sách".</summary>
+    public const int UncollectedDays = 7;
+}
+
 public interface IPhieuMuonService
 {
     //Bạn đọc: Đăng ký & Theo dõi phiếu mượn
@@ -62,4 +70,10 @@ public interface IPhieuMuonService
     /// Thủ thư giao sách cho bạn đọc (chuyển sang Đang mượn, ghi nhận NgayMuon và HanTra theo cấu hình thư viện).
     /// </summary>
     Task<ServiceResult> DeliverBookAsync(int maPhieuMuon, int actingMaTaiKhoan, CancellationToken ct = default);
+
+    /// <summary>Số liệu nhanh cho trang quản lý phiếu mượn.</summary>
+    Task<PhieuMuonManageSummary> GetManageSummaryAsync(CancellationToken ct = default);
+
+    /// <summary>Phiếu Đã duyệt quá LoanRules.UncollectedDays ngày chưa được nhận sách (vẫn giữ một bản).</summary>
+    Task<List<PhieuMuonItemViewModel>> GetUncollectedAsync(CancellationToken ct = default);
 }

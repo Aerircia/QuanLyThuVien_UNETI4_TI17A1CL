@@ -17,7 +17,7 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -193,6 +193,121 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                     b.ToTable("GiaHanMuon", t =>
                         {
                             t.HasCheckConstraint("CK_GiaHanMuon_HanTra", "[HanTraMoi] > [HanTraCu]");
+                        });
+                });
+
+            modelBuilder.Entity("QuanLyThuVien_UNETI4_TI17A1CL.Models.GiaoDichThanhToan", b =>
+                {
+                    b.Property<int>("MaGiaoDich")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaGiaoDich"));
+
+                    b.Property<string>("CheckoutUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("GhiChu")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("MaBanDoc")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MaDonHangNhaCungCap")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("MaGiaoDichNhaCungCap")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("MaNguoiXacNhan")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("NgayHetHan")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("NgayTao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("NgayThanhToan")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NhaCungCap")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<long?>("OrderCode")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("PhuongThuc")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("TongTien")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("TrangThai")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("MaGiaoDich");
+
+                    b.HasIndex("MaNguoiXacNhan");
+
+                    b.HasIndex("OrderCode")
+                        .IsUnique()
+                        .HasDatabaseName("UX_GiaoDichThanhToan_OrderCode")
+                        .HasFilter("[OrderCode] IS NOT NULL");
+
+                    b.HasIndex("MaBanDoc", "NgayTao")
+                        .HasDatabaseName("IX_GiaoDichThanhToan_BanDoc_NgayTao");
+
+                    b.HasIndex("TrangThai", "NgayHetHan")
+                        .HasDatabaseName("IX_GiaoDichThanhToan_TrangThai_HetHan");
+
+                    b.ToTable("GiaoDichThanhToan", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_GiaoDichThanhToan_TongTien", "[TongTien] > 0");
+                        });
+                });
+
+            modelBuilder.Entity("QuanLyThuVien_UNETI4_TI17A1CL.Models.GiaoDichThanhToanChiTiet", b =>
+                {
+                    b.Property<int>("MaChiTiet")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaChiTiet"));
+
+                    b.Property<bool>("DangCho")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MaGiaoDich")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaTra")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("SoTien")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("MaChiTiet");
+
+                    b.HasIndex("MaGiaoDich");
+
+                    b.HasIndex("MaTra")
+                        .IsUnique()
+                        .HasDatabaseName("UX_GiaoDichChiTiet_MaTra_DangCho")
+                        .HasFilter("[DangCho] = 1");
+
+                    b.ToTable("GiaoDichThanhToanChiTiet", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_GiaoDichThanhToanChiTiet_SoTien", "[SoTien] > 0");
                         });
                 });
 
@@ -542,6 +657,43 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                     b.Navigation("PhieuMuon");
                 });
 
+            modelBuilder.Entity("QuanLyThuVien_UNETI4_TI17A1CL.Models.GiaoDichThanhToan", b =>
+                {
+                    b.HasOne("QuanLyThuVien_UNETI4_TI17A1CL.Models.BanDoc", "BanDoc")
+                        .WithMany()
+                        .HasForeignKey("MaBanDoc")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("QuanLyThuVien_UNETI4_TI17A1CL.Models.TaiKhoan", "NguoiXacNhan")
+                        .WithMany()
+                        .HasForeignKey("MaNguoiXacNhan")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("BanDoc");
+
+                    b.Navigation("NguoiXacNhan");
+                });
+
+            modelBuilder.Entity("QuanLyThuVien_UNETI4_TI17A1CL.Models.GiaoDichThanhToanChiTiet", b =>
+                {
+                    b.HasOne("QuanLyThuVien_UNETI4_TI17A1CL.Models.GiaoDichThanhToan", "GiaoDich")
+                        .WithMany("ChiTiets")
+                        .HasForeignKey("MaGiaoDich")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("QuanLyThuVien_UNETI4_TI17A1CL.Models.TraSach", "TraSach")
+                        .WithMany()
+                        .HasForeignKey("MaTra")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("GiaoDich");
+
+                    b.Navigation("TraSach");
+                });
+
             modelBuilder.Entity("QuanLyThuVien_UNETI4_TI17A1CL.Models.PhieuMuon", b =>
                 {
                     b.HasOne("QuanLyThuVien_UNETI4_TI17A1CL.Models.BanDoc", "BanDoc")
@@ -613,6 +765,11 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
             modelBuilder.Entity("QuanLyThuVien_UNETI4_TI17A1CL.Models.BanDoc", b =>
                 {
                     b.Navigation("PhieuMuons");
+                });
+
+            modelBuilder.Entity("QuanLyThuVien_UNETI4_TI17A1CL.Models.GiaoDichThanhToan", b =>
+                {
+                    b.Navigation("ChiTiets");
                 });
 
             modelBuilder.Entity("QuanLyThuVien_UNETI4_TI17A1CL.Models.PhieuMuon", b =>
