@@ -31,14 +31,7 @@
     </a>
 </div>
 
-@if (TempData["ThongBao"] is string thongBao)
-{
-    <div class="alert alert-success" role="status">@thongBao</div>
-}
-@if (TempData["Loi"] is string loi)
-{
-    <div class="alert alert-danger" role="alert">@loi</div>
-}
+<partial name="_AlertsPartial" />
 
 <form method="get" asp-action="Index" class="app-card filter-bar">
     <input type="hidden" name="pageSize" value="@Model.PageSize" />

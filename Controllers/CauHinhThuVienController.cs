@@ -54,7 +54,7 @@ public class CauHinhThuVienController : Controller
             return View(vm);
         }
 
-        TempData["Success"] = "Đã lưu cấu hình thư viện.";
+        TempData["ThongBao"] = "Đã lưu cấu hình thư viện.";
         return RedirectToAction(nameof(Index));
     }
 }

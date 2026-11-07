@@ -32,10 +32,7 @@
                 <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-sm">← Quay lại danh mục</a>
             </div>
 
-            @if (TempData["Loi"] is string loi)
-            {
-                <div class="alert alert-danger" role="alert">@loi</div>
-            }
+                        <partial name="_AlertsPartial" />
 
             <div class="row g-3">
                 <!-- Cột thông tin sách -->

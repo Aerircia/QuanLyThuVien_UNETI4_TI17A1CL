@@ -28,14 +28,7 @@
     <link rel="stylesheet" href="~/css/landing.css" asp-append-version="true" />
 }
 
-@if (TempData["ThongBao"] is string thongBao)
-{
-    <div class="alert alert-success" role="status">@thongBao</div>
-}
-@if (TempData["Loi"] is string loi)
-{
-    <div class="alert alert-danger" role="alert">@loi</div>
-}
+<partial name="_AlertsPartial" />
 
 <section class="lp-hero reveal">
     <div class="lp-hero-main">
