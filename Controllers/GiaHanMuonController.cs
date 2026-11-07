@@ -21,6 +21,22 @@ public class GiaHanMuonController : Controller
         _service = service;
         _current = current;
     }
+    private bool IsAjax => Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+    private IActionResult AjaxLoi(string? macDinh = null)
+    {
+        var loi = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
+            .Where(m => !string.IsNullOrWhiteSpace(m)).ToList();
+        var nhanXet = ModelState.TryGetValue(nameof(GiaHanMuonProcessViewModel.NhanXet), out var entry)
+            ? entry.Errors.Select(e => e.ErrorMessage).ToArray()
+            : Array.Empty<string>();
+
+        return Json(new
+        {
+            success = false,
+            message = loi.Count > 0 ? string.Join(" ", loi) : macDinh ?? "Không thể xử lý yêu cầu gia hạn.",
+            errors = new { NhanXet = nhanXet }
+        });
+    }
 
 // Bạn đọc gửi yêu cầu gia hạn 
     [HttpGet("GiaHanMuon/Create/{maPhieuMuon:int}")]
@@ -92,14 +108,20 @@ public class GiaHanMuonController : Controller
         if (search is not null) routeValues["search"] = search;
         if (trangThai.HasValue) routeValues["trangThai"] = trangThai.Value.ToString();
 
-        return View(new GiaHanMuonListViewModel
+        var vm = new GiaHanMuonListViewModel
         {
             Search = search,
             TrangThai = trangThai,
             PageSize = result.PageSize,
             Result = result,
             Pager = PagerViewModel.From(result, "GiaHanMuon", nameof(Index), routeValues)
-        });
+        };
+
+        // AJAX tìm/lọc/phân trang
+        if (IsAjax)
+            return PartialView("_BangGiaHan", vm);
+
+        return View(vm);
     }
 
 // Thủ thư: duyệt
@@ -111,7 +133,11 @@ public class GiaHanMuonController : Controller
         if (detail is null)
             return NotFound();
 
-        return View(new GiaHanMuonProcessViewModel { Detail = detail });
+        var vm = new GiaHanMuonProcessViewModel { Detail = detail };
+        if (IsAjax)
+            return PartialView("_ChiTietXuLy", vm);
+
+        return View(vm);
     }
 
     [HttpPost("GiaHanMuon/Process/{id:int}")]
@@ -125,16 +151,21 @@ public class GiaHanMuonController : Controller
         model.Detail = detail;
 
         if (!ModelState.IsValid)
-            return View(model);
+            return IsAjax ? AjaxLoi("Dữ liệu không hợp lệ.") : View(model);
 
         var result = await _service.ProcessAsync(new ProcessGiaHanInput(id, duyet, model.NhanXet), HttpContext.RequestAborted);
         if (!result.Succeeded)
         {
             result.AddTo(ModelState);
-            return View(model);
+            return IsAjax ? AjaxLoi() : View(model);
         }
 
-        TempData["ThongBao"] = duyet ? "Đã duyệt yêu cầu gia hạn." : "Đã từ chối yêu cầu gia hạn.";
+        var thongBao = duyet ? "Đã duyệt yêu cầu gia hạn." : "Đã từ chối yêu cầu gia hạn.";
+        if (IsAjax)
+            return Json(new { success = true, message = thongBao ,redirectUrl = Url.Action(nameof(Index)) //để JS biết nên chuyển tới đích đến nào sau khi xác nhận
+            });
+
+        TempData["ThongBao"] = thongBao;
         return RedirectToAction(nameof(Index));
     }
 }

@@ -1,6 +1,6 @@
 @* Họ và tên: Vũ Ngọc Hương Giang *@
 @* Mã sinh viên: 23103100280 *@
-@* Nội dung thực hiện: view Thủ thư duyệt hoặc từ chối yêu cầu gia hạn *@
+@* Nội dung thực hiện: view Thủ thư duyệt/từ chối yêu cầu gia hạn, sử dụng AJAX *@
 @model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.GiaHanMuonProcessViewModel
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
 @{
@@ -11,6 +11,7 @@
     var diffDays = d.HanTraMoi.DayNumber - d.HanTraCu.DayNumber;
     var validDays = diffDays > 0 && diffDays <= 7;
 }
+<div id="process-alert" aria-live="polite"></div>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
@@ -21,7 +22,7 @@
 </div>
 
 <div class="row g-4">
-    <!-- Cột trái: Thông tin yêu cầu và form xử lý -->
+    
     <div class="col-lg-7">
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-white py-3">
@@ -111,24 +112,36 @@
                         </div>
                     }
 
-                    <form asp-action="Process" asp-route-id="@d.MaGiaHan" method="post">
+                    <form id="formXuLy" asp-action="Process" asp-route-id="@d.MaGiaHan" method="post">
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+                        <input type="hidden" id="duyet" name="duyet" value="true" />
 
                         <div class="mb-3">
                             <label asp-for="NhanXet" class="form-label fw-bold"></label>
                             <textarea asp-for="NhanXet" class="form-control" rows="3" maxlength="100" placeholder="Ghi chú ý kiến hoặc lý do từ chối..."></textarea>
                             <div class="form-text">Bắt buộc nhập nhận xét khi từ chối yêu cầu. Tối đa 100 ký tự.</div>
                             <span asp-validation-for="NhanXet" class="text-danger"></span>
+                            <div id="nhanXetLoi" class="text-danger small" role="alert"></div>
                         </div>
 
                         <div class="d-flex gap-2">
                             @if (d.DuDieuKienDuyet)
                             {
-                                <button type="submit" name="duyet" value="true" class="btn btn-primary">
+                                <button type="button" id="btnDuyet" class="btn btn-primary"
+                                        data-confirm-form="#formXuLy"
+                                        data-confirm-title="Duyệt gia hạn"
+                                        data-confirm-message="Bạn xác nhận duyệt gia hạn mới của bạn đọc này? Hạn trả mới: @d.HanTraMoi.ToString("dd/MM/yyyy")."
+                                        data-confirm-ok="Xác nhận duyệt"
+                                        data-confirm-class="btn-primary">
                                     Duyệt gia hạn
                                 </button>
                             }
-                            <button type="submit" name="duyet" value="false" class="btn btn-outline-danger">
+                            <button type="button" id="btnTuChoi" class="btn btn-outline-danger"
+                                    data-confirm-form="#formXuLy"
+                                    data-confirm-title="Từ chối gia hạn"
+                                    data-confirm-message="Bạn xác nhận từ chối yêu cầu gia hạn của bạn đọc này?"
+                                    data-confirm-ok="Xác nhận từ chối"
+                                    data-confirm-class="btn-danger">
                                 Từ chối
                             </button>
                             <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
@@ -139,7 +152,7 @@
         }
     </div>
 
-    <!-- Cột phải: Các tiêu chuẩn & lưu ý khi duyệt gia hạn -->
+
     <div class="col-lg-5">
         <div class="card shadow-sm h-100">
             <div class="card-header bg-white py-3">
@@ -228,4 +241,49 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+<script>
+    $(function () {
+
+        // Hiện thông báo lỗi phía trên trang
+        function hienThongBao(loai, noiDung) {
+            $('#process-alert').html('<div class="alert alert-' + loai + '"></div>');
+            $('#process-alert .alert').text(noiDung);  
+        }
+        // Bấm "Duyệt gia hạn" / "Từ chối" -> ghi lựa chọn vào ô ẩn #duyet.
+        $('#btnDuyet, #btnTuChoi').click(function (e) {
+            var duyet = (this.id === 'btnDuyet');
+            $('#duyet').val(duyet);
+
+            if (!duyet && $.trim($('#NhanXet').val()) === '') {
+                $('#nhanXetLoi').text('Vui lòng nhập nhận xét khi từ chối yêu cầu gia hạn.');
+                $('#NhanXet').addClass('is-invalid').focus();
+                e.stopPropagation();
+                return;
+            }
+            $('#nhanXetLoi').text('');
+            $('#NhanXet').removeClass('is-invalid');
+        });
+
+        // form được submit -> gửi AJAX POST
+        $('#formXuLy').submit(function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: $(this).attr('action'),
+                type: 'POST',
+                data: $(this).serialize(),       
+                dataType: 'json',
+                success: function (result) {
+                    if (result.success) {
+                        location.href = result.redirectUrl;     
+                        return;
+                    }
+                    hienThongBao('danger', result.message);
+                },
+                error: function () {
+                    hienThongBao('danger', 'Có lỗi xảy ra, vui lòng thử lại.');
+                }
+            });
+        });
+    });
+</script>
 }
