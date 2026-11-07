@@ -46,7 +46,15 @@
                                 data-confirm-ok="@(hoatDong ? "Ngưng hoạt động" : "Kích hoạt")"
                                 data-confirm-class="@(hoatDong ? "btn-danger" : "btn-primary")">@(hoatDong ? "Ngưng" : "Kích hoạt")</button>
                     </form>
-                    <a asp-action="Delete" asp-route-id="@category.MaTheLoai" class="btn btn-sm btn-outline-danger">Xóa</a>
+                    <form asp-action="Delete" asp-route-id="@category.MaTheLoai" method="post" class="d-none" id="xoaTheLoai-@category.MaTheLoai">
+                        @Html.AntiForgeryToken()
+                    </form>
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                            data-confirm-form="#xoaTheLoai-@category.MaTheLoai"
+                            data-confirm-title="Xóa thể loại"
+                            data-confirm-message="@($"• Thể loại còn sách → không thể xóa; hãy chuyển sách sang thể loại khác trước.\n• Thể loại trống → xóa vĩnh viễn, không thể khôi phục.\n\nCó xác nhận xóa thể loại không?")"
+                            data-confirm-ok="Xóa thể loại"
+                            data-confirm-class="btn-danger">Xóa</button>
                 </td>
             </tr>
         }
