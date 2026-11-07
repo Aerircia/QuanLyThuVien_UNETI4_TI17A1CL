@@ -2,6 +2,7 @@
 // Mã sinh viên: 23103100255
 // Nội dung thực hiện: Xây dựng DbSeeder.cs, seed dữ liệu ban đầu cho cơ sở dữ liệu, bao gồm cấu hình thư viện, tài khoản mẫu, và hồ sơ bạn đọc mẫu.
 
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models;
@@ -21,6 +22,7 @@ public static partial class DbSeeder
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
         var log = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DbSeeder");
+        var webRootPath = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>().WebRootPath;
 
         // Requires at least one migration (dotnet ef migrations add InitialCreate)
         await db.Database.MigrateAsync();
@@ -36,7 +38,7 @@ public static partial class DbSeeder
         }
 
         // Thứ tự bắt buộc: thể loại/sách -> tài khoản/bạn đọc -> phiếu mượn (phụ thuộc hai bước trước).
-        await SeedCatalogAsync(db, log);
+        await SeedCatalogAsync(db, log, webRootPath);
         await SeedPeopleAsync(db, log);
         await SeedLoansAsync(db, log);
     }
