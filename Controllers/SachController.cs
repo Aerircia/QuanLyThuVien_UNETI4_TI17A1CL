@@ -17,12 +17,14 @@ public class SachController : Controller
     private readonly ISachService _sachService;
     private readonly ITheLoaiService _theLoaiService;
     private readonly IAnhBiaService _anhBiaService;
+    private readonly ICurrentUserService _current;
 
-    public SachController(ISachService sachService, ITheLoaiService theLoaiService, IAnhBiaService anhBiaService)
+    public SachController(ISachService sachService, ITheLoaiService theLoaiService, IAnhBiaService anhBiaService, ICurrentUserService current)
     {
         _sachService = sachService;
         _theLoaiService = theLoaiService;
         _anhBiaService = anhBiaService;
+        _current = current;
     }
 
     [HttpGet]
@@ -73,7 +75,15 @@ public class SachController : Controller
     public async Task<IActionResult> Details(int id)
     {
         var detail = await _sachService.GetAsync(id, HttpContext.RequestAborted);
-        return detail is null ? NotFound() : View(detail);
+        if (detail is null)
+        {
+            // Không có id hoặc sách không tồn tại/đã xóa: về danh sách (thủ thư) hoặc kho sách (khách, bạn đọc)
+            TempData["Loi"] = "Không tìm thấy sách hoặc sách đã bị xóa.";
+            return _current.IsInRole(VaiTro.Admin, VaiTro.ThuThu)
+                ? RedirectToAction(nameof(Index))
+                : RedirectToAction("Catalog", "Home");
+        }
+        return View(detail);
     }
 
     [HttpGet]
@@ -227,14 +237,6 @@ public class SachController : Controller
             });
         }
         return Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : RedirectToAction(nameof(Index));
-    }
-
-    [HttpGet]
-    [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var detail = await _sachService.GetAsync(id, HttpContext.RequestAborted);
-        return detail is null ? NotFound() : View(detail);
     }
 
     [HttpPost, ActionName("Delete")]

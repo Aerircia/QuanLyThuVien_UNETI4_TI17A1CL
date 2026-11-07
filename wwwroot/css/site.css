@@ -446,6 +446,7 @@ body.app-body .dropdown-menu { border-color: var(--app-line); border-radius: 12p
 body.app-body .modal-content { overflow: hidden; border: 1px solid var(--app-line); border-radius: 18px; box-shadow: 0 18px 48px rgba(27,44,20,.17); }
 body.app-body .modal-header, body.app-body .modal-footer { border-color: var(--app-line); }
 body.app-body .modal-header { background: #fbfcf9; }
+body.app-body #confirmMessage { white-space: pre-line; line-height: 1.6; }
 body.app-body .nav-pills .nav-link { border-radius: 999px; color: var(--app-text); font-size: 13px; font-weight: 700; }
 body.app-body .nav-pills .nav-link.active { color: #fff; background: var(--app-ac); }
 body.app-body .breadcrumb { margin-bottom: 18px; font-size: 12px; }

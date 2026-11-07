@@ -30,7 +30,7 @@
             }
         </div>
         <div class="d-flex gap-2">
-            <a asp-controller="@(isStaff ? "Index" : "Home")" asp-action="@(isStaff ? "Index" : "Catalog")" class="btn btn-outline-secondary btn-sm">← @(isStaff ? "Danh sách" : "Kho sách")</a>
+            <a asp-controller="@(isStaff ? "Sach" : "Home")" asp-action="@(isStaff ? "Index" : "Catalog")" class="btn btn-outline-secondary btn-sm">← @(isStaff ? "Danh sách" : "Kho sách")</a>
             @if (isStaff)
             {
                 <a asp-action="Edit" asp-route-id="@Model.MaSach" class="btn btn-outline-primary btn-sm">Sửa sách</a>
@@ -46,7 +46,15 @@
                                 data-confirm-class="@(tamNgung ? "btn-danger" : "btn-primary")">@(tamNgung ? "Tạm ngưng" : "Mở lại")</button>
                     </form>
                 }
-                <a asp-action="Delete" asp-route-id="@Model.MaSach" class="btn btn-outline-danger btn-sm">Xóa</a>
+                <form asp-action="Delete" asp-route-id="@Model.MaSach" method="post" class="d-none" id="xoaSachDetails">
+                    @Html.AntiForgeryToken()
+                </form>
+                <button type="button" class="btn btn-outline-danger btn-sm"
+                        data-confirm-form="#xoaSachDetails"
+                        data-confirm-title="Xóa sách"
+                        data-confirm-message="@($"• Sách chưa từng mượn → xóa vĩnh viễn, không thể khôi phục.\n• Sách đã có lịch sử mượn → chuyển sang Ngừng phục vụ để giữ dữ liệu (không xóa hẳn).\n• Còn phiếu mượn đang hiệu lực → không thể xóa; hãy đợi bạn đọc trả sách xong.\n\nCó xác nhận xóa sách không?")"
+                        data-confirm-ok="Xóa sách"
+                        data-confirm-class="btn-danger">Xóa</button>
             }
         </div>
     </div>
