@@ -29,7 +29,15 @@ public sealed record GiaoDichListItem(
     DateTime? NgayThanhToan,
     string? NguoiXacNhan);
 
-public sealed record GiaoDichLine(int MaTra, int MaPhieuMuon, string TenSach, decimal SoTien);
+public sealed record GiaoDichLine(
+    int MaTra,
+    int MaPhieuMuon,
+    string TenSach,
+    decimal SoTien,
+    DateOnly NgayTra,
+    TinhTrangSach TinhTrangSach,
+    int SoNgayTre,
+    TrangThaiPhat TrangThaiPhat);   // trạng thái HIỆN TẠI của khoản phạt, để truy vết từng khoản
 
 public sealed record GiaoDichDetail(
     int MaGiaoDich,

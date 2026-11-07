@@ -1,6 +1,6 @@
 @* Họ và tên: Vũ Ngọc Hương Giang *@
 @* Mã sinh viên: 23103100280 *@
-@* Nội dung thực hiện: view lịch sử trả sách và tiền phạt *@
+@* Nội dung thực hiện: view lịch sử trả sách và tiền phạt, tìm/lọc/phân trang và đánh dấu đã nộp phạt bằng AJAX *@
 @model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.TraSachListViewModel
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
 @{
@@ -26,84 +26,123 @@
     <li class="nav-item"><a class="nav-link active" asp-action="Index">Lịch sử trả sách</a></li>
 </ul>
 <partial name="_AlertsPartial" />
+<div id="tra-sach-alert" aria-live="polite"></div>
 
 <div class="card mb-3">
     <div class="card-body">
-        <form method="get" asp-action="Index" class="row g-2 align-items-center">
-            <input type="hidden" name="pageSize" value="@Model.PageSize" />
+        <form id="bo-loc-tra-sach" method="get" asp-action="Index" class="row g-2 align-items-center">
+            <input type="hidden" id="pageSize" name="pageSize" value="@Model.PageSize" />
             <div class="col-lg-4">
-                <input name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo họ tên bạn đọc hoặc tên sách" />
+                <input id="timKiem" name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo họ tên bạn đọc hoặc tên sách" />
             </div>
             <div class="col-md-6 col-lg-3">
-                <select name="tinhTrang" class="form-select" asp-items="tinhTrangItems" onchange="this.form.requestSubmit()">
+                <select id="tinhTrang" name="tinhTrang" class="form-select" asp-items="tinhTrangItems" onchange="this.form.requestSubmit()">
                     <option value="">Mọi tình trạng sách</option>
                 </select>
             </div>
             <div class="col-md-6 col-lg-3">
-                <select name="trangThaiPhat" class="form-select" asp-items="phatItems" onchange="this.form.requestSubmit()">
+                <select id="trangThaiPhat" name="trangThaiPhat" class="form-select" asp-items="phatItems" onchange="this.form.requestSubmit()">
                     <option value="">Mọi trạng thái phạt</option>
                 </select>
             </div>
             <div class="col-lg-2 d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Tìm</button>
-                @if (dangLoc)
-                {
-                    <a asp-action="Index" asp-route-pageSize="@Model.PageSize" class="btn btn-outline-secondary">Xóa lọc</a>
-                }
+                <a asp-action="Index" asp-route-pageSize="@Model.PageSize" data-xoa-loc class="btn btn-outline-secondary @(dangLoc ? "" : "d-none")">Xóa lọc</a>
             </div>
         </form>
     </div>
 </div>
-
-<div class="table-responsive">
-    <table class="table table-striped align-middle">
-        <thead>
-            <tr>
-                <th>Phiếu</th>
-                <th>Bạn đọc</th>
-                <th>Sách</th>
-                <th>Ngày trả</th>
-                <th>Tình trạng</th>
-                <th class="text-end">Ngày trễ</th>
-                <th class="text-end">Tiền phạt</th>
-                <th>Trạng thái phạt</th>
-                <th class="text-end">Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model.Result.Items)
-            {
-                var phatBadge = item.TrangThaiPhat switch
-                {
-                    TrangThaiPhat.ChuaNop => "bg-danger",
-                    TrangThaiPhat.DaNop => "bg-success",
-                    _ => "bg-secondary"
-                };
-                <tr>
-                    <td>#@item.MaPhieuMuon</td>
-                    <td>@item.TenBanDoc</td>
-                    <td>@item.TenSach</td>
-                    <td>@item.NgayTra.ToString("dd/MM/yyyy")</td>
-                    <td>@item.TinhTrang.GetDisplayName()</td>
-                    <td class="text-end @(item.SoNgayTre > 0 ? "text-danger fw-bold" : "")">@item.SoNgayTre</td>
-                    <td class="text-end">@item.TienPhat.ToString("N0") đ</td>
-                    <td><span class="badge @phatBadge">@item.TrangThaiPhat.GetDisplayName()</span></td>
-                    <td class="text-end text-nowrap">
-                        <a asp-action="Details" asp-route-id="@item.MaTra" class="btn btn-sm btn-outline-secondary">Chi tiết</a>
-                        @if (item.TrangThaiPhat == TrangThaiPhat.ChuaNop)
-                        {
-                            <form asp-action="MarkPaid" asp-route-id="@item.MaTra" method="post" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-outline-success">Đã nộp phạt</button>
-                            </form>
-                        }
-                    </td>
-                </tr>
-            }
-            @if (!Model.Result.Items.Any())
-            {
-                <tr><td colspan="9" class="text-center text-muted py-4">Chưa có bản ghi trả sách nào phù hợp.</td></tr>
-            }
-        </tbody>
-    </table>
+<div id="vung-ket-qua-tra-sach">
+    <partial name="_BangTraSach" model="Model" />
 </div>
-<partial name="_PagerPartial" model="Model.Pager" />
+
+@section Scripts {
+<script>
+    $(function () {
+
+        // Bước 1: lấy điều kiện tìm kiếm/lọc người dùng đang nhập
+        function layDieuKien() {
+            return {
+                search: $('#timKiem').val(),
+                tinhTrang: $('#tinhTrang').val(),
+                trangThaiPhat: $('#trangThaiPhat').val(),
+                pageSize: $('#pageSize').val()
+            };
+        }
+
+        // Bước 2: gửi AJAX tới url và hiển thị kết quả
+        function taiDanhSach(url, data) {
+            $.ajax({
+                url: url,
+                type: 'GET',
+                data: data,
+                success: function (result) {
+                    $('#vung-ket-qua-tra-sach').html(result);
+                },
+                error: function () {
+                    alert('Có lỗi xảy ra, vui lòng thử lại.');
+                }
+            });
+        }
+
+        // Chỉ hiện nút "Xóa lọc" khi đang có điều kiện lọc
+        function hienNutXoaLoc() {
+            var coLoc = $('#bo-loc-tra-sach').find('input[name="search"], select').filter(function () {
+                return $.trim($(this).val()) !== '';
+            }).length > 0 || $('#bo-loc-tra-sach').find('input[type="checkbox"]:checked').length > 0;
+            $('#bo-loc-tra-sach [data-xoa-loc]').toggleClass('d-none', !coLoc);
+        }
+
+        function timKiem() {
+            hienNutXoaLoc();
+            taiDanhSach($('#bo-loc-tra-sach').attr('action'), layDieuKien());
+        }
+
+        // Bước 3: gắn sự kiện
+        $('#bo-loc-tra-sach').submit(function (e) {
+            e.preventDefault();
+            timKiem();
+        });
+
+        // keyup
+        $('#bo-loc-tra-sach input[name="search"]').keyup(function () {
+            timKiem();
+        });
+
+        // Xóa lọc
+        $('#bo-loc-tra-sach [data-xoa-loc]').click(function (e) {
+            e.preventDefault();
+            $('#timKiem').val('');
+            $('#tinhTrang').val('');
+            $('#trangThaiPhat').val('');
+            timKiem();
+        });
+
+        // Phân trang
+        $('#vung-ket-qua-tra-sach').on('click', 'nav[aria-label="Phân trang"] a[href]', function (e) {
+            e.preventDefault();
+            taiDanhSach($(this).attr('href'));
+        });
+
+        //Đã nộp phạt
+        $('#vung-ket-qua-tra-sach').on('submit', 'form[data-nop-phat]', function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: $(this).attr('action'),
+                type: 'POST',
+                data: $(this).serialize(),  
+                dataType: 'json',
+                success: function (result) {
+                    var loai = result.success ? 'success' : 'danger';
+                    $('#tra-sach-alert').html('<div class="alert alert-' + loai + '"></div>');
+                    $('#tra-sach-alert .alert').text(result.message);
+                    if (result.success) timKiem();     
+                },
+                error: function () {
+                    alert('Có lỗi xảy ra, vui lòng thử lại.');
+                }
+            });
+        });
+    });
+</script>
+}

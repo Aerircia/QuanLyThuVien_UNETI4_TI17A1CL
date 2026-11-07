@@ -2,9 +2,13 @@
 @* Mã sinh viên: 23103100255 *@
 @* Nội dung thực hiện: Xây dựng chi tiết giao dịch *@
 @model QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.GiaoDichDetail
-@{ ViewData["Title"] = "Chi tiết giao dịch"; }
+@{
+    ViewData["Title"] = "Chi tiết giao dịch";
+    ViewData["TraceLinks"] = true;   // nhân viên: mỗi khoản phạt liên kết sang phiếu trả sách
+}
+@section Styles { <link rel="stylesheet" href="~/css/thanhtoan.css" asp-append-version="true" /> }
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0">Chi tiết giao dịch</h1>
+    <h1 class="h4 mb-0">Chi tiết giao dịch #@Model.MaGiaoDich</h1>
     <a asp-action="Index" class="btn btn-outline-secondary">← Lịch sử thanh toán</a>
 </div>
 <partial name="_AlertsPartial" />

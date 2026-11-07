@@ -60,7 +60,7 @@ public static partial class DbSeeder
             .ToListAsync();
         foreach (var sach in anhSaiTienTo)
         {
-            var duongDan = sach.ImgPath.Trim();
+            var duongDan = sach.ImgPath!.Trim();
             if (duongDan.StartsWith("wwwroot", StringComparison.OrdinalIgnoreCase))
                 duongDan = duongDan["wwwroot".Length..];
             sach.ImgPath = "/" + duongDan.TrimStart('/');

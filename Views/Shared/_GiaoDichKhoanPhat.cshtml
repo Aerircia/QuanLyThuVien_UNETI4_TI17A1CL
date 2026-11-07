@@ -1,0 +1,41 @@
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Tạo partial view hiển thị các khoản phạt trong giao dịch *@
+@* Thẻ "Các khoản phạt trong giao dịch". ViewData["TraceLinks"] = true: hiện liên kết sang phiếu trả sách (trang nhân viên). *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.GiaoDichDetail
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    var trace = ViewData["TraceLinks"] is true;
+}
+<div class="card pay-card h-100">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Các khoản phạt trong giao dịch</span>
+        <span class="badge badge-soft-primary">@Model.Lines.Count khoản</span>
+    </div>
+    <div class="table-responsive pay-lines-scroll">
+        <table class="table pay-lines align-middle mb-0">
+            <thead>
+                <tr><th>Mã phạt</th><th>Phiếu</th><th>Sách</th><th>Trả / tình trạng</th><th>Phạt</th><th class="text-end">Số tiền</th></tr>
+            </thead>
+            <tbody>
+            @foreach (var l in Model.Lines)
+            {
+                <tr>
+                    <td class="font-monospace">
+                        @if (trace) { <a asp-controller="TraSach" asp-action="Details" asp-route-id="@l.MaTra">#@l.MaTra</a> }
+                        else { <span>#@l.MaTra</span> }
+                    </td>
+                    <td>#@l.MaPhieuMuon</td>
+                    <td class="pay-book">@l.TenSach</td>
+                    <td class="small">@l.NgayTra.ToString("dd/MM/yyyy")<div class="text-muted">@l.TinhTrangSach.GetDisplayName()@(l.SoNgayTre > 0 ? $" · trễ {l.SoNgayTre} ngày" : "")</div></td>
+                    <td><span class="badge @(l.TrangThaiPhat == TrangThaiPhat.DaNop ? "badge-soft-success" : "badge-soft-warning")">@l.TrangThaiPhat.GetDisplayName()</span></td>
+                    <td class="text-end fw-semibold">@l.SoTien.ToString("N0") ₫</td>
+                </tr>
+            }
+            </tbody>
+            <tfoot>
+                <tr><td colspan="5" class="text-end text-muted">Tổng cộng</td><td class="text-end fw-bold">@Model.TongTien.ToString("N0") ₫</td></tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
