@@ -1,0 +1,40 @@
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Tạo partial view hiển thị thông tin chi tiết giao dịch *@
+@* Bảng thông tin giao dịch (chỉ phần bảng, thẻ bao ngoài do trang gọi quyết định). *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces.GiaoDichDetail
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Payment
+@{
+    var maPhieus = Model.Lines.Select(l => l.MaPhieuMuon).ToList();
+    var online = Model.PhuongThuc == PhuongThucThanhToan.Online;
+}
+<table class="pay-kv">
+    <tr><th>Bạn đọc</th><td><strong>@Model.HoTen</strong> <span class="font-monospace text-muted">@Model.MaSoThe</span></td></tr>
+    <tr><th>Hình thức</th><td>@Model.PhuongThuc.GetDisplayName()</td></tr>
+    <tr><th>Tổng tiền</th><td><strong class="pay-amount">@Model.TongTien.ToString("N0") ₫</strong> <span class="text-muted small">(@Model.Lines.Count khoản)</span></td></tr>
+    @if (online)
+    {
+        <tr><th>Nội dung CK</th>
+            <td><span class="pay-code">@PayDescriptionBuilder.ForGateway(Model.MaGiaoDich, maPhieus)</span>
+                <div class="text-muted small mt-1">@PayDescriptionBuilder.FullText(maPhieus)</div></td></tr>
+    }
+    @if (Model.OrderCode.HasValue)
+    {
+        <tr><th>Mã đơn payOS</th><td class="font-monospace">@Model.OrderCode</td></tr>
+    }
+    <tr><th>Ngày tạo</th><td>@Model.NgayTao.ToString("dd/MM/yyyy HH:mm")</td></tr>
+    @if (Model.NgayHetHan.HasValue && Model.TrangThai == TrangThaiGiaoDich.ChoThanhToan)
+    {
+        <tr><th>Hết hạn lúc</th><td>@Model.NgayHetHan.Value.ToString("dd/MM/yyyy HH:mm")</td></tr>
+    }
+    <tr><th>Ngày thanh toán</th><td>@(Model.NgayThanhToan?.ToString("dd/MM/yyyy HH:mm") ?? "—")</td></tr>
+    @if (!string.IsNullOrEmpty(Model.NguoiXacNhan))
+    {
+        <tr><th>Người xác nhận</th><td>@Model.NguoiXacNhan</td></tr>
+    }
+</table>
+@if (!string.IsNullOrWhiteSpace(Model.GhiChu))
+{
+    <div class="alert alert-warning mt-3 mb-0">@Model.GhiChu</div>
+}

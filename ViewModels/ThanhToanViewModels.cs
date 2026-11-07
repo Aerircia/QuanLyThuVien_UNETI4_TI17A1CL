@@ -1,6 +1,6 @@
 // Họ và tên: Lại Anh Quân
 // Mã sinh viên: 23103100255
-// Nội dung thực hiện: Xây dựng IThanhToanService, định nghĩa các phương thức tạo giao dịch thanh toán tiền phạt (online hoặc tại quầy), đối soát kết quả từ cổng thanh toán, hủy giao dịch chờ, truy vấn danh sách giao dịch và thông tin bạn đọc có nợ.
+// Nội dung thực hiện: Xây dựng các ViewModel cho màn hình quản lý thanh toán tiền phạt, bao gồm danh sách giao dịch, danh sách bạn đọc có nợ và chi tiết giao dịch.
 using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Common;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces;
