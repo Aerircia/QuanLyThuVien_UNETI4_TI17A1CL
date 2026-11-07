@@ -1,0 +1,55 @@
+@* Họ và tên: Vũ Ngọc Hương Giang *@
+@* Mã sinh viên: 23103100280 *@
+@* Nội dung thực hiện: partial bảng yêu cầu gia hạn + phân trang, dùng cho render thường và AJAX *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.GiaHanMuonListViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Phiếu</th>
+                <th>Bạn đọc</th>
+                <th>Sách</th>
+                <th>Hạn trả cũ</th>
+                <th>Hạn trả mới</th>
+                <th>Lý do</th>
+                <th>Ngày yêu cầu</th>
+                <th>Trạng thái</th>
+                <th class="text-end">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Result.Items)
+            {
+                <tr>
+                    <td>#@item.MaPhieuMuon</td>
+                    <td>@item.TenBanDoc</td>
+                    <td>@item.TenSach</td>
+                    <td>@item.HanTraCu.ToString("dd/MM/yyyy")</td>
+                    <td>@item.HanTraMoi.ToString("dd/MM/yyyy")</td>
+                    <td>@item.LyDo</td>
+                    <td>@item.NgayYeuCau.ToString("dd/MM/yyyy")</td>
+                    <td><partial name="_TrangThaiGiaHanBadge" model="item.TrangThai" /></td>
+                    <td class="text-end text-nowrap">
+                        @if (item.TrangThai == TrangThaiGiaHan.ChoDuyet)
+                        {
+                            <a asp-action="Process" asp-route-id="@item.MaGiaHan" class="btn btn-sm btn-primary">Xử lý</a>
+                        }
+                        else
+                        {
+                            <a asp-action="Process" asp-route-id="@item.MaGiaHan" class="btn btn-sm btn-outline-secondary">Xem</a>
+                        }
+                    </td>
+                </tr>
+            }
+
+            @if (!Model.Result.Items.Any())
+            {
+                <tr><td colspan="9" class="text-center text-muted py-4">Không có yêu cầu gia hạn nào phù hợp.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<partial name="_PagerPartial" model="Model.Pager" />

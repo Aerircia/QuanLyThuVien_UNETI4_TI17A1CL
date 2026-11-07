@@ -1,6 +1,6 @@
 @* Họ và tên: Vũ Ngọc Hương Giang *@
 @* Mã sinh viên: 23103100280 *@
-@* Nội dung thực hiện: view Thủ thư xem danh sách yêu cầu gia hạn  *@
+@* Nội dung thực hiện: view Thủ thư xem danh sách yêu cầu gia hạn, tìm/lọc/phân trang bằng AJAX *@
 @model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.GiaHanMuonListViewModel
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
 @{
@@ -28,73 +28,78 @@
 
 <div class="card mb-3">
     <div class="card-body">
-        <form method="get" asp-action="Index" class="row g-2 align-items-center">
-            <input type="hidden" name="pageSize" value="@Model.PageSize" />
+        <form id="bo-loc-gia-han" method="get" asp-action="Index" class="row g-2 align-items-center">
+            <input type="hidden" id="pageSize" name="pageSize" value="@Model.PageSize" />
             <div class="col-lg-6">
-                <input name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo họ tên bạn đọc hoặc tên sách" />
+                <input id="timKiem" name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo họ tên bạn đọc hoặc tên sách" />
             </div>
             <div class="col-md-6 col-lg-3">
-                <select name="trangThai" class="form-select" asp-items="trangThaiItems" onchange="this.form.requestSubmit()">
+                <select id="trangThai" name="trangThai" class="form-select" asp-items="trangThaiItems" onchange="this.form.requestSubmit()">
                     <option value="">Tất cả trạng thái</option>
                 </select>
             </div>
             <div class="col-md-6 col-lg-3 d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Tìm</button>
-                @if (dangLoc)
-                {
-                    <a asp-action="Index" asp-route-pageSize="@Model.PageSize" class="btn btn-outline-secondary">Xóa lọc</a>
-                }
+                <a asp-action="Index" asp-route-pageSize="@Model.PageSize" data-xoa-loc class="btn btn-outline-secondary @(dangLoc ? "" : "d-none")">Xóa lọc</a>
             </div>
         </form>
     </div>
 </div>
-
-<div class="table-responsive">
-    <table class="table table-striped align-middle">
-        <thead>
-            <tr>
-                <th>Phiếu</th>
-                <th>Bạn đọc</th>
-                <th>Sách</th>
-                <th>Hạn trả cũ</th>
-                <th>Hạn trả mới</th>
-                <th>Lý do</th>
-                <th>Ngày yêu cầu</th>
-                <th>Trạng thái</th>
-                <th class="text-end">Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model.Result.Items)
-            {
-                <tr>
-                    <td>#@item.MaPhieuMuon</td>
-                    <td>@item.TenBanDoc</td>
-                    <td>@item.TenSach</td>
-                    <td>@item.HanTraCu.ToString("dd/MM/yyyy")</td>
-                    <td>@item.HanTraMoi.ToString("dd/MM/yyyy")</td>
-                    <td>@item.LyDo</td>
-                    <td>@item.NgayYeuCau.ToString("dd/MM/yyyy")</td>
-                    <td><partial name="_TrangThaiGiaHanBadge" model="item.TrangThai" /></td>
-                    <td class="text-end text-nowrap">
-                        @if (item.TrangThai == TrangThaiGiaHan.ChoDuyet)
-                        {
-                            <a asp-action="Process" asp-route-id="@item.MaGiaHan" class="btn btn-sm btn-primary">Xử lý</a>
-                        }
-                        else
-                        {
-                            <a asp-action="Process" asp-route-id="@item.MaGiaHan" class="btn btn-sm btn-outline-secondary">Xem</a>
-                        }
-                    </td>
-                </tr>
-            }
-
-            @if (!Model.Result.Items.Any())
-            {
-                <tr><td colspan="9" class="text-center text-muted py-4">Không có yêu cầu gia hạn nào phù hợp.</td></tr>
-            }
-        </tbody>
-    </table>
+<div id="vung-ket-qua-gia-han">
+    <partial name="_BangGiaHan" model="Model" />
 </div>
 
-<partial name="_PagerPartial" model="Model.Pager" />
+@section Scripts {
+<script>
+    $(function () {
+        function layDieuKien() {
+            return {
+                search: $('#timKiem').val(),
+                trangThai: $('#trangThai').val(),
+                pageSize: $('#pageSize').val()
+            };
+        }
+        function taiDanhSach(url, data) {
+            $.ajax({
+                url: url,
+                type: 'GET',
+                data: data,
+                success: function (result) {
+                    $('#vung-ket-qua-gia-han').html(result);
+                },
+                error: function () {
+                    alert('Có lỗi xảy ra, vui lòng thử lại.');
+                }
+            });
+        }
+        function hienNutXoaLoc() {
+            var coLoc = $('#bo-loc-gia-han').find('input[name="search"], select').filter(function () {
+                return $.trim($(this).val()) !== '';
+            }).length > 0 || $('#bo-loc-gia-han').find('input[type="checkbox"]:checked').length > 0;
+            $('#bo-loc-gia-han [data-xoa-loc]').toggleClass('d-none', !coLoc);
+        }
+
+        function timKiem() {
+            hienNutXoaLoc();
+            taiDanhSach($('#bo-loc-gia-han').attr('action'), layDieuKien());
+        }
+        $('#bo-loc-gia-han').submit(function (e) {
+            e.preventDefault();
+            timKiem();
+        });
+        $('#bo-loc-gia-han input[name="search"]').keyup(function () {
+            timKiem();
+        });
+        $('#bo-loc-gia-han [data-xoa-loc]').click(function (e) {
+            e.preventDefault();
+            $('#timKiem').val('');
+            $('#trangThai').val('');
+            timKiem();
+        });
+        $('#vung-ket-qua-gia-han').on('click', 'nav[aria-label="Phân trang"] a[href]', function (e) {
+            e.preventDefault();
+            taiDanhSach($(this).attr('href'));
+        });
+    });
+</script>
+}

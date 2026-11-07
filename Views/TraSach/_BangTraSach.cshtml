@@ -1,0 +1,66 @@
+@* Họ và tên: Vũ Ngọc Hương Giang *@
+@* Mã sinh viên: 23103100280 *@
+@* Nội dung thực hiện: partial bảng lịch sử trả sách + phân trang, dùng cho render thường và AJAX *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.TraSachListViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Phiếu</th>
+                <th>Bạn đọc</th>
+                <th>Sách</th>
+                <th>Ngày trả</th>
+                <th>Tình trạng</th>
+                <th class="text-end">Ngày trễ</th>
+                <th class="text-end">Tiền phạt</th>
+                <th>Trạng thái phạt</th>
+                <th class="text-end">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Result.Items)
+            {
+                var phatBadge = item.TrangThaiPhat switch
+                {
+                    TrangThaiPhat.ChuaNop => "bg-danger",
+                    TrangThaiPhat.DaNop => "bg-success",
+                    _ => "bg-secondary"
+                };
+                <tr>
+                    <td>#@item.MaPhieuMuon</td>
+                    <td>@item.TenBanDoc</td>
+                    <td>@item.TenSach</td>
+                    <td>@item.NgayTra.ToString("dd/MM/yyyy")</td>
+                    <td>@item.TinhTrang.GetDisplayName()</td>
+                    <td class="text-end @(item.SoNgayTre > 0 ? "text-danger fw-bold" : "")">@item.SoNgayTre</td>
+                    <td class="text-end">@item.TienPhat.ToString("N0") đ</td>
+                    <td><span class="badge @phatBadge">@item.TrangThaiPhat.GetDisplayName()</span></td>
+                    <td class="text-end text-nowrap">
+                        <a asp-action="Details" asp-route-id="@item.MaTra" class="btn btn-sm btn-outline-secondary">Chi tiết</a>
+                        @if (item.TrangThaiPhat == TrangThaiPhat.ChuaNop)
+                        {
+                            <form asp-action="MarkPaid" asp-route-id="@item.MaTra" method="post" class="d-inline"
+                                  id="nopPhatForm-@item.MaTra" data-nop-phat>
+                                <button type="button" class="btn btn-sm btn-outline-success"
+                                        data-confirm-form="#nopPhatForm-@item.MaTra"
+                                        data-confirm-title="Xác nhận nộp phạt"
+                                        data-confirm-message="Xác nhận bạn đọc @item.TenBanDoc đã nộp khoản phạt @item.TienPhat.ToString("N0") đ cho sách '@item.TenSach'?"
+                                        data-confirm-ok="Đồng ý"
+                                        data-confirm-class="btn-primary">
+                                    Đã nộp phạt
+                                </button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Result.Items.Any())
+            {
+                <tr><td colspan="9" class="text-center text-muted py-4">Chưa có bản ghi trả sách nào phù hợp.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+<partial name="_PagerPartial" model="Model.Pager" />
