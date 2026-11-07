@@ -1,0 +1,58 @@
+@* Họ và tên: Vũ Ngọc Hương Giang *@
+@* Mã sinh viên: 23103100280 *@
+@* Nội dung thực hiện: partial bảng phiếu chờ nhận trả + phân trang*@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.PhieuChoTraListViewModel
+
+<div class="table-responsive">
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Phiếu</th>
+                <th>Bạn đọc</th>
+                <th>Sách</th>
+                <th>Ngày mượn</th>
+                <th>Hạn trả</th>
+                <th>Tình trạng</th>
+                <th class="text-end">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Result.Items)
+            {
+                var quaHan = item.SoNgayTre > 0;
+                <tr class="@(quaHan ? "table-danger" : "")">
+                    <td class="fw-semibold">#@item.MaPhieuMuon</td>
+                    <td>
+                        @item.TenBanDoc
+                        @if (!string.IsNullOrEmpty(item.MaSoThe))
+                        {
+                            <small class="text-muted d-block">@item.MaSoThe</small>
+                        }
+                    </td>
+                    <td>@item.TenSach</td>
+                    <td>@(item.NgayMuon?.ToString("dd/MM/yyyy") ?? "—")</td>
+                    <td class="@(quaHan ? "text-danger fw-semibold" : "")">@(item.HanTra?.ToString("dd/MM/yyyy") ?? "—")</td>
+                    <td>
+                        @if (quaHan)
+                        {
+                            <span class="badge badge-soft-danger">Quá hạn @item.SoNgayTre ngày</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-soft-success">Còn hạn</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="Create" asp-route-maPhieuMuon="@item.MaPhieuMuon" class="btn btn-sm btn-primary">Nhận trả</a>
+                    </td>
+                </tr>
+            }
+
+            @if (!Model.Result.Items.Any())
+            {
+                <tr><td colspan="7" class="text-center text-muted py-4">Không có phiếu đang mượn nào chờ nhận trả.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+<partial name="_PagerPartial" model="Model.Pager" />
