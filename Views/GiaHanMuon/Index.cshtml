@@ -17,14 +17,7 @@
     <h1 class="mb-0">Yêu cầu gia hạn</h1>
 </div>
 
-@if (TempData["ThongBao"] is string thongBao)
-{
-    <div class="alert alert-success" role="status">@thongBao</div>
-}
-@if (TempData["Loi"] is string loi)
-{
-    <div class="alert alert-danger" role="alert">@loi</div>
-}
+<partial name="_AlertsPartial" />
 
 <div class="card mb-3">
     <div class="card-body">

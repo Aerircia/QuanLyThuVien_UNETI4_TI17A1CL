@@ -19,20 +19,7 @@
         </a>
     </div>
 
-    @if (TempData["ThongBao"] is string thongBao)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <strong>Thông báo:</strong> @thongBao
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-    @if (TempData["Loi"] is string loi)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>Lỗi:</strong> @loi
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
+    <partial name="_AlertsPartial" />
 
     <!-- Cảnh báo quá hạn nếu có -->
     @if (Model.SoPhieuQuaHan > 0)

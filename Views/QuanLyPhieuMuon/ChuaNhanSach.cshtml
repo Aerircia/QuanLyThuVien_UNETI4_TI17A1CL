@@ -20,14 +20,7 @@
         <a asp-action="Index" class="btn btn-outline-secondary">← Quản lý phiếu mượn</a>
     </div>
 
-    @if (TempData["ThongBao"] is string thongBao)
-    {
-        <div class="alert alert-success" role="status">@thongBao</div>
-    }
-    @if (TempData["Loi"] is string loi)
-    {
-        <div class="alert alert-danger" role="alert">@loi</div>
-    }
+    <partial name="_AlertsPartial" />
 
     <div class="app-card p-0 overflow-hidden">
         <div class="table-responsive">

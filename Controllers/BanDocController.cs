@@ -516,7 +516,12 @@ public class BanDocController : Controller
     public async Task<IActionResult> Details(int id)
     {
         var detail = await _banDocService.GetAsync(id, HttpContext.RequestAborted);
-        if (detail is null) return NotFound();
+        if (detail is null)
+        {
+            // Không có id hoặc bạn đọc không tồn tại: về danh sách thay vì 404 thô (trang chỉ dành cho Thủ thư/Admin)
+            TempData["Loi"] = "Không tìm thấy bạn đọc hoặc bạn đọc đã bị xóa.";
+            return RedirectToAction(nameof(Index));
+        }
 
         return View(detail);
     }

@@ -15,14 +15,7 @@
     <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
 </div>
 
-@if (TempData["ThongBao"] is string thongBao)
-{
-    <div class="alert alert-success" role="status">@thongBao</div>
-}
-@if (TempData["Loi"] is string loi)
-{
-    <div class="alert alert-danger" role="alert">@loi</div>
-}
+<partial name="_AlertsPartial" />
 @if (Model.SoNgayTre > 0)
 {
     <div class="alert alert-overdue" role="alert">Phiếu này được trả trễ <strong>@Model.SoNgayTre ngày</strong>.</div>

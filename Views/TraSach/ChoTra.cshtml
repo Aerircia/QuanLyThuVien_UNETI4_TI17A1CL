@@ -17,14 +17,7 @@
     <li class="nav-item"><a class="nav-link" asp-action="Index">Lịch sử trả sách</a></li>
 </ul>
 
-@if (TempData["ThongBao"] is string thongBao)
-{
-    <div class="alert alert-success" role="status">@thongBao</div>
-}
-@if (TempData["Loi"] is string loi)
-{
-    <div class="alert alert-danger" role="alert">@loi</div>
-}
+<partial name="_AlertsPartial" />
 <div class="card mb-3">
     <div class="card-body">
         <form id="bo-loc-cho-tra" method="get" asp-action="ChoTra" class="row g-2 align-items-center">

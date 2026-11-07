@@ -40,20 +40,7 @@
         </div>
     </div>
 
-    @if (TempData["ThongBao"] is string thongBao)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <strong>Thành công!</strong> @thongBao
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-    @if (TempData["Loi"] is string loi)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>Lỗi!</strong> @loi
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
+    <partial name="_AlertsPartial" />
 
     <!-- Banner hành động khi hồ sơ đang Chờ duyệt -->
     @if (isChoDuyet)

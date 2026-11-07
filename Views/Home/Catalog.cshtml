@@ -14,6 +14,8 @@
     <link rel="stylesheet" href="~/css/catalog.css" asp-append-version="true" />
 }
 
+<partial name="_AlertsPartial" />
+
 @* Một form duy nhất giữ toàn bộ trạng thái lọc. Không có JavaScript thì nó vẫn là form GET bình thường. *@
 <form id="catalogForm" asp-controller="Home" asp-action="Catalog" method="get">
     <input type="hidden" name="view" value="@f.View" data-default="grid" />

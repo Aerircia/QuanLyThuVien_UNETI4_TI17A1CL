@@ -36,7 +36,7 @@
                 </div>
                 <div class="col-md-3 d-flex gap-2">
                     <button type="submit" class="btn btn-primary flex-fill">Lọc</button>
-                    <a asp-action="Index" class="btn btn-outline-secondary flex-fill">Xóa lọc</a>
+                    <a asp-action="Index" id="nut-xoa-loc-the-loai" class="btn btn-outline-secondary flex-fill">Xóa lọc</a>
                 </div>
             </form>
         </div>
@@ -77,6 +77,12 @@
             var a = e.target.closest('a[href]');
             if (!a) return;
             e.preventDefault();
+            // Xóa lọc: dọn trắng các ô nhập/select (giữ input ẩn pageSize) rồi nạp lại danh sách
+            if (a.id === 'nut-xoa-loc-the-loai') {
+                form.querySelectorAll('input[name], select[name]').forEach(function (el) {
+                    if (el.type !== 'hidden') el.value = '';
+                });
+            }
             nap(a.getAttribute('href'), true);
         });
 

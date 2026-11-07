@@ -32,33 +32,20 @@
         </div>
     </div>
 
-    @if (TempData["ThongBao"] is string thongBao)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <strong>Thành công!</strong> @thongBao
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-    @if (TempData["Loi"] is string loi)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>Lỗi!</strong> @loi
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
+    <partial name="_AlertsPartial" />
 
-    <!-- Quick filter tabs -->
-    <div class="d-flex flex-wrap gap-2 mb-3">
-        <a asp-action="Index" class="btn btn-sm @(!Model.TrangThai.HasValue ? "btn-primary" : "btn-light border")">
+    <!-- Quick filter tabs: click chuyển tab qua AJAX, không tải lại trang -->
+    <div class="d-flex flex-wrap gap-2 mb-3" id="tab-loc-ban-doc">
+        <a asp-action="Index" class="btn btn-sm quick-tab-ban-doc @(!Model.TrangThai.HasValue ? "btn-primary" : "btn-light border")" data-active-class="btn-primary" data-gia-tri="">
             Tất cả (@Model.TongSoBanDoc)
         </a>
-        <a asp-action="Index" asp-route-trangThai="@(nameof(TrangThaiBanDoc.ChoDuyet))" class="btn btn-sm @(Model.TrangThai == TrangThaiBanDoc.ChoDuyet ? "btn-warning" : "btn-light border")">
+        <a asp-action="Index" asp-route-trangThai="@(nameof(TrangThaiBanDoc.ChoDuyet))" class="btn btn-sm quick-tab-ban-doc @(Model.TrangThai == TrangThaiBanDoc.ChoDuyet ? "btn-warning" : "btn-light border")" data-active-class="btn-warning" data-gia-tri="@((int)TrangThaiBanDoc.ChoDuyet)">
             Chờ duyệt cấp thẻ (@Model.SoBanDocChoDuyet)
         </a>
-        <a asp-action="Index" asp-route-trangThai="@(nameof(TrangThaiBanDoc.HoatDong))" class="btn btn-sm @(Model.TrangThai == TrangThaiBanDoc.HoatDong ? "btn-primary" : "btn-light border")">
+        <a asp-action="Index" asp-route-trangThai="@(nameof(TrangThaiBanDoc.HoatDong))" class="btn btn-sm quick-tab-ban-doc @(Model.TrangThai == TrangThaiBanDoc.HoatDong ? "btn-primary" : "btn-light border")" data-active-class="btn-primary" data-gia-tri="@((int)TrangThaiBanDoc.HoatDong)">
             Đang hoạt động (@Model.SoBanDocHoatDong)
         </a>
-        <a asp-action="Index" asp-route-trangThai="@(nameof(TrangThaiBanDoc.NgungHoatDong))" class="btn btn-sm @(Model.TrangThai == TrangThaiBanDoc.NgungHoatDong ? "btn-primary" : "btn-light border")">
+        <a asp-action="Index" asp-route-trangThai="@(nameof(TrangThaiBanDoc.NgungHoatDong))" class="btn btn-sm quick-tab-ban-doc @(Model.TrangThai == TrangThaiBanDoc.NgungHoatDong ? "btn-primary" : "btn-light border")" data-active-class="btn-primary" data-gia-tri="@((int)TrangThaiBanDoc.NgungHoatDong)">
             Ngừng hoạt động / Khóa (@Model.SoBanDocNgungHoatDong)
         </a>
     </div>
@@ -66,7 +53,7 @@
     <!-- Bộ lọc tìm kiếm -->
     <div class="card mb-3">
         <div class="card-body">
-            <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <form id="bo-loc-ban-doc" method="get" asp-action="Index" class="row g-2 align-items-center">
                 <input type="hidden" name="pageSize" value="@Model.PageSize" />
                 <div class="col-md-5">
                     <input name="search" value="@Model.Search" class="form-control"
@@ -89,7 +76,8 @@
         </div>
     </div>
 
-    <!-- Bảng danh sách -->
+    @* Vùng kết quả: lọc/tìm kiếm/phân trang qua AJAX - JS tải cả trang rồi cắt vùng này thay vào *@
+    <div id="vung-ket-qua-ban-doc">
     <div class="table-responsive">
         <table class="table table-striped align-middle mb-0">
             <thead>
@@ -176,7 +164,7 @@
                         </td>
                         <td class="text-end text-nowrap">
                             <a asp-action="Details" asp-route-id="@item.MaBanDoc" class="btn btn-sm btn-outline-primary">Chi tiết</a>
-
+    
                             @if (isChoDuyet)
                             {
                                 <form asp-action="Duyet" method="post" class="d-inline" id="duyetTheIndexForm-@item.MaBanDoc">
@@ -188,7 +176,7 @@
                                             data-confirm-message="Duyệt cấp thẻ thư viện cho bạn đọc @item.HoTen?"
                                             data-confirm-ok="Duyệt cấp thẻ"
                                             data-confirm-class="btn-primary">
-
+    
                                         Duyệt
                                     </button>
                                 </form>
@@ -201,7 +189,7 @@
                                             data-confirm-message="Từ chối yêu cầu cấp thẻ của bạn đọc @item.HoTen?"
                                             data-confirm-ok="Từ chối"
                                             data-confirm-class="btn-danger">
-
+    
                                         Từ chối
                                     </button>
                                 </form>
@@ -219,7 +207,7 @@
                                             data-confirm-message="@(locked ? $"Bạn có chắc muốn kích hoạt lại bạn đọc {item.HoTen}?" : $"Bạn có chắc muốn tạm khóa bạn đọc {item.HoTen}?")"
                                             data-confirm-ok="@(locked ? "Mở khóa" : "Tạm khóa")"
                                             data-confirm-class="@(locked ? "btn-primary" : "btn-danger")">
-
+    
                                         @(locked ? "Mở khóa" : "Khóa")
                                     </button>
                                 </form>
@@ -227,7 +215,7 @@
                         </td>
                     </tr>
                 }
-
+    
                 @if (!Model.Result.Items.Any())
                 {
                     <tr>
@@ -237,8 +225,91 @@
             </tbody>
         </table>
     </div>
-
-    <div class="mt-3">
+    
+    <div class="phan-trang mt-3">
         <partial name="_PagerPartial" model="Model.Pager" />
     </div>
+    </div>
 </div>
+
+@section Scripts {
+<script>
+    // Lọc/tìm kiếm/phân trang/tab nhanh bằng AJAX: server trả về cả trang như thường,
+    // JS tải về rồi cắt lấy vùng kết quả thay vào; URL vẫn cập nhật để chia sẻ và nút Back hoạt động.
+    (function () {
+        var vung = document.getElementById('vung-ket-qua-ban-doc');
+        var form = document.getElementById('bo-loc-ban-doc');
+        var tabs = document.getElementById('tab-loc-ban-doc');
+        if (!vung || !form) return;
+
+        function nap(url, push) {
+            vung.style.opacity = '0.55';
+            fetch(url)
+                .then(function (r) {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return r.text();
+                })
+                .then(function (html) {
+                    // Tải cả trang rồi cắt lấy vùng kết quả trong HTML trả về
+                    var doc = new DOMParser().parseFromString(html, 'text/html');
+                    var vungMoi = doc.getElementById('vung-ket-qua-ban-doc');
+                    if (!vungMoi) { location.assign(url); return; }
+                    vung.innerHTML = vungMoi.innerHTML;
+                    vung.style.opacity = '1';
+                    if (push) history.pushState(null, '', url);
+                })
+                .catch(function () { vung.style.opacity = '1'; });
+        }
+
+        // Tab nhanh: nạp AJAX rồi tự đổi màu tab đang chọn theo tham số trangThai trên URL.
+        // trangThai trên URL có thể là tên enum (link tab) hoặc số (select bộ lọc) -> so khớp cả hai.
+        function capNhatTab(href) {
+            if (!tabs) return;
+            var trangThai = new URL(href, location.origin).searchParams.get('trangThai') || '';
+            tabs.querySelectorAll('.quick-tab-ban-doc').forEach(function (tab) {
+                var cuaTab = new URL(tab.getAttribute('href'), location.origin).searchParams.get('trangThai') || '';
+                var active = cuaTab === trangThai || (tab.dataset.giaTri || '') === trangThai;
+                tab.classList.remove('btn-primary', 'btn-warning', 'btn-light', 'border');
+                if (active) {
+                    tab.classList.add(tab.dataset.activeClass || 'btn-primary');
+                } else {
+                    tab.classList.add('btn-light', 'border');
+                }
+            });
+        }
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var url = form.getAttribute('action') + '?' + new URLSearchParams(new FormData(form)).toString();
+            capNhatTab(url);
+            nap(url, true);
+        });
+
+        if (tabs) {
+            tabs.addEventListener('click', function (e) {
+                var a = e.target.closest('a[href]');
+                if (!a) return;
+                e.preventDefault();
+                // Tab là bộ lọc độc lập: dọn trắng ô lọc để không còn chữ tìm kiếm cũ gây hiểu nhầm
+                form.querySelectorAll('input[name], select[name]').forEach(function (el) {
+                    if (el.type !== 'hidden') el.value = '';
+                });
+                capNhatTab(a.getAttribute('href'));
+                nap(a.getAttribute('href'), true);
+            });
+        }
+
+        vung.addEventListener('click', function (e) {
+            var a = e.target.closest('a[href]');
+            if (!a || !a.closest('.phan-trang')) return;
+            e.preventDefault();
+            nap(a.getAttribute('href'), true);
+        });
+
+        window.addEventListener('popstate', function () {
+            nap(location.href, false);
+            capNhatTab(location.href);
+        });
+    })();
+</script>
+}

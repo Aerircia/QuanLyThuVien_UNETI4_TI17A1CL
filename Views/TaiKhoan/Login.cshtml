@@ -19,14 +19,7 @@
         <h1 class="auth-title">Chào mừng quay lại</h1>
         <p class="auth-sub">Đăng nhập bằng tên đăng nhập hoặc email.</p>
 
-        @if (TempData["ThongBao"] is string thanhCong)
-        {
-            <div class="alert alert-success" role="status">@thanhCong</div>
-        }
-        @if (TempData["Loi"] is string loi)
-        {
-            <div class="alert alert-danger" role="alert">@loi</div>
-        }
+                <partial name="_AlertsPartial" />
         @if (ViewBag.ThongBao is string thongBao)
         {
             <div class="alert alert-warning" role="alert">@thongBao</div>

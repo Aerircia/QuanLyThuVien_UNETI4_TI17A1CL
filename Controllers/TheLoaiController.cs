@@ -14,10 +14,12 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Controllers;
 public class TheLoaiController : Controller
 {
     private readonly ITheLoaiService _service;
+    private readonly ICurrentUserService _current;
 
-    public TheLoaiController(ITheLoaiService service)
+    public TheLoaiController(ITheLoaiService service, ICurrentUserService current)
     {
         _service = service;
+        _current = current;
     }
 
     [HttpGet]
@@ -53,7 +55,15 @@ public class TheLoaiController : Controller
     public async Task<IActionResult> Details(int id)
     {
         var detail = await _service.GetAsync(id, HttpContext.RequestAborted);
-        return detail is null ? NotFound() : View(detail);
+        if (detail is null)
+        {
+            // Không có id hoặc thể loại không tồn tại/đã xóa: về danh sách (Admin) hoặc kho sách (Thủ thư, Bạn đọc)
+            TempData["Loi"] = "Không tìm thấy thể loại hoặc thể loại đã bị xóa.";
+            return _current.IsInRole(VaiTro.Admin)
+                ? RedirectToAction(nameof(Index))
+                : RedirectToAction("Catalog", "Home");
+        }
+        return View(detail);
     }
 
     [HttpGet]
@@ -130,14 +140,6 @@ public class TheLoaiController : Controller
         if (IsAjaxRequest())
             return Json(new { success = true, redirectUrl = Url.Action(nameof(Index)), message = "Đã cập nhật thể loại." });
         return RedirectToAction(nameof(Index));
-    }
-
-    [HttpGet]
-    [AuthorizeRole(VaiTro.Admin)]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var detail = await _service.GetAsync(id, HttpContext.RequestAborted);
-        return detail is null ? NotFound() : View(detail);
     }
 
     [HttpPost, ActionName("Delete")]

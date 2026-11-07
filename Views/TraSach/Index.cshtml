@@ -25,14 +25,8 @@
     <li class="nav-item"><a class="nav-link" asp-action="ChoTra">Chờ nhận trả</a></li>
     <li class="nav-item"><a class="nav-link active" asp-action="Index">Lịch sử trả sách</a></li>
 </ul>
-@if (TempData["ThongBao"] is string thongBao)
-{
-    <div class="alert alert-success" role="status">@thongBao</div>
-}
-@if (TempData["Loi"] is string loi)
-{
-    <div class="alert alert-danger" role="alert">@loi</div>
-}
+
+<partial name="_AlertsPartial" />
 <div id="tra-sach-alert" aria-live="polite"></div>
 
 <div class="card mb-3">

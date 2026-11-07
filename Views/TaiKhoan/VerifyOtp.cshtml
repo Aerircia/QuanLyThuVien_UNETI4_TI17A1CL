@@ -21,14 +21,7 @@
         <h1 class="auth-title">Nhập mã OTP</h1>
         <p class="auth-sub">Mã gồm 6 chữ số đã được gửi tới <strong>@Model.Email</strong>. Mã có hiệu lực trong thời gian ngắn và chỉ dùng một lần.</p>
 
-        @if (TempData["ThongBao"] is string thongBao)
-        {
-            <div class="alert alert-success" role="status">@thongBao</div>
-        }
-        @if (TempData["Loi"] is string loi)
-        {
-            <div class="alert alert-warning" role="alert">@loi</div>
-        }
+        <partial name="_AlertsPartial" />
 
         <form asp-action="VerifyOtp" method="post" novalidate>
             <input type="hidden" asp-for="Email" />

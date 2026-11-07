@@ -19,13 +19,7 @@
     </a>
 </div>
 
-@if (TempData["ThongBao"] is string thongBao)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="status">
-        @thongBao
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
+<partial name="_AlertsPartial" />
 
 <div class="row g-4">
     <!-- Cột trái: Form gia hạn & thông tin phiếu -->
