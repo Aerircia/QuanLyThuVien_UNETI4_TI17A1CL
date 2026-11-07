@@ -58,19 +58,15 @@ public sealed class SachService : ISachService
                 s.MaTheLoai,
                 s.TheLoai!.TenTheLoai,
                 s.SoLuongTong,
-                // Số bản còn lại = SoLuongTong - (phiếu Đã duyệt + Đang mượn) - sách mất (cùng công thức GiaHanMuonService).
-                s.SoLuongTong
-                    - s.PhieuMuons.Count(p => p.TrangThai == TrangThaiPhieuMuon.DaDuyet || p.TrangThai == TrangThaiPhieuMuon.DangMuon)
-                    - s.PhieuMuons.Count(p => p.TrangThai == TrangThaiPhieuMuon.DaTra &&
-                                              p.TraSach != null &&
-                                              p.TraSach.TinhTrangSach == TinhTrangSach.Mat),
                 s.GiaBia,
                 s.TrangThai,
-                s.ImgPath));
+                s.ImgPath,
+                s.PhieuMuons.Count(p => p.TrangThai == TrangThaiPhieuMuon.DaDuyet || p.TrangThai == TrangThaiPhieuMuon.DangMuon),
+                s.PhieuMuons.Count(p => p.TraSach != null && p.TraSach.TinhTrangSach == TinhTrangSach.Mat)));
 
         return await PagedResult<SachListItem>.CreateAsync(projected, filter.Page, filter.PageSize, ct);
     }
-
+    
     public async Task<IReadOnlyList<string>> GetAuthorOptionsAsync(CancellationToken ct = default)
     {
         return await _db.Sachs
@@ -95,16 +91,13 @@ public sealed class SachService : ISachService
                 s.NhaXuatBan,
                 s.NamXuatBan,
                 s.SoLuongTong,
-                s.SoLuongTong
-                    - s.PhieuMuons.Count(p => p.TrangThai == TrangThaiPhieuMuon.DaDuyet || p.TrangThai == TrangThaiPhieuMuon.DangMuon)
-                    - s.PhieuMuons.Count(p => p.TrangThai == TrangThaiPhieuMuon.DaTra &&
-                                              p.TraSach != null &&
-                                              p.TraSach.TinhTrangSach == TinhTrangSach.Mat),
                 s.GiaBia,
                 s.ViTriKe,
                 s.MoTa,
                 s.TrangThai,
-                s.ImgPath))
+                s.ImgPath,
+                s.PhieuMuons.Count(p => p.TrangThai == TrangThaiPhieuMuon.DaDuyet || p.TrangThai == TrangThaiPhieuMuon.DangMuon),
+                s.PhieuMuons.Count(p => p.TraSach != null && p.TraSach.TinhTrangSach == TinhTrangSach.Mat)))
             .FirstOrDefaultAsync(ct);
     }
 
@@ -145,9 +138,10 @@ public sealed class SachService : ISachService
         if (sach is null)
             return ServiceResult.Fail("Không tìm thấy sách.");
 
-        var result = Validate(new SachFields(
+var result = Validate(new SachFields(
             input.MaTheLoai, input.TenSach, input.TacGia, input.NhaXuatBan, input.NamXuatBan,
             input.SoLuongTong, input.GiaBia, input.ViTriKe, input.MoTa, input.TrangThai, input.ImgPath));
+
         if (!await IsUsableCategoryForUpdateAsync(input.MaTheLoai, sach.MaTheLoai, ct))
             result.AddError(nameof(input.MaTheLoai), "Thể loại không tồn tại hoặc đã ngừng hoạt động.");
 
@@ -215,7 +209,7 @@ public sealed class SachService : ISachService
         }
         return ServiceResult<bool>.Ok(true);
     }
-
+    
     public async Task<ServiceResult> ToggleTrangThaiAsync(int maSach, CancellationToken ct = default)
     {
         var sach = await _db.Sachs.FirstOrDefaultAsync(s => s.MaSach == maSach, ct);

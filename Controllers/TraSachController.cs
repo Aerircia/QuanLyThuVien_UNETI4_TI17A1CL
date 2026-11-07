@@ -14,11 +14,13 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Controllers;
 public class TraSachController : Controller
 {
     private readonly ITraSachService _service;
+    private readonly IThanhToanService _thanhToanService;
     private readonly ICurrentUserService _current;
 
-    public TraSachController(ITraSachService service, ICurrentUserService current)
+    public TraSachController(ITraSachService service, IThanhToanService thanhToanService, ICurrentUserService current)
     {
         _service = service;
+        _thanhToanService = thanhToanService;
         _current = current;
     }
 
@@ -133,7 +135,7 @@ public class TraSachController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkPaid(int id)
     {
-        var result = await _service.MarkPaidAsync(id, HttpContext.RequestAborted);
+        var result = await _thanhToanService.RecordCounterAsync(new[] { id }, _current.User!.MaTaiKhoan, HttpContext.RequestAborted);
 
         if (result.Succeeded)
             TempData["ThongBao"] = "Đã ghi nhận nộp phạt.";

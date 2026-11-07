@@ -29,6 +29,9 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// Mọi mã lỗi không có nội dung (404 khi gõ sai đường dẫn, NotFound() trong controller...) được trả về trang Error.
+app.UseStatusCodePagesWithReExecute("/Home/Error", "?statusCode={0}");
+
 app.UseHttpsRedirection();
 
 // Ảnh bìa upload lúc runtime không nằm trong static assets manifest (build-time),

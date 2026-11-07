@@ -109,6 +109,7 @@
                 @foreach (var item in Model.Result.Items)
                 {
                     var isChoDuyet = item.TrangThai == TrangThaiBanDoc.ChoDuyet;
+                    var isIssued = item.TrangThai is TrangThaiBanDoc.HoatDong or TrangThaiBanDoc.NgungHoatDong;
                     var locked = item.TrangThai == TrangThaiBanDoc.NgungHoatDong;
                     <tr class="@(isChoDuyet ? "table-warning" : "")">
                         <td>
@@ -122,9 +123,9 @@
                         </td>
                         <td>@item.LoaiBanDoc.GetDisplayName()</td>
                         <td>
-                            @if (isChoDuyet)
+                            @if (!isIssued)
                             {
-                                <span class="text-muted small">Chờ duyệt</span>
+                                <span class="text-muted small">@(isChoDuyet ? "Chờ duyệt" : "—")</span>
                             }
                             else
                             {
@@ -205,7 +206,7 @@
                                     </button>
                                 </form>
                             }
-                            else
+                            else if (isIssued)
                             {
                                 <a asp-action="Edit" asp-route-id="@item.MaBanDoc" class="btn btn-sm btn-outline-secondary">Sửa</a>
                                 <form asp-action="SetStatus" method="post" class="d-inline" id="statusBanDocIndex-@item.MaBanDoc">

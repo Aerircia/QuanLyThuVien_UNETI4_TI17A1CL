@@ -205,6 +205,9 @@ public class BanDocService : IBanDocService
         if (input.NgayHetHanThe <= input.NgayCapThe)
             result.AddError(nameof(input.NgayHetHanThe), "Ngày hết hạn thẻ phải sau ngày cấp thẻ.");
 
+        if (!IsIssued(input.TrangThai))
+            result.AddError(nameof(input.TrangThai), "Hồ sơ do thủ thư tạo chỉ có thể ở trạng thái Hoạt động hoặc Ngừng hoạt động.");
+
         if (maSoThe != null && !await IsMaSoTheAvailableAsync(maSoThe, null, ct))
             result.AddError(nameof(input.MaSoThe), "Mã số thẻ đã tồn tại.");
 
@@ -297,6 +300,9 @@ public class BanDocService : IBanDocService
 
         if (banDoc is null)
             return ServiceResult.Fail("Không tìm thấy bạn đọc.");
+
+        if (input.TrangThai != banDoc.TrangThai && !(IsIssued(input.TrangThai) && IsIssued(banDoc.TrangThai)))
+            result.AddError(nameof(input.TrangThai), "Không thể đổi trạng thái theo cách này. Hồ sơ chờ duyệt hoặc bị từ chối được xử lý ở trang Duyệt thẻ.");
 
         if (!await _taiKhoanService.IsEmailAvailableAsync(email, banDoc.MaTaiKhoan, ct))
             result.AddError(nameof(input.Email), "Email đã được sử dụng bởi tài khoản khác.");
@@ -405,10 +411,19 @@ public class BanDocService : IBanDocService
         if (banDoc is null)
             return ServiceResult.Fail("Không tìm thấy bạn đọc.");
 
+        if (!IsIssued(trangThai))
+            return ServiceResult.Fail("Chỉ có thể chuyển thẻ giữa Hoạt động và Ngừng hoạt động.");
+        if (!IsIssued(banDoc.TrangThai))
+            return ServiceResult.Fail("Hồ sơ chờ duyệt hoặc bị từ chối chỉ được xử lý ở trang Duyệt thẻ.");
+
         banDoc.TrangThai = trangThai;
         await _db.SaveChangesAsync(ct);
         return ServiceResult.Success();
     }
+
+    // Thẻ đã được cấp: chỉ hai trạng thái này được đổi qua lại bởi thủ thư.
+    private static bool IsIssued(TrangThaiBanDoc trangThai) =>
+        trangThai is TrangThaiBanDoc.HoatDong or TrangThaiBanDoc.NgungHoatDong;
 
     public async Task<bool> IsMaSoTheAvailableAsync(string maSoThe, int? excludeMaBanDoc = null, CancellationToken ct = default)
     {
@@ -463,7 +478,7 @@ public class BanDocService : IBanDocService
         if (taiKhoan is null)
             return ServiceResult<int>.Error(string.Empty, "Không tìm thấy tài khoản người dùng.");
 
-        if (false && taiKhoan.VaiTro != VaiTro.BanDoc)
+        if (taiKhoan.VaiTro != VaiTro.BanDoc)
             return ServiceResult<int>.Error(string.Empty, "Chỉ tài khoản Bạn đọc mới có thể đăng ký thẻ bạn đọc.");
 
         if (!await _taiKhoanService.IsEmailAvailableAsync(email, maTaiKhoan, ct))
@@ -477,6 +492,9 @@ public class BanDocService : IBanDocService
         {
             if (existingBanDoc.TrangThai == TrangThaiBanDoc.HoatDong)
                 return ServiceResult<int>.Error(string.Empty, "Tài khoản của bạn đã có thẻ thư viện đang hoạt động.");
+
+            if (existingBanDoc.TrangThai == TrangThaiBanDoc.NgungHoatDong)
+                return ServiceResult<int>.Error(string.Empty, "Thẻ thư viện của bạn đang bị khóa. Vui lòng liên hệ thủ thư để được hỗ trợ.");
 
             // Cập nhật lại thông tin và chuyển sang Chờ duyệt (áp dụng cho trường hợp gửi lại sau khi bị từ chối hoặc sửa thông tin chờ duyệt)
             existingBanDoc.HoTen = hoTen;
@@ -535,15 +553,13 @@ public class BanDocService : IBanDocService
         if (banDoc is null)
             return ServiceResult.Fail("Không tìm thấy hồ sơ bạn đọc.");
 
+        if (banDoc.TrangThai != TrangThaiBanDoc.ChoDuyet)
+            return ServiceResult.Fail("Chỉ có thể duyệt hồ sơ đang ở trạng thái 'Chờ duyệt'.");
+
         var homNay = DateOnly.FromDateTime(DateTime.Today);
         banDoc.TrangThai = TrangThaiBanDoc.HoatDong;
         banDoc.NgayCapThe = homNay;
         banDoc.NgayHetHanThe = homNay.AddYears(1);
-
-        if (string.IsNullOrWhiteSpace(banDoc.MaSoThe))
-        {
-            banDoc.MaSoThe = $"TV-{banDoc.MaBanDoc:D6}";
-        }
 
         await _db.SaveChangesAsync(ct);
         return ServiceResult.Success();
@@ -554,6 +570,9 @@ public class BanDocService : IBanDocService
         var banDoc = await _db.BanDocs.FindAsync(new object[] { maBanDoc }, ct);
         if (banDoc is null)
             return ServiceResult.Fail("Không tìm thấy hồ sơ bạn đọc.");
+
+        if (banDoc.TrangThai != TrangThaiBanDoc.ChoDuyet)
+            return ServiceResult.Fail("Chỉ có thể từ chối hồ sơ đang ở trạng thái 'Chờ duyệt'.");
 
         banDoc.TrangThai = TrangThaiBanDoc.TuChoi;
         await _db.SaveChangesAsync(ct);

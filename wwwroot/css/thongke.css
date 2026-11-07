@@ -394,3 +394,14 @@
 @media (max-width: 576px) {
     .la-report-redesigned .la-report-kpis { grid-template-columns: 1fr; }
 }
+
+/* Thanh tiêu đề trang (Dashboard, Thống kê) và lưới KPI tự co giãn */
+.la-page-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; margin: 6px 0 20px; }
+.la-page-toolbar h1 { margin: 0 0 4px; }
+.la-page-toolbar p { margin: 0; color: var(--la-muted); font-size: 13px; }
+.la-page-kicker { display: block; margin-bottom: 6px; color: var(--la-green); font-size: 11px; font-weight: 800; letter-spacing: .11em; }
+.la-page-toolbar-actions { display: flex; align-items: center; gap: 10px; }
+.la-page-toolbar .la-dash-date { display: inline-flex; align-items: center; gap: 6px; background: #fff; border-color: var(--la-border); color: var(--la-text); }
+.la-dash-kpis { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.la-dash-icon .ico { width: 19px; height: 19px; }
+.la-dash-view-all .ico { width: 13px; height: 13px; vertical-align: -2px; }

@@ -2,6 +2,7 @@
 // Mã sinh viên: 23103100136
 // Nội dung thực hiện: Xây dựng service xử lý nghiệp vụ phiếu mượn, đăng ký mượn sách, hủy phiếu và theo dõi phiếu mượn
 
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using QuanLyThuVien_UNETI4_TI17A1CL.Data;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models;
@@ -42,28 +43,11 @@ public class PhieuMuonService : IPhieuMuonService
             return result;
         }
 
-        if (banDoc.TrangThai != TrangThaiBanDoc.HoatDong)
+        var readerErrors = await GetReaderBlockersAsync(banDoc, today, ct);
+        if (readerErrors.Count > 0)
         {
             result.CanBorrow = false;
-            result.Errors.Add("Hồ sơ bạn đọc đang bị tạm khóa hoặc ngừng hoạt động.");
-        }
-
-        if (banDoc.NgayHetHanThe < today)
-        {
-            result.CanBorrow = false;
-            result.Errors.Add($"Thẻ thư viện đã hết hạn từ ngày {banDoc.NgayHetHanThe:dd/MM/yyyy}. Vui lòng liên hệ thủ thư để gia hạn thẻ.");
-        }
-
-        // 7. Thông tin bắt buộc của bạn đọc đã được khai báo
-        var thongTinThieu = new List<string>();
-        if (string.IsNullOrWhiteSpace(banDoc.HoTen)) thongTinThieu.Add("Họ tên");
-        if (string.IsNullOrWhiteSpace(banDoc.SoDienThoai)) thongTinThieu.Add("Số điện thoại");
-        if (string.IsNullOrWhiteSpace(banDoc.Email)) thongTinThieu.Add("Email");
-        if (string.IsNullOrWhiteSpace(banDoc.DiaChi)) thongTinThieu.Add("Địa chỉ");
-        if (thongTinThieu.Count > 0)
-        {
-            result.CanBorrow = false;
-            result.Errors.Add($"Chưa khai báo đủ thông tin bắt buộc ({string.Join(", ", thongTinThieu)}). Vui lòng cập nhật thông tin cá nhân trước khi mượn.");
+            result.Errors.AddRange(readerErrors);
         }
 
         // 2. Sách tồn tại và ở trạng thái Đang phục vụ
@@ -124,31 +108,39 @@ public class PhieuMuonService : IPhieuMuonService
             result.Errors.Add($"Bạn đã đạt mức tối đa {cauHinh.SoPhieuToiDa} phiếu đang xử lý đồng thời.");
         }
 
-        // 6. Bạn đọc không có phiếu Đang mượn đã quá hạn hoặc khoản phạt chưa nộp
-        var coPhieuQuaHan = await _db.PhieuMuons
-            .AnyAsync(p => p.MaBanDoc == maBanDoc &&
-                           p.TrangThai == TrangThaiPhieuMuon.DangMuon &&
-                           p.HanTra.HasValue &&
-                           p.HanTra.Value < today, ct);
-
-        if (coPhieuQuaHan)
-        {
-            result.CanBorrow = false;
-            result.Errors.Add("Bạn đang có sách mượn quá hạn chưa trả. Vui lòng trả sách quá hạn trước khi đăng ký mượn thêm.");
-        }
-
-        var coPhatChuaNop = await _db.PhieuMuons
-            .AnyAsync(p => p.MaBanDoc == maBanDoc &&
-                           p.TraSach != null &&
-                           p.TraSach.TrangThaiPhat == TrangThaiPhat.ChuaNop, ct);
-
-        if (coPhatChuaNop)
-        {
-            result.CanBorrow = false;
-            result.Errors.Add("Bạn đang có khoản tiền phạt chưa nộp. Vui lòng thanh toán tiền phạt tại thư viện trước khi mượn sách.");
-        }
-
         return result;
+    }
+
+    // Điều kiện về phía bạn đọc, dùng chung cho lúc đăng ký và lúc thủ thư duyệt phiếu.
+    private async Task<List<string>> GetReaderBlockersAsync(BanDoc banDoc, DateOnly today, CancellationToken ct)
+    {
+        var errors = new List<string>();
+
+        if (banDoc.TrangThai != TrangThaiBanDoc.HoatDong)
+            errors.Add("Hồ sơ bạn đọc đang chờ duyệt, bị từ chối, tạm khóa hoặc ngừng hoạt động.");
+
+        if (banDoc.NgayHetHanThe < today)
+            errors.Add($"Thẻ thư viện đã hết hạn từ ngày {banDoc.NgayHetHanThe:dd/MM/yyyy}.");
+
+        var thongTinThieu = new List<string>();
+        if (string.IsNullOrWhiteSpace(banDoc.HoTen)) thongTinThieu.Add("Họ tên");
+        if (string.IsNullOrWhiteSpace(banDoc.SoDienThoai)) thongTinThieu.Add("Số điện thoại");
+        if (string.IsNullOrWhiteSpace(banDoc.Email)) thongTinThieu.Add("Email");
+        if (string.IsNullOrWhiteSpace(banDoc.DiaChi)) thongTinThieu.Add("Địa chỉ");
+        if (thongTinThieu.Count > 0)
+            errors.Add($"Hồ sơ chưa khai báo đủ thông tin bắt buộc ({string.Join(", ", thongTinThieu)}).");
+
+        if (await _db.PhieuMuons.AnyAsync(p => p.MaBanDoc == banDoc.MaBanDoc &&
+                                              p.TrangThai == TrangThaiPhieuMuon.DangMuon &&
+                                              p.HanTra.HasValue && p.HanTra.Value < today, ct))
+            errors.Add("Đang có sách mượn quá hạn chưa trả, cần trả sách quá hạn trước khi mượn thêm.");
+
+        if (await _db.PhieuMuons.AnyAsync(p => p.MaBanDoc == banDoc.MaBanDoc &&
+                                              p.TraSach != null &&
+                                              p.TraSach.TrangThaiPhat == TrangThaiPhat.ChuaNop, ct))
+            errors.Add("Đang có khoản tiền phạt chưa nộp, cần thanh toán tại thư viện trước khi mượn sách.");
+
+        return errors;
     }
 
     public async Task<ServiceResult<int>> RegisterLoanAsync(int maBanDoc, int maSach, string? ghiChu, CancellationToken ct = default)
@@ -341,6 +333,7 @@ public class PhieuMuonService : IPhieuMuonService
         if (p is null) return null;
 
         var isOverdue = p.TrangThai == TrangThaiPhieuMuon.DangMuon && p.HanTra.HasValue && p.HanTra.Value < today;
+        var cauHinh = await GetCauHinhAsync(ct);
 
         return new PhieuMuonDetailViewModel
         {
@@ -368,6 +361,10 @@ public class PhieuMuonService : IPhieuMuonService
             NgayXuLy = p.NgayXuLy,
             NhanXetThuThu = p.NhanXetThuThu,
             GhiChu = p.GhiChu,
+
+            SoLanDaGiaHan = p.GiaHanMuons.Count(g => g.TrangThai == TrangThaiGiaHan.DaDuyet),
+            SoLanGiaHanToiDa = cauHinh.SoLanGiaHanToiDa,
+            SoNgayGiaHanToiDa = cauHinh.SoNgayGiaHanToiDa,
 
             IsOverdue = isOverdue,
             SoNgayQuaHan = p.HanTra.HasValue ? Math.Max(0, today.DayNumber - p.HanTra.Value.DayNumber) : 0,
@@ -500,8 +497,68 @@ public class PhieuMuonService : IPhieuMuonService
         return await PagedResult<PhieuMuonItemViewModel>.CreateAsync(projected, filter.Page, filter.PageSize, ct);
     }
 
+    // Tổng hợp số liệu cho trang quản lý phiếu mượn (thủ thư / Admin)
+    public async Task<PhieuMuonManageSummary> GetManageSummaryAsync(CancellationToken ct = default)
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var map = (await _db.PhieuMuons.AsNoTracking()
+                .GroupBy(p => p.TrangThai)
+                .Select(g => new { g.Key, N = g.Count() })
+                .ToListAsync(ct))
+            .ToDictionary(x => x.Key, x => x.N);
+
+        var quaHan = await _db.PhieuMuons.CountAsync(
+            p => p.TrangThai == TrangThaiPhieuMuon.DangMuon && p.HanTra.HasValue && p.HanTra.Value < today, ct);
+
+        var cutoff = today.AddDays(-LoanRules.UncollectedDays);
+        var chuaNhan = await _db.PhieuMuons.CountAsync(
+            p => p.TrangThai == TrangThaiPhieuMuon.DaDuyet && (p.NgayXuLy ?? p.NgayDangKy) < cutoff, ct);
+
+        return new PhieuMuonManageSummary(
+            map.GetValueOrDefault(TrangThaiPhieuMuon.ChoDuyet),
+            map.GetValueOrDefault(TrangThaiPhieuMuon.DaDuyet),
+            map.GetValueOrDefault(TrangThaiPhieuMuon.DangMuon),
+            quaHan,
+            chuaNhan);
+    }
+
+    // Phiếu Đã duyệt quá LoanRules.UncollectedDays ngày mà bạn đọc chưa đến nhận (vẫn đang giữ một bản sách).
+    public async Task<List<PhieuMuonItemViewModel>> GetUncollectedAsync(CancellationToken ct = default)
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var cutoff = today.AddDays(-LoanRules.UncollectedDays);
+
+        return await _db.PhieuMuons.AsNoTracking()
+            .Where(p => p.TrangThai == TrangThaiPhieuMuon.DaDuyet && (p.NgayXuLy ?? p.NgayDangKy) < cutoff)
+            .OrderBy(p => p.NgayXuLy ?? p.NgayDangKy)
+            .ThenBy(p => p.MaPhieuMuon)
+            .Select(p => new PhieuMuonItemViewModel
+            {
+                MaPhieuMuon = p.MaPhieuMuon,
+                MaBanDoc = p.MaBanDoc,
+                HoTenBanDoc = p.BanDoc != null ? p.BanDoc.HoTen : string.Empty,
+                MaSoThe = p.BanDoc != null ? p.BanDoc.MaSoThe : null,
+                MaSach = p.MaSach,
+                TenSach = p.Sach != null ? p.Sach.TenSach : string.Empty,
+                TacGia = p.Sach != null ? p.Sach.TacGia : string.Empty,
+                ViTriKe = p.Sach != null ? p.Sach.ViTriKe : null,
+                NgayDangKy = p.NgayDangKy,
+                NgayXuLy = p.NgayXuLy,
+                TrangThai = p.TrangThai,
+                NhanXetThuThu = p.NhanXetThuThu
+            })
+            .ToListAsync(ct);
+    }
+
     public async Task<ServiceResult> ApproveLoanAsync(int maPhieuMuon, int actingMaTaiKhoan, string? nhanXet = null, CancellationToken ct = default)
     {
+        nhanXet = string.IsNullOrWhiteSpace(nhanXet) ? null : nhanXet.Trim();
+        if (nhanXet is { Length: > 100 })
+            return ServiceResult.Fail("Nhận xét tối đa 100 ký tự.");
+
+        // Serializable: hai thủ thư duyệt cùng lúc không thể cùng lấy bản sách cuối.
+        await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+
         var phieu = await _db.PhieuMuons
             .Include(p => p.Sach)
             .Include(p => p.BanDoc)
@@ -513,26 +570,44 @@ public class PhieuMuonService : IPhieuMuonService
         if (phieu.TrangThai != TrangThaiPhieuMuon.ChoDuyet)
             return ServiceResult.Fail($"Chỉ có thể duyệt phiếu ở trạng thái 'Chờ duyệt' (hiện tại: {phieu.TrangThai.GetDisplayName()}).");
 
-        // Kiểm tra lại số lượng sách còn lại
+        // Kiểm tra lại mọi điều kiện: bất kỳ điều kiện nào không đạt thì chặn duyệt.
+        var errors = new List<string>();
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        if (phieu.BanDoc is null)
+            errors.Add("Hồ sơ bạn đọc không tồn tại.");
+        else
+            errors.AddRange(await GetReaderBlockersAsync(phieu.BanDoc, today, ct));
+
         var sach = phieu.Sach;
         if (sach is null || sach.TrangThai != TrangThaiSach.DangPhucVu)
-            return ServiceResult.Fail("Sách không còn phục vụ.");
+        {
+            errors.Add("Sách không còn phục vụ.");
+        }
+        else
+        {
+            var heldCopies = await _db.PhieuMuons
+                .CountAsync(p => p.MaSach == phieu.MaSach &&
+                                (p.TrangThai == TrangThaiPhieuMuon.DaDuyet || p.TrangThai == TrangThaiPhieuMuon.DangMuon), ct);
 
-        var heldCopies = await _db.PhieuMuons
-            .CountAsync(p => p.MaSach == phieu.MaSach &&
-                            (p.TrangThai == TrangThaiPhieuMuon.DaDuyet || p.TrangThai == TrangThaiPhieuMuon.DangMuon), ct);
+            var lostCopies = await _db.TraSachs
+                .CountAsync(t => t.PhieuMuon!.MaSach == phieu.MaSach && t.TinhTrangSach == TinhTrangSach.Mat, ct);
 
-        var lostCopies = await _db.TraSachs
-            .CountAsync(t => t.PhieuMuon!.MaSach == phieu.MaSach && t.TinhTrangSach == TinhTrangSach.Mat, ct);
+            if (sach.SoLuongTong - heldCopies - lostCopies <= 0)
+                errors.Add("Sách này hiện không còn bản trống để duyệt.");
+        }
 
-        var soLuongConLai = sach.SoLuongTong - heldCopies - lostCopies;
-        if (soLuongConLai <= 0)
-            return ServiceResult.Fail("Sách này hiện không còn bản trống để duyệt.");
+        if (errors.Count > 0)
+        {
+            var fail = new ServiceResult();
+            foreach (var e in errors) fail.AddError(string.Empty, e);
+            return fail;
+        }
 
         var oldStatus = phieu.TrangThai;
         phieu.TrangThai = TrangThaiPhieuMuon.DaDuyet;
-        phieu.NgayXuLy = DateOnly.FromDateTime(DateTime.Today);
-        phieu.NhanXetThuThu = string.IsNullOrWhiteSpace(nhanXet) ? "Đã duyệt, mời bạn đọc đến nhận sách." : nhanXet.Trim();
+        phieu.NgayXuLy = today;
+        phieu.NhanXetThuThu = nhanXet ?? "Đã duyệt, mời bạn đọc đến nhận sách.";
 
         _db.PhieuMuonLichSus.Add(new PhieuMuonLichSu
         {
@@ -544,12 +619,27 @@ public class PhieuMuonService : IPhieuMuonService
             GhiChu = phieu.NhanXetThuThu
         });
 
-        await _db.SaveChangesAsync(ct);
+        try
+        {
+            await _db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            return ServiceResult.Fail("Không thể lưu thay đổi. Vui lòng thử lại.");
+        }
+
         return ServiceResult.Success();
     }
 
     public async Task<ServiceResult> RejectLoanAsync(int maPhieuMuon, int actingMaTaiKhoan, string? nhanXet = null, CancellationToken ct = default)
     {
+        nhanXet = string.IsNullOrWhiteSpace(nhanXet) ? null : nhanXet.Trim();
+        if (nhanXet is null)
+            return ServiceResult.Fail("Vui lòng nhập lý do từ chối.");
+        if (nhanXet.Length > 100)
+            return ServiceResult.Fail("Lý do từ chối tối đa 100 ký tự.");
+
         var phieu = await _db.PhieuMuons.FirstOrDefaultAsync(p => p.MaPhieuMuon == maPhieuMuon, ct);
         if (phieu is null)
             return ServiceResult.Fail("Không tìm thấy phiếu mượn.");
@@ -560,7 +650,7 @@ public class PhieuMuonService : IPhieuMuonService
         var oldStatus = phieu.TrangThai;
         phieu.TrangThai = TrangThaiPhieuMuon.TuChoi;
         phieu.NgayXuLy = DateOnly.FromDateTime(DateTime.Today);
-        phieu.NhanXetThuThu = string.IsNullOrWhiteSpace(nhanXet) ? "Thư viện từ chối yêu cầu mượn này." : nhanXet.Trim();
+        phieu.NhanXetThuThu = nhanXet;
 
         _db.PhieuMuonLichSus.Add(new PhieuMuonLichSu
         {

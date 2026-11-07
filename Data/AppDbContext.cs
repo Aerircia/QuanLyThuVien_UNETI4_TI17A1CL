@@ -23,6 +23,8 @@ public class AppDbContext : DbContext
     public DbSet<CauHinhThuVien> CauHinhThuViens => Set<CauHinhThuVien>();
     public DbSet<PhieuMuonLichSu> PhieuMuonLichSus => Set<PhieuMuonLichSu>();
     public DbSet<Otp> Otps => Set<Otp>();
+    public DbSet<GiaoDichThanhToan> GiaoDichThanhToans => Set<GiaoDichThanhToan>();
+    public DbSet<GiaoDichThanhToanChiTiet> GiaoDichThanhToanChiTiets => Set<GiaoDichThanhToanChiTiet>();
 
     // Enums are stored as strings holding the member name, so the filters below compare against those names.
     private static readonly string ActiveLoanFilter =
@@ -126,5 +128,8 @@ public class AppDbContext : DbContext
         // ---- Never cascade-delete (keeps history, avoids SQL Server multiple-cascade-path errors) ----
         foreach (var fk in b.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             fk.DeleteBehavior = DeleteBehavior.Restrict;
+
+        // ---- Configure GiaoDichThanhToan and GiaoDichThanhToanChiTiet ----
+        b.ConfigureThanhToan();
     }
 }

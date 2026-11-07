@@ -1,0 +1,15 @@
+/* Họ và tên: Lại Anh Quân */
+/* Mã sinh viên: 23103100255 */
+/* Nội dung thực hiện: Xây dựng CSS trang thanh toán tiền phạt */
+/* CSS trang thanh toán tiền phạt (dùng biến --app-* của site.css) */
+
+.pay-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 1.25rem; margin-top: 1rem; padding: 14px 18px; border: 1px solid var(--app-line); border-radius: var(--app-radius); background: var(--app-surface); box-shadow: var(--app-shadow-sm); }
+.pay-total { font-size: 1.05rem; }
+.pay-total strong { color: var(--app-ac-hover); font-size: 1.3rem; }
+.pay-bar .btn[disabled] { cursor: not-allowed; }
+.pay-result .alert { margin-bottom: 0; }
+
+@media (max-width: 575px) {
+  .pay-bar { justify-content: space-between; }
+  .pay-bar .btn { flex: 1 1 100%; }
+}

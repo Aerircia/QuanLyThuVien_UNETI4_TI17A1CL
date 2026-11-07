@@ -102,3 +102,19 @@ public enum TrangThaiPhat
     [Display(Name = "Chưa nộp")] ChuaNop,
     [Display(Name = "Đã nộp")] DaNop
 }
+
+public enum PhuongThucThanhToan
+{
+    [Display(Name = "Trực tuyến (payOS)")] Online,
+    [Display(Name = "Tại quầy")] TaiQuay
+}
+
+public enum TrangThaiGiaoDich
+{
+    [Display(Name = "Chờ thanh toán")] ChoThanhToan,
+    [Display(Name = "Thành công")] ThanhCong,
+    [Display(Name = "Thất bại")] ThatBai,
+    [Display(Name = "Đã hủy")] DaHuy,
+    [Display(Name = "Hết hạn")] HetHan,
+    [Display(Name = "Cần đối soát")] CanDoiSoat
+}

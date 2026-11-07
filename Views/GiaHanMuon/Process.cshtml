@@ -9,7 +9,7 @@
     var choDuyet = d.TrangThai == TrangThaiGiaHan.ChoDuyet;
     var isOverdue = d.HanTraHienTai.HasValue && d.HanTraHienTai.Value < DateOnly.FromDateTime(DateTime.Now);
     var diffDays = d.HanTraMoi.DayNumber - d.HanTraCu.DayNumber;
-    var validDays = diffDays > 0 && diffDays <= 7;
+    var validDays = diffDays > 0 && diffDays <= d.SoNgayToiDa;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -181,7 +181,7 @@
                                 @(d.SoLanDaGiaHan < d.SoLanToiDa ? "✓" : "✗")
                             </span>
                             <div>
-                                <strong class="d-block text-dark">Đã gia hạn @d.SoLanDaGiaHan/@d.SoLanToiDa lần (chưa vượt tối đa 2 lần)</strong>
+                                <strong class="d-block text-dark">Đã gia hạn @d.SoLanDaGiaHan/@d.SoLanToiDa lần (chưa vượt tối đa @d.SoLanToiDa lần)</strong>
                                 <span class="text-muted">Mỗi phiếu mượn chỉ được gia hạn tối đa @d.SoLanToiDa lần.</span>
                             </div>
                         </div>
@@ -193,8 +193,8 @@
                                 @(validDays ? "✓" : "✗")
                             </span>
                             <div>
-                                <strong class="d-block text-dark">Mỗi lần gia hạn tối đa 7 ngày, hạn trả mới phải sau hạn trả cũ</strong>
-                                <span class="text-muted">Khoảng thời gian gia hạn yêu cầu: +@diffDays ngày (tối đa 7 ngày).</span>
+                                <strong class="d-block text-dark">Mỗi lần gia hạn tối đa @d.SoNgayToiDa ngày, hạn trả mới phải sau hạn trả cũ</strong>
+                                <span class="text-muted">Khoảng thời gian gia hạn yêu cầu: +@diffDays ngày (tối đa @d.SoNgayToiDa ngày).</span>
                             </div>
                         </div>
                     </div>

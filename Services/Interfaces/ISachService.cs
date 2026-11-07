@@ -25,10 +25,14 @@ public sealed record SachListItem(
     int MaTheLoai,
     string TenTheLoai,
     int SoLuongTong,
-    int SoLuongConLai,
     decimal GiaBia,
     TrangThaiSach TrangThai,
-    string? ImgPath);
+    string? ImgPath,
+    int DangGiu,
+    int DaMat)
+{
+    public int SoLuongConLai => Math.Max(0, SoLuongTong - DangGiu - DaMat);
+}
 
 public sealed record SachDetail(
     int MaSach,
@@ -39,12 +43,16 @@ public sealed record SachDetail(
     string? NhaXuatBan,
     int NamXuatBan,
     int SoLuongTong,
-    int SoLuongConLai,
     decimal GiaBia,
     string? ViTriKe,
     string? MoTa,
     TrangThaiSach TrangThai,
-    string? ImgPath);
+    string? ImgPath,
+    int DangGiu,
+    int DaMat)
+{
+    public int SoLuongConLai => Math.Max(0, SoLuongTong - DangGiu - DaMat);
+}
 
 public sealed record CreateSachInput(
     int MaTheLoai,

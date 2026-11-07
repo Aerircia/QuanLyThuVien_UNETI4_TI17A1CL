@@ -125,6 +125,11 @@ public sealed class PhieuMuonDetailViewModel
     // Quyền thao tác
     public bool CanCancel { get; set; }
 
+    // Quy định gia hạn lấy từ CauHinhThuVien
+    public int SoLanDaGiaHan { get; set; }
+    public int SoLanGiaHanToiDa { get; set; }
+    public int SoNgayGiaHanToiDa { get; set; }
+
     // Lịch sử gia hạn
     public List<GiaHanMuonItemViewModel> LichSuGiaHan { get; set; } = new();
 
@@ -218,6 +223,9 @@ public sealed class MyLoansViewModel
     }
 
     public decimal TongTienPhatChuaNop { get; set; }
+
+    // Phiếu đã kết thúc: Đã trả + Đã hủy + Từ chối (khớp tab "completed")
+    public int SoPhieuKetThuc { get; set; }
 }
 
 public sealed class FineItemViewModel

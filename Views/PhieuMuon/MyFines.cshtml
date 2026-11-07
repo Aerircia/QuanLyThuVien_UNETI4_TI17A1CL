@@ -1,127 +1,96 @@
 @* Họ và tên: Nguyễn Hữu Tuấn *@
 @* Mã sinh viên: 23103100136 *@
 @* Nội dung thực hiện: View theo dõi tiền phạt của bạn đọc (PhieuMuon/MyFines) *@
+
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: Component thanh toán tiền phạt *@
 @model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.MyFinesViewModel
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
 @{
     ViewData["Title"] = "Tiền phạt của tôi";
+    var pending = ViewBag.PendingFineIds as HashSet<int> ?? new HashSet<int>();
+    var payEnabled = ViewBag.PayEnabled is true;
 }
+@section Styles { <link rel="stylesheet" href="~/css/thanhtoan.css" asp-append-version="true" /> }
 
 <div class="container py-3">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h1 class="h4 mb-0">Tiền phạt &amp; Bồi thường sách</h1>
-            <p class="text-muted small mb-0">Theo dõi các khoản phạt phát sinh do trễ hạn, hư hỏng hoặc làm mất sách.</p>
-        </div>
-        <a asp-action="MyLoans" class="btn btn-outline-secondary btn-sm">
-            ← Phiếu mượn của tôi
-        </a>
+        <div><h1 class="h4 mb-0">Tiền phạt của tôi</h1><p class="text-muted small mb-0">Chọn các khoản phạt muốn thanh toán trực tuyến qua payOS.</p></div>
+        <a asp-controller="ThanhToan" asp-action="LichSu" class="btn btn-outline-secondary">Lịch sử thanh toán</a>
+    </div>
+    <partial name="_AlertsPartial" />
+
+    <div class="row g-3 mb-3">
+        <div class="col-sm-4"><div class="app-card"><small class="text-muted d-block">Tổng tiền phạt</small><strong class="fs-5">@Model.TongTienPhat.ToString("N0") ₫</strong></div></div>
+        <div class="col-sm-4"><div class="app-card"><small class="text-muted d-block">Đã nộp</small><strong class="fs-5 text-success">@Model.DaNop.ToString("N0") ₫</strong></div></div>
+        <div class="col-sm-4"><div class="app-card"><small class="text-muted d-block">Chưa nộp</small><strong class="fs-5 text-danger">@Model.ChuaNop.ToString("N0") ₫</strong></div></div>
     </div>
 
-    <!-- Tóm tắt số liệu -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="app-card text-center p-3">
-                <small class="text-muted text-uppercase fw-semibold d-block">Tổng tiền phạt phát sinh</small>
-                <div class="h3 fw-bold text-dark mb-0 mt-2">@Model.TongTienPhat.ToString("N0") ₫</div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="app-card text-center p-3">
-                <small class="text-muted text-uppercase fw-semibold d-block">Đã thanh toán</small>
-                <div class="h3 fw-bold text-success mb-0 mt-2">@Model.DaNop.ToString("N0") ₫</div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="app-card text-center p-3 @(Model.ChuaNop > 0 ? "border-danger bg-danger-subtle" : "")">
-                <small class="text-muted text-uppercase fw-semibold d-block">Còn nợ chưa nộp</small>
-                <div class="h3 fw-bold @(Model.ChuaNop > 0 ? "text-danger" : "text-muted") mb-0 mt-2">
-                    @Model.ChuaNop.ToString("N0") ₫
-                </div>
-            </div>
-        </div>
-    </div>
-
-    @if (Model.SoKhoanChuaNop > 0)
+    @if (!payEnabled)
     {
-        <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
-            <span class="fs-4 me-3">⚠️</span>
-            <div>
-                <h6 class="alert-heading fw-bold mb-1">Bạn có @Model.SoKhoanChuaNop khoản phạt chưa thanh toán!</h6>
-                <div class="small">
-                    Theo quy định, bạn đọc có khoản phạt chưa nộp sẽ tạm thời không thể đăng ký mượn thêm sách mới. Vui lòng đến quầy thủ thư để nộp phạt.
-                </div>
-            </div>
-        </div>
+        <div class="alert alert-info">Thanh toán trực tuyến hiện chưa khả dụng. Bạn có thể nộp phạt trực tiếp tại quầy thủ thư.</div>
     }
 
-    <!-- Bảng chi tiết các khoản phạt -->
-    <div class="app-card p-0 overflow-hidden">
+    <form asp-controller="ThanhToan" asp-action="Pay" method="post" id="payFinesForm" data-pay-form>
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
+            <table class="table table-striped align-middle mb-0">
+                <thead>
                     <tr>
-                        <th>Phiếu mượn</th>
-                        <th>Tên sách</th>
-                        <th>Ngày trả</th>
-                        <th>Tình trạng sách</th>
-                        <th>Số ngày trễ</th>
-                        <th class="text-end">Tiền phạt</th>
-                        <th class="text-center">Trạng thái</th>
-                        <th>Ghi chú</th>
+                        <th style="width:44px"><input type="checkbox" class="form-check-input" data-fine-all aria-label="Chọn tất cả" @(payEnabled ? "" : "disabled") /></th>
+                        <th>Phiếu mượn</th><th>Sách</th><th>Ngày trả</th><th>Tình trạng sách</th>
+                        <th class="text-end">Số ngày trễ</th><th class="text-end">Tiền phạt</th><th>Trạng thái</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var f in Model.Fines)
-                    {
-                        var chuaNop = f.TrangThaiPhat == TrangThaiPhat.ChuaNop;
-                        <tr class="@(chuaNop ? "table-warning" : "")">
-                            <td>
-                                <a asp-action="Details" asp-route-id="@f.MaPhieuMuon" class="font-monospace fw-bold text-decoration-none">
-                                    #@f.MaPhieuMuon
-                                </a>
-                            </td>
-                            <td class="fw-semibold">@f.TenSach</td>
-                            <td>@f.NgayTra.ToString("dd/MM/yyyy")</td>
-                            <td>
-                                <span class="badge @(f.TinhTrangSach switch {
-                                    TinhTrangSach.HuHong => "bg-warning text-dark",
-                                    TinhTrangSach.Mat => "bg-danger",
-                                    _ => "bg-light text-dark border"
-                                })">
-                                    @f.TinhTrangSach.GetDisplayName()
-                                </span>
-                            </td>
-                            <td>
-                                @if (f.SoNgayTre > 0)
-                                {
-                                    <span class="text-danger fw-bold">@f.SoNgayTre ngày</span>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">Đúng hạn</span>
-                                }
-                            </td>
-                            <td class="text-end fw-bold text-danger">@f.TienPhat.ToString("N0") ₫</td>
-                            <td class="text-center">
-                                <span class="badge @(chuaNop ? "bg-danger" : "bg-success")">
-                                    @f.TrangThaiPhat.GetDisplayName()
-                                </span>
-                            </td>
-                            <td class="small text-muted">@(f.GhiChu ?? "—")</td>
-                        </tr>
-                    }
-
-                    @if (!Model.Fines.Any())
-                    {
-                        <tr>
-                            <td colspan="8" class="text-center text-muted py-5">
-                                <p class="mb-0">Tuyệt vời! Bạn không có khoản phạt nào trong hệ thống thư viện.</p>
-                            </td>
-                        </tr>
-                    }
+                @foreach (var f in Model.Fines)
+                {
+                    var payable = f.TrangThaiPhat == TrangThaiPhat.ChuaNop && f.TienPhat > 0;
+                    <tr>
+                        <td>
+                            @if (payable && !pending.Contains(f.MaTra))
+                            {
+                                <input type="checkbox" class="form-check-input" name="maTras" value="@f.MaTra"
+                                       data-fine-check data-amount="@((long)f.TienPhat)"
+                                       aria-label="Chọn khoản phạt phiếu #@f.MaPhieuMuon" @(payEnabled ? "" : "disabled") />
+                            }
+                        </td>
+                        <td>#@f.MaPhieuMuon</td>
+                        <td>@f.TenSach</td>
+                        <td>@f.NgayTra.ToString("dd/MM/yyyy")</td>
+                        <td>@f.TinhTrangSach.GetDisplayName()</td>
+                        <td class="text-end">@f.SoNgayTre ngày</td>
+                        <td class="text-end fw-bold">@f.TienPhat.ToString("N0") ₫</td>
+                        <td>
+                            @if (pending.Contains(f.MaTra))
+                            {
+                                <span class="badge badge-soft-warning">Đang chờ thanh toán</span>
+                            }
+                            else
+                            {
+                                <span class="badge @(f.TrangThaiPhat == TrangThaiPhat.DaNop ? "badge-soft-success" : f.TrangThaiPhat == TrangThaiPhat.ChuaNop ? "badge-soft-danger" : "badge-soft-secondary")">@f.TrangThaiPhat.GetDisplayName()</span>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Fines.Any())
+                {
+                    <tr><td colspan="8" class="text-center text-muted py-4">Bạn chưa có khoản phạt nào.</td></tr>
+                }
                 </tbody>
             </table>
         </div>
-    </div>
+
+        <div class="pay-bar">
+            <div>Đã chọn <strong data-pay-count>0</strong> khoản</div>
+            <div class="pay-total">Tổng thanh toán: <strong data-pay-total>0 ₫</strong></div>
+            <button type="button" class="btn btn-primary" data-pay-submit disabled
+                    data-confirm-form="#payFinesForm"
+                    data-confirm-title="Thanh toán tiền phạt"
+                    data-confirm-message="Bạn sẽ được chuyển sang cổng thanh toán payOS. Giao dịch hết hạn sau 10 phút nếu chưa hoàn tất."
+                    data-confirm-ok="Tiếp tục thanh toán">Thanh toán</button>
+        </div>
+    </form>
 </div>
+
+@section Scripts { <script src="~/js/thanhtoan.js" asp-append-version="true"></script> }

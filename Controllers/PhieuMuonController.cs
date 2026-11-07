@@ -1,6 +1,6 @@
 // Họ và tên: Nguyễn Hữu Tuấn
 // Mã sinh viên: 23103100136
-// Nội dung thực hiện: Controller xử lý quy trình đăng ký mượn sách, hủy phiếu, theo dõi phiếu mượn và duyệt mượn sách (Module 3)
+// Nội dung thực hiện: Controller phía bạn đọc: đăng ký mượn sách, hủy phiếu, theo dõi phiếu mượn và tiền phạt (Module 3). Phần quản lý của thủ thư nằm ở QuanLyPhieuMuonController.
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,12 +16,14 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Controllers;
 public class PhieuMuonController : Controller
 {
     private readonly IPhieuMuonService _phieuMuonService;
+    private readonly IThanhToanService _thanhToanService;
     private readonly ICurrentUserService _current;
     private readonly AppDbContext _db;
 
-    public PhieuMuonController(IPhieuMuonService phieuMuonService, ICurrentUserService current, AppDbContext db)
+    public PhieuMuonController(IPhieuMuonService phieuMuonService, IThanhToanService thanhToanService, ICurrentUserService current, AppDbContext db)
     {
         _phieuMuonService = phieuMuonService;
+        _thanhToanService = thanhToanService;
         _current = current;
         _db = db;
     }
@@ -187,31 +189,23 @@ public class PhieuMuonController : Controller
         });
     }
 
-    // 7.5. THEO DÕI PHIẾU MƯỢN CỦA BẠN ĐỌC
+    // 7.5. THEO DÕI PHIẾU MƯỢN CỦA BẠN ĐỌC (cần thẻ đang hoạt động)
     [AuthorizeRole(VaiTro.BanDoc)]
+    [RequireActiveCard]
     [HttpGet]
     public async Task<IActionResult> MyLoans(string? filter = "all")
     {
-        var user = _current.User!;
-        var banDoc = await _db.BanDocs
-            .AsNoTracking()
-            .FirstOrDefaultAsync(b => b.MaTaiKhoan == user.MaTaiKhoan, HttpContext.RequestAborted);
-
-        if (banDoc is null || banDoc.TrangThai != TrangThaiBanDoc.HoatDong)
-        {
-            TempData["ThongBao"] = banDoc?.TrangThai == TrangThaiBanDoc.ChoDuyet
-                ? "Thẻ bạn đọc của bạn đang chờ thủ thư duyệt thẻ. Vui lòng theo dõi tại trang Thẻ & hồ sơ."
-                : "Bạn chưa có thẻ thư viện. Vui lòng hoàn tất thông tin đăng ký thẻ bạn đọc.";
+        var ct = HttpContext.RequestAborted;
+        var maBanDoc = await _current.GetMaBanDocAsync(ct);
+        if (maBanDoc is null)
             return RedirectToAction("MyProfile", "BanDoc");
-        }
 
-        var maBanDoc = banDoc.MaBanDoc;
-        var allLoans = await _phieuMuonService.GetMyLoansAsync(maBanDoc, "all", HttpContext.RequestAborted);
+        var allLoans = await _phieuMuonService.GetMyLoansAsync(maBanDoc.Value, "all", ct);
         var loans = (filter == "all" || string.IsNullOrWhiteSpace(filter))
             ? allLoans
-            : await _phieuMuonService.GetMyLoansAsync(maBanDoc, filter, HttpContext.RequestAborted);
+            : await _phieuMuonService.GetMyLoansAsync(maBanDoc.Value, filter, ct);
 
-        var fines = await _phieuMuonService.GetMyFinesAsync(maBanDoc, HttpContext.RequestAborted);
+        var fines = await _phieuMuonService.GetMyFinesAsync(maBanDoc.Value, ct);
 
         var model = new MyLoansViewModel
         {
@@ -222,43 +216,43 @@ public class PhieuMuonController : Controller
             SoPhieuDaDuyet = allLoans.Count(l => l.TrangThai == TrangThaiPhieuMuon.DaDuyet),
             SoPhieuDangMuon = allLoans.Count(l => l.TrangThai == TrangThaiPhieuMuon.DangMuon),
             SoPhieuQuaHan = allLoans.Count(l => l.IsOverdue),
+            SoPhieuDaTra = allLoans.Count(l => l.TrangThai == TrangThaiPhieuMuon.DaTra),
+            SoPhieuKetThuc = allLoans.Count(l => l.TrangThai is TrangThaiPhieuMuon.DaTra
+                or TrangThaiPhieuMuon.DaHuy or TrangThaiPhieuMuon.TuChoi),
             TongTienPhatChuaNop = fines.ChuaNop
         };
 
         return View(model);
     }
 
-    // 7.5. CHI TIẾT PHIẾU MƯỢN
+    // 7.5. CHI TIẾT PHIẾU MƯỢN (bạn đọc xem phiếu của chính mình; thủ thư được chuyển sang trang quản lý)
     [AuthorizeRole]
+    [RequireActiveCard]
     [HttpGet]
     public async Task<IActionResult> Details(int id)
     {
-        int? requiredMaBanDoc = null;
-        if (_current.IsInRole(VaiTro.BanDoc))
-        {
-            requiredMaBanDoc = await _current.GetMaBanDocAsync(HttpContext.RequestAborted);
-            if (!requiredMaBanDoc.HasValue)
-                return NotFound();
-        }
+        if (_current.IsInRole(VaiTro.Admin, VaiTro.ThuThu))
+            return RedirectToAction("Details", "QuanLyPhieuMuon", new { id });
 
-        // Với Bạn đọc: bắt buộc phiếu phải thuộc về requiredMaBanDoc
-        // Với Thủ thư / Admin: requiredMaBanDoc = null -> xem được chi tiết phiếu
-        var detail = await _phieuMuonService.GetLoanDetailAsync(id, requiredMaBanDoc, HttpContext.RequestAborted);
-        if (detail is null)
-            return NotFound("Không tìm thấy phiếu mượn hoặc bạn không có quyền xem phiếu mượn này.");
+        var maBanDoc = await _current.GetMaBanDocAsync(HttpContext.RequestAborted);
+        if (!maBanDoc.HasValue)
+            return NotFound();
 
-        return View(detail);
+        // Bắt buộc phiếu thuộc về bạn đọc này: đổi mã trên URL không làm lộ dữ liệu người khác.
+        var detail = await _phieuMuonService.GetLoanDetailAsync(id, maBanDoc, HttpContext.RequestAborted);
+        return detail is null ? NotFound("Không tìm thấy phiếu mượn hoặc bạn không có quyền xem phiếu mượn này.") : View(detail);
     }
 
     // 7.4. HỦY PHIẾU MƯỢN (POST only)
     [AuthorizeRole(VaiTro.BanDoc)]
+    [RequireActiveCard]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Cancel(int id, string? returnUrl = null)
     {
         var maBanDoc = await _current.GetMaBanDocAsync(HttpContext.RequestAborted);
         if (!maBanDoc.HasValue)
-            return Forbid();
+            return RedirectToAction("MyProfile", "BanDoc");
 
         var result = await _phieuMuonService.CancelLoanAsync(id, maBanDoc.Value, HttpContext.RequestAborted);
 
@@ -273,127 +267,23 @@ public class PhieuMuonController : Controller
         return RedirectToAction(nameof(MyLoans));
     }
 
-    // 7.5. TIỀN PHẠT CỦA BẠN ĐỌC
+    // 7.5. TIỀN PHẠT CỦA BẠN ĐỌC (cần thẻ đang hoạt động)
     [AuthorizeRole(VaiTro.BanDoc)]
+    [RequireActiveCard]
     [HttpGet]
     public async Task<IActionResult> MyFines()
     {
-        var user = _current.User!;
-        var banDoc = await _db.BanDocs
-            .AsNoTracking()
-            .FirstOrDefaultAsync(b => b.MaTaiKhoan == user.MaTaiKhoan, HttpContext.RequestAborted);
-
-        if (banDoc is null || banDoc.TrangThai != TrangThaiBanDoc.HoatDong)
+        var maBanDoc = await _current.GetMaBanDocAsync(HttpContext.RequestAborted);
+        if (maBanDoc is null)
         {
             TempData["ThongBao"] = "Bạn chưa có thẻ thư viện đang hoạt động.";
             return RedirectToAction("MyProfile", "BanDoc");
         }
 
-        var model = await _phieuMuonService.GetMyFinesAsync(banDoc.MaBanDoc, HttpContext.RequestAborted);
+        var model = await _phieuMuonService.GetMyFinesAsync(maBanDoc.Value, HttpContext.RequestAborted);
+        ViewBag.PendingFineIds = await _thanhToanService.GetPendingFineIdsAsync(maBanDoc.Value, HttpContext.RequestAborted);
+        ViewBag.PayEnabled = _thanhToanService.IsOnlineEnabled;
+
         return View(model);
-    }
-
-    // DÀNH CHO THỦ THƯ & ADMIN: Xử lý & Xác nhận mượn sách
-    [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
-    [HttpGet]
-    public async Task<IActionResult> Index(
-        string? search,
-        TrangThaiPhieuMuon? trangThai,
-        int? maTheLoai,
-        bool? overdueOnly,
-        int page = 1,
-        int pageSize = PagingDefaults.DefaultPageSize)
-    {
-        if (trangThai.HasValue && !Enum.IsDefined(trangThai.Value)) trangThai = null;
-        search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
-
-        var filter = new PhieuMuonManageFilter(search, trangThai, maTheLoai, overdueOnly, page, pageSize);
-        var result = await _phieuMuonService.GetManageListAsync(filter, HttpContext.RequestAborted);
-
-        var today = DateOnly.FromDateTime(DateTime.Today);
-        var choDuyetCount = await _db.PhieuMuons.CountAsync(p => p.TrangThai == TrangThaiPhieuMuon.ChoDuyet, HttpContext.RequestAborted);
-        var daDuyetCount = await _db.PhieuMuons.CountAsync(p => p.TrangThai == TrangThaiPhieuMuon.DaDuyet, HttpContext.RequestAborted);
-        var dangMuonCount = await _db.PhieuMuons.CountAsync(p => p.TrangThai == TrangThaiPhieuMuon.DangMuon, HttpContext.RequestAborted);
-        var overdueCount = await _db.PhieuMuons.CountAsync(p => p.TrangThai == TrangThaiPhieuMuon.DangMuon && p.HanTra.HasValue && p.HanTra.Value < today, HttpContext.RequestAborted);
-
-        ViewBag.TheLoais = await _db.TheLoais.AsNoTracking().OrderBy(t => t.TenTheLoai).ToListAsync(HttpContext.RequestAborted);
-
-        var routeValues = new Dictionary<string, string>();
-        if (search is not null) routeValues["search"] = search;
-        if (trangThai.HasValue) routeValues["trangThai"] = trangThai.Value.ToString();
-        if (maTheLoai.HasValue) routeValues["maTheLoai"] = maTheLoai.Value.ToString();
-        if (overdueOnly == true) routeValues["overdueOnly"] = "true";
-
-        return View(new PhieuMuonManageListViewModel
-        {
-            Search = search,
-            TrangThai = trangThai,
-            MaTheLoai = maTheLoai,
-            OverdueOnly = overdueOnly,
-            PageSize = result.PageSize,
-            Result = result,
-            Pager = PagerViewModel.From(result, "PhieuMuon", nameof(Index), routeValues),
-            ChoDuyetCount = choDuyetCount,
-            DaDuyetCount = daDuyetCount,
-            DangMuonCount = dangMuonCount,
-            OverdueCount = overdueCount
-        });
-    }
-
-    [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Duyet(int id, string? nhanXet, string? returnUrl)
-    {
-        var actingId = _current.User!.MaTaiKhoan;
-        var result = await _phieuMuonService.ApproveLoanAsync(id, actingId, nhanXet, HttpContext.RequestAborted);
-
-        if (result.Succeeded)
-            TempData["ThongBao"] = $"Đã duyệt phiếu mượn #{id}. Bạn đọc có thể đến quầy nhận sách.";
-        else
-            TempData["Loi"] = result.FirstError;
-
-        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-            return LocalRedirect(returnUrl);
-
-        return RedirectToAction(nameof(Index));
-    }
-
-    [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> TuChoi(int id, string? nhanXet, string? returnUrl)
-    {
-        var actingId = _current.User!.MaTaiKhoan;
-        var result = await _phieuMuonService.RejectLoanAsync(id, actingId, nhanXet, HttpContext.RequestAborted);
-
-        if (result.Succeeded)
-            TempData["ThongBao"] = $"Đã từ chối phiếu mượn #{id}.";
-        else
-            TempData["Loi"] = result.FirstError;
-
-        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-            return LocalRedirect(returnUrl);
-
-        return RedirectToAction(nameof(Index));
-    }
-
-    [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> GiaoSach(int id, string? returnUrl)
-    {
-        var actingId = _current.User!.MaTaiKhoan;
-        var result = await _phieuMuonService.DeliverBookAsync(id, actingId, HttpContext.RequestAborted);
-
-        if (result.Succeeded)
-            TempData["ThongBao"] = $"Đã giao sách cho phiếu mượn #{id}. Phiếu chuyển sang trạng thái 'Đang mượn'.";
-        else
-            TempData["Loi"] = result.FirstError;
-
-        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-            return LocalRedirect(returnUrl);
-
-        return RedirectToAction(nameof(Index));
     }
 }
