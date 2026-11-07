@@ -143,6 +143,20 @@
       const contentType = response.headers.get('content-type') || '';
       if (contentType.includes('application/json')) {
         const result = await response.json();
+        if (result.success === false && result.message) {
+          // Thao tác bị chặn phía server: hiện thông báo ngay trong card, giữ form để sửa và gửi lại.
+          const card = form.closest('.app-form-card, .app-card');
+          if (card) {
+            card.querySelector('.ajax-crud-error')?.remove();
+            const alertEl = document.createElement('div');
+            alertEl.className = 'alert alert-danger ajax-crud-error';
+            alertEl.setAttribute('role', 'alert');
+            alertEl.textContent = result.message;
+            card.prepend(alertEl);
+            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+          return;
+        }
         if (result.redirectUrl) {
           window.location.assign(result.redirectUrl);
           return;
@@ -150,12 +164,23 @@
       } else {
         const html = await response.text();
         const parsed = new DOMParser().parseFromString(html, 'text/html');
-        const newCard = parsed.querySelector('.app-form-card');
-        const currentCard = document.querySelector('.app-form-card');
+        // Các view CRUD dùng .app-card, một số trang (TheLoai/Delete) dùng .app-form-card.
+        const newCard = parsed.querySelector('.app-form-card, .app-card');
+        const currentCard = form.closest('.app-form-card, .app-card');
         if (newCard && currentCard) {
           currentCard.replaceWith(newCard);
+          // DOMParser không thực thi script; tạo lại để script nhúng trong card (nếu có) chạy được.
+          newCard.querySelectorAll('script').forEach((oldScript) => {
+            const script = document.createElement('script');
+            if (oldScript.src) script.src = oldScript.src;
+            else script.textContent = oldScript.textContent;
+            oldScript.replaceWith(script);
+          });
           return;
         }
+        // Không tìm thấy card để thay (trang lỗi 500, trang lạ): nạp lại để hiện lỗi thay vì im lặng.
+        window.location.reload();
+        return;
       }
     } catch (error) {
       console.error('CRUD AJAX failed', error);

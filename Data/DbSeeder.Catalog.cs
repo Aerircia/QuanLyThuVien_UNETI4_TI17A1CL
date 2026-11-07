@@ -16,12 +16,16 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Data;
 
 public static partial class DbSeeder
 {
+    // Nạp 1 lần khi seed để kiểm tra file ảnh bìa có tồn tại trên đĩa hay không.
+    private static string? _webRootPath;
+
     // Thứ tự mảng = số thứ tự đầu sách (1..50) mà DbSeeder.Loans.cs tham chiếu.
     private sealed record BookSeed(string Title, string Author, string Publisher, int Year, int Total,
         decimal Price, string Category, TrangThaiSach Status, string Description, string ImageFile);
 
-    private static async Task SeedCatalogAsync(AppDbContext db, ILogger log)
+    private static async Task SeedCatalogAsync(AppDbContext db, ILogger log, string? webRootPath)
     {
+        _webRootPath = webRootPath;
         await SeedTheLoaiAsync(db);
         await SeedSachAsync(db, log);
     }
@@ -48,14 +52,39 @@ public static partial class DbSeeder
 
         var add = new List<Sach>();
         var changed = false;
+
+        // Tự sửa dữ liệu cũ: đường dẫn ảnh thiếu dấu / đầu (vd "wwwroot/uploads/..." hay "uploads/bia/...")
+        // sẽ thành URL tương đối và vỡ 404 trên các trang /Home/...; chuẩn hoá về "/uploads/bia/...".
+        var anhSaiTienTo = await db.Sachs
+            .Where(s => s.ImgPath != null && !s.ImgPath.StartsWith("/"))
+            .ToListAsync();
+        foreach (var sach in anhSaiTienTo)
+        {
+            var duongDan = sach.ImgPath.Trim();
+            if (duongDan.StartsWith("wwwroot", StringComparison.OrdinalIgnoreCase))
+                duongDan = duongDan["wwwroot".Length..];
+            sach.ImgPath = "/" + duongDan.TrimStart('/');
+            changed = true;
+        }
+
         for (var i = 0; i < SampleBooks.Length; i++)
         {
             var b = SampleBooks[i];
-            var imagePath = $"wwwroot/uploads/bia/{Uri.EscapeDataString(b.ImageFile)}";
+            var imagePath = $"/uploads/bia/{Uri.EscapeDataString(b.ImageFile)}";
 
             // Bổ sung ảnh cho dữ liệu cũ nếu chưa có, không ghi đè ảnh thủ thư đã cập nhật.
             if (existing.TryGetValue(b.Title, out var existingBook))
             {
+                // Ảnh trỏ tới file không còn trên đĩa (upload cũ bị mất) mà file seed có sẵn: trỏ về ảnh seed.
+                if (!string.IsNullOrWhiteSpace(existingBook.ImgPath)
+                    && existingBook.ImgPath.StartsWith("/uploads/bia/", StringComparison.OrdinalIgnoreCase)
+                    && !File.Exists(Path.Combine(_webRootPath!, existingBook.ImgPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar)))
+                    && File.Exists(Path.Combine(_webRootPath!, "uploads", "bia", b.ImageFile)))
+                {
+                    existingBook.ImgPath = imagePath;
+                    changed = true;
+                }
+
                 if (string.IsNullOrWhiteSpace(existingBook.ImgPath))
                 {
                     existingBook.ImgPath = imagePath;
