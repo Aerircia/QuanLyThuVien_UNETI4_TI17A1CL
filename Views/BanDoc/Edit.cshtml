@@ -1,10 +1,14 @@
 @* Họ và tên: Nguyễn Hữu Tuấn *@
 @* Mã sinh viên: 23103100136 *@
-@* Nội dung thực hiện: View chỉnh sửa thông tin bạn đọc (Thủ thư & Admin) *@
+@* Nội dung thực hiện: View chỉnh sửa thông tin bạn đọc (Thủ thư & Admin); hồ sơ chờ duyệt / bị từ chối chỉ đổi trạng thái ở trang Duyệt thẻ *@
 @model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.BanDocEditViewModel
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
 @{
     ViewData["Title"] = "Chỉnh sửa bạn đọc";
+    var issued = Model.TrangThai is TrangThaiBanDoc.HoatDong or TrangThaiBanDoc.NgungHoatDong;
+    var statusItems = Html.GetEnumSelectList<TrangThaiBanDoc>()
+        .Where(i => i.Value == ((int)TrangThaiBanDoc.HoatDong).ToString() || i.Value == ((int)TrangThaiBanDoc.NgungHoatDong).ToString())
+        .ToList();
 }
 
 <div class="container py-3">
@@ -91,7 +95,16 @@
 
                         <div class="col-md-4">
                             <label asp-for="TrangThai" class="form-label fw-semibold"></label>
-                            <select asp-for="TrangThai" class="form-select" asp-items="Html.GetEnumSelectList<TrangThaiBanDoc>()"></select>
+                            @if (issued)
+                            {
+                                <select asp-for="TrangThai" class="form-select" asp-items="statusItems"></select>
+                            }
+                            else
+                            {
+                                <input type="hidden" asp-for="TrangThai" />
+                                <input class="form-control" value="@Model.TrangThai.GetDisplayName()" readonly />
+                                <div class="form-text">Hồ sơ chờ duyệt hoặc bị từ chối được xử lý ở trang Duyệt thẻ.</div>
+                            }
                             <span asp-validation-for="TrangThai" class="text-danger small"></span>
                         </div>
                     </div>

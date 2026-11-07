@@ -29,7 +29,7 @@ public class BanDocController : Controller
     }
 
     // 1. Dành cho BẠN ĐỌC: Xem và cập nhật thông tin cá nhân của chính mình
-    [AuthorizeRole]
+    [AuthorizeRole(VaiTro.BanDoc)]
     [HttpGet]
     public async Task<IActionResult> MyProfile()
     {
@@ -86,7 +86,7 @@ public class BanDocController : Controller
         return View(model);
     }
 
-    [AuthorizeRole]
+    [AuthorizeRole(VaiTro.BanDoc)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DangKyThe(DangKyTheBanDocViewModel? model)
@@ -210,7 +210,7 @@ public class BanDocController : Controller
         return RedirectToAction(nameof(MyProfile));
     }
 
-    [AuthorizeRole]
+    [AuthorizeRole(VaiTro.BanDoc)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> HuyDangKyThe()
@@ -225,7 +225,7 @@ public class BanDocController : Controller
         return RedirectToAction(nameof(MyProfile));
     }
 
-    [AuthorizeRole]
+    [AuthorizeRole(VaiTro.BanDoc)]
     [HttpGet]
     public async Task<IActionResult> EditProfile()
     {
@@ -254,7 +254,7 @@ public class BanDocController : Controller
         return View(model);
     }
 
-    [AuthorizeRole]
+    [AuthorizeRole(VaiTro.BanDoc)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditProfile(BanDocEditProfileViewModel model)

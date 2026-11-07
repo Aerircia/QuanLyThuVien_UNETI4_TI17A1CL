@@ -57,6 +57,7 @@ public sealed record GiaHanMuonDetail(
     string? NhanXet,
     int SoLanDaGiaHan,
     int SoLanToiDa,
+    int SoNgayToiDa,
     int SoLuongConLai,
     IReadOnlyList<string> CanhBao)
 {

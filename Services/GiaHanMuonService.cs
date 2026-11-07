@@ -180,7 +180,7 @@ public class GiaHanMuonService : IGiaHanMuonService
         return new GiaHanMuonDetail(
             row.MaGiaHan, row.MaPhieuMuon, row.MaBanDoc, row.TenBanDoc, row.TenSach, row.TrangThaiPhieu,
             row.HanTraHienTai, row.HanTraCu, row.HanTraMoi, row.LyDo, row.NgayYeuCau, row.TrangThai,
-            row.NgayXuLy, row.NhanXet, soLan, cfg.SoLanGiaHanToiDa, conLai, canhBao);
+            row.NgayXuLy, row.NhanXet, soLan, cfg.SoLanGiaHanToiDa, cfg.SoNgayGiaHanToiDa, conLai, canhBao);
     }
 
     public async Task<ServiceResult> ProcessAsync(ProcessGiaHanInput input, CancellationToken ct = default)

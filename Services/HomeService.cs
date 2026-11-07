@@ -1,5 +1,5 @@
 // Họ và tên: Lại Anh Quân
-// Mã sinh viên: 23103100255s
+// Mã sinh viên: 23103100255
 // Nội dung thực hiện: Service trang chủ và tra cứu kho sách (LINQ chạy trong SQL: đếm, nhóm, lọc, sắp xếp, phân trang)
 
 using Microsoft.EntityFrameworkCore;
@@ -56,7 +56,8 @@ public sealed class HomeService : IHomeService
             CauHinh = await _db.CauHinhThuViens.AsNoTracking().FirstOrDefaultAsync(ct) ?? new CauHinhThuVien(),
             TongDauSach = await _db.Sachs.CountAsync(ct),
             TongBanSach = await _db.Sachs.SumAsync(s => (int?)s.SoLuongTong, ct) ?? 0,
-            TongBanDoc = await _db.BanDocs.CountAsync(ct),
+            TongBanDoc = await _db.BanDocs.CountAsync(
+                b => b.TrangThai == TrangThaiBanDoc.HoatDong || b.TrangThai == TrangThaiBanDoc.NgungHoatDong, ct),
             // Cùng định nghĩa với thống kê: một lượt mượn là một phiếu đã được giao (NgayMuon != null).
             TongLuotMuon = await _db.PhieuMuons.CountAsync(p => p.NgayMuon != null, ct)
         };
