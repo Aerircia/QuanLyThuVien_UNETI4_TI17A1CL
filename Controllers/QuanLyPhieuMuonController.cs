@@ -46,6 +46,7 @@ public class QuanLyPhieuMuonController : Controller
     [HttpGet]
     public async Task<IActionResult> Index(
         string? search,
+        string? groupFilter,
         TrangThaiPhieuMuon? trangThai,
         int? maTheLoai,
         bool? overdueOnly,
@@ -53,11 +54,14 @@ public class QuanLyPhieuMuonController : Controller
         int pageSize = PagingDefaults.DefaultPageSize)
     {
         var ct = HttpContext.RequestAborted;
+        await _phieuMuonService.AutoCancelOverdueApprovedLoansAsync(ct);
+
         if (trangThai.HasValue && !Enum.IsDefined(trangThai.Value)) trangThai = null;
         search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+        groupFilter = string.IsNullOrWhiteSpace(groupFilter) ? null : groupFilter.Trim().ToLowerInvariant();
 
         var result = await _phieuMuonService.GetManageListAsync(
-            new PhieuMuonManageFilter(search, trangThai, maTheLoai, overdueOnly, page, pageSize), ct);
+            new PhieuMuonManageFilter(search, trangThai, maTheLoai, overdueOnly, page, pageSize, groupFilter), ct);
         var summary = await _phieuMuonService.GetManageSummaryAsync(ct);
 
         ViewBag.TheLoais = await _theLoaiService.GetActiveOptionsAsync(ct);
@@ -65,24 +69,34 @@ public class QuanLyPhieuMuonController : Controller
 
         var routeValues = new Dictionary<string, string>();
         if (search is not null) routeValues["search"] = search;
+        if (groupFilter is not null) routeValues["groupFilter"] = groupFilter;
         if (trangThai.HasValue) routeValues["trangThai"] = trangThai.Value.ToString();
         if (maTheLoai.HasValue) routeValues["maTheLoai"] = maTheLoai.Value.ToString();
         if (overdueOnly == true) routeValues["overdueOnly"] = "true";
 
-        return View(new PhieuMuonManageListViewModel
+        var model = new PhieuMuonManageListViewModel
         {
             Search = search,
+            GroupFilter = groupFilter,
             TrangThai = trangThai,
             MaTheLoai = maTheLoai,
             OverdueOnly = overdueOnly,
             PageSize = result.PageSize,
             Result = result,
             Pager = PagerViewModel.From(result, "QuanLyPhieuMuon", nameof(Index), routeValues),
+            ChoDuyetGiaoCount = summary.ChoDuyet + summary.DaDuyet,
+            DangMuonCount = summary.DangMuon,
+            HoanThanhCount = summary.HoanThanh,
             ChoDuyetCount = summary.ChoDuyet,
             DaDuyetCount = summary.DaDuyet,
-            DangMuonCount = summary.DangMuon,
             OverdueCount = summary.QuaHan
-        });
+        };
+
+        var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Query.ContainsKey("ajax");
+        if (isAjax)
+            return PartialView("_ManageLoansContentPartial", model);
+
+        return View(model);
     }
 
     // Chi tiết dùng chung view với bạn đọc; view tự ẩn các nút chỉ dành cho bạn đọc.
@@ -103,14 +117,39 @@ public class QuanLyPhieuMuonController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> TuDongHuyQuaHan(string? returnUrl)
+    {
+        var count = await _phieuMuonService.AutoCancelOverdueApprovedLoansAsync(HttpContext.RequestAborted);
+        var msg = count > 0
+            ? $"Đã tự động hủy thành công {count} phiếu mượn đã duyệt nhưng quá 7 ngày chưa nhận sách."
+            : "Không có phiếu mượn nào quá hạn nhận sách cần hủy.";
+
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return Json(new { success = true, count, message = msg });
+
+        TempData["ThongBao"] = msg;
+        return Back(returnUrl);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Duyet(int id, string? nhanXet, string? returnUrl)
     {
         var result = await _phieuMuonService.ApproveLoanAsync(id, ActingId, nhanXet, HttpContext.RequestAborted);
+        var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
 
         if (result.Succeeded)
-            TempData["ThongBao"] = $"Đã duyệt phiếu mượn #{id}. Bạn đọc có thể đến quầy nhận sách.";
+        {
+            var msg = $"Đã duyệt phiếu mượn #{id}. Bạn đọc có thể đến quầy nhận sách.";
+            if (isAjax) return Json(new { success = true, message = msg });
+            TempData["ThongBao"] = msg;
+        }
         else
-            TempData["Loi"] = $"Không thể duyệt phiếu #{id}: {AllErrors(result)}";
+        {
+            var msg = $"Không thể duyệt phiếu #{id}: {AllErrors(result)}";
+            if (isAjax) return Json(new { success = false, message = msg });
+            TempData["Loi"] = msg;
+        }
 
         return Back(returnUrl);
     }
@@ -120,11 +159,20 @@ public class QuanLyPhieuMuonController : Controller
     public async Task<IActionResult> TuChoi(int id, string? nhanXet, string? returnUrl)
     {
         var result = await _phieuMuonService.RejectLoanAsync(id, ActingId, nhanXet, HttpContext.RequestAborted);
+        var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
 
         if (result.Succeeded)
-            TempData["ThongBao"] = $"Đã từ chối phiếu mượn #{id}.";
+        {
+            var msg = $"Đã từ chối phiếu mượn #{id}.";
+            if (isAjax) return Json(new { success = true, message = msg });
+            TempData["ThongBao"] = msg;
+        }
         else
-            TempData["Loi"] = AllErrors(result);
+        {
+            var msg = AllErrors(result);
+            if (isAjax) return Json(new { success = false, message = msg });
+            TempData["Loi"] = msg;
+        }
 
         return Back(returnUrl);
     }
@@ -134,11 +182,43 @@ public class QuanLyPhieuMuonController : Controller
     public async Task<IActionResult> GiaoSach(int id, string? returnUrl)
     {
         var result = await _phieuMuonService.DeliverBookAsync(id, ActingId, HttpContext.RequestAborted);
+        var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
 
         if (result.Succeeded)
-            TempData["ThongBao"] = $"Đã giao sách cho phiếu mượn #{id}. Phiếu chuyển sang trạng thái 'Đang mượn'.";
+        {
+            var msg = $"Đã giao sách cho phiếu mượn #{id}. Phiếu chuyển sang trạng thái 'Đang mượn'.";
+            if (isAjax) return Json(new { success = true, message = msg });
+            TempData["ThongBao"] = msg;
+        }
         else
-            TempData["Loi"] = AllErrors(result);
+        {
+            var msg = AllErrors(result);
+            if (isAjax) return Json(new { success = false, message = msg });
+            TempData["Loi"] = msg;
+        }
+
+        return Back(returnUrl);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> HuyPhieu(int id, string? nhanXet, string? returnUrl)
+    {
+        var result = await _phieuMuonService.CancelLoanByStaffAsync(id, ActingId, nhanXet, HttpContext.RequestAborted);
+        var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+
+        if (result.Succeeded)
+        {
+            var msg = $"Đã hủy phiếu mượn #{id}.";
+            if (isAjax) return Json(new { success = true, message = msg });
+            TempData["ThongBao"] = msg;
+        }
+        else
+        {
+            var msg = $"Không thể hủy phiếu #{id}: {AllErrors(result)}";
+            if (isAjax) return Json(new { success = false, message = msg });
+            TempData["Loi"] = msg;
+        }
 
         return Back(returnUrl);
     }

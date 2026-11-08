@@ -222,6 +222,10 @@ public class PhieuMuonController : Controller
             TongTienPhatChuaNop = fines.ChuaNop
         };
 
+        var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Query.ContainsKey("ajax");
+        if (isAjax)
+            return PartialView("_MyLoansListPartial", model);
+
         return View(model);
     }
 
@@ -251,15 +255,28 @@ public class PhieuMuonController : Controller
     public async Task<IActionResult> Cancel(int id, string? returnUrl = null)
     {
         var maBanDoc = await _current.GetMaBanDocAsync(HttpContext.RequestAborted);
+        var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+
         if (!maBanDoc.HasValue)
+        {
+            if (isAjax) return Json(new { success = false, message = "Bạn chưa có hồ sơ bạn đọc." });
             return RedirectToAction("MyProfile", "BanDoc");
+        }
 
         var result = await _phieuMuonService.CancelLoanAsync(id, maBanDoc.Value, HttpContext.RequestAborted);
 
         if (result.Succeeded)
-            TempData["ThongBao"] = "Đã hủy phiếu mượn thành công.";
+        {
+            var msg = "Đã hủy phiếu mượn thành công.";
+            if (isAjax) return Json(new { success = true, message = msg });
+            TempData["ThongBao"] = msg;
+        }
         else
-            TempData["Loi"] = result.FirstError;
+        {
+            var msg = result.FirstError;
+            if (isAjax) return Json(new { success = false, message = msg });
+            TempData["Loi"] = msg;
+        }
 
         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             return LocalRedirect(returnUrl);

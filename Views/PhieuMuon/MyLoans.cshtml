@@ -1,11 +1,10 @@
 @* Họ và tên: Nguyễn Hữu Tuấn *@
 @* Mã sinh viên: 23103100136 *@
-@* Nội dung thực hiện: View theo dõi danh sách phiếu mượn của bạn đọc (MyLoans) *@
+@* Nội dung thực hiện: View theo dõi danh sách phiếu mượn của bạn đọc (MyLoans) - hỗ trợ AJAX *@
 @model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.MyLoansViewModel
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
 @{
     ViewData["Title"] = "Phiếu mượn của tôi";
-    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
 }
 
 <div class="container py-3">
@@ -21,154 +20,95 @@
 
     <partial name="_AlertsPartial" />
 
-    <!-- Cảnh báo quá hạn nếu có -->
-    @if (Model.SoPhieuQuaHan > 0)
-    {
-        <div class="alert alert-overdue d-flex align-items-center mb-4" role="alert">
-            <span class="fs-4 me-3">⚠️</span>
-            <div>
-                <h6 class="fw-bold mb-1">Bạn có @Model.SoPhieuQuaHan phiếu mượn đang quá hạn!</h6>
-                <div class="small">
-                    Vui lòng mang sách đến quầy thư viện trả sớm để tránh phát sinh thêm phí phạt trễ hạn. Các đăng ký mượn mới sẽ tạm bị khóa đến khi bạn hoàn tất trả sách quá hạn.
-                </div>
-            </div>
-        </div>
-    }
-
-    <!-- Tabs phân loại -->
-    <div class="d-flex flex-wrap gap-2 mb-3">
-        <a asp-action="MyLoans" asp-route-filter="all" class="btn btn-sm @(Model.Filter == "all" ? "btn-primary" : "btn-light border")">
-            Tất cả (@Model.TongSoPhieu)
-        </a>
-        <a asp-action="MyLoans" asp-route-filter="pending" class="btn btn-sm @(Model.Filter == "pending" ? "btn-primary" : "btn-light border")">
-            Chờ duyệt (@Model.SoPhieuChoDuyet)
-        </a>
-        <a asp-action="MyLoans" asp-route-filter="active" class="btn btn-sm @(Model.Filter == "active" ? "btn-primary" : "btn-light border")">
-            Đang xử lý &amp; mượn (@(Model.SoPhieuChoDuyet + Model.SoPhieuDaDuyet + Model.SoPhieuDangMuon))
-        </a>
-        <a asp-action="MyLoans" asp-route-filter="overdue" class="btn btn-sm @(Model.Filter == "overdue" ? "btn-danger" : "btn-outline-danger")">
-            Quá hạn (@Model.SoPhieuQuaHan)
-        </a>
-        <a asp-action="MyLoans" asp-route-filter="completed" class="btn btn-sm @(Model.Filter == "completed" ? "btn-primary" : "btn-light border")">
-            Đã kết thúc (@Model.SoPhieuKetThuc)
-        </a>
-    </div>
-
-    <!-- Danh sách phiếu mượn -->
-    <div class="app-card p-0 overflow-hidden">
-        <div class="table-responsive">
-            <table class="table table-striped align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Mã</th>
-                        <th>Đầu sách</th>
-                        <th>Thể loại</th>
-                        <th>Ngày đăng ký</th>
-                        <th>Hạn trả</th>
-                        <th>Trạng thái</th>
-                        <th class="text-end">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model.Loans)
-                    {
-                        var isOd = item.IsOverdue;
-                        <tr class="@(isOd ? "table-danger" : "")">
-                            <td>
-                                <a asp-action="Details" asp-route-id="@item.MaPhieuMuon" class="fw-bold font-monospace text-decoration-none text-dark">
-                                    #@item.MaPhieuMuon
-                                </a>
-                            </td>
-                            <td>
-                                <div class="fw-semibold">@item.TenSach</div>
-                                <small class="text-muted">@item.TacGia @(item.ViTriKe != null ? $"· Kệ {item.ViTriKe}" : "")</small>
-                            </td>
-                            <td>@(item.TheLoai ?? "—")</td>
-                            <td>@item.NgayDangKy.ToString("dd/MM/yyyy")</td>
-                            <td>
-                                @if (item.HanTra.HasValue)
-                                {
-                                    <div class="@(isOd ? "text-danger fw-bold" : "text-dark")">
-                                        @item.HanTra.Value.ToString("dd/MM/yyyy")
-                                    </div>
-                                    @if (isOd)
-                                    {
-                                        <span class="badge badge-soft-danger small">Quá hạn @item.SoNgayQuaHan ngày</span>
-                                    }
-                                    else if (item.TrangThai == TrangThaiPhieuMuon.DangMuon)
-                                    {
-                                        <small class="text-muted">Còn @item.SoNgayConLai ngày</small>
-                                    }
-                                }
-                                else if (item.TrangThai == TrangThaiPhieuMuon.DaDuyet)
-                                {
-                                    <span class="text-info small fw-bold">Sẵn sàng nhận sách tại quầy</span>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">—</span>
-                                }
-                            </td>
-                            <td>
-                                <span class="badge @(item.TrangThai switch {
-                                    TrangThaiPhieuMuon.ChoDuyet => "badge-soft-warning",
-                                    TrangThaiPhieuMuon.DaDuyet  => "badge-soft-info",
-                                    TrangThaiPhieuMuon.DangMuon => isOd ? "badge-soft-danger" : "badge-soft-primary",
-                                    TrangThaiPhieuMuon.DaTra    => "badge-soft-success",
-                                    TrangThaiPhieuMuon.TuChoi   => "badge-soft-danger",
-                                    TrangThaiPhieuMuon.DaHuy    => "badge-soft-secondary",
-                                    _                           => "badge-soft-secondary"
-                                })">
-                                    @item.TrangThai.GetDisplayName()
-                                </span>
-                            </td>
-                            <td class="text-end text-nowrap">
-                                <a asp-action="Details" asp-route-id="@item.MaPhieuMuon" class="btn btn-sm btn-outline-primary">
-                                    Chi tiết
-                                </a>
-
-                                @if (item.TrangThai == TrangThaiPhieuMuon.DangMuon && !isOd)
-                                {
-                                    <form asp-controller="GiaHanMuon" asp-action="Create" asp-route-maPhieuMuon="@item.MaPhieuMuon" method="get" class="d-inline">
-                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                        <button type="submit" class="btn btn-sm btn-outline-secondary">
-                                            <i class="bi bi-arrow-repeat"></i> Gia hạn
-                                        </button>
-                                    </form>
-                                }
-
-                                @if (item.CanCancel)
-                                {
-                                    <form asp-action="Cancel" asp-route-id="@item.MaPhieuMuon" method="post" class="d-inline" id="cancelLoanForm-@item.MaPhieuMuon">
-                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                                data-confirm-form="#cancelLoanForm-@item.MaPhieuMuon"
-                                                data-confirm-title="Xác nhận hủy phiếu mượn"
-                                                data-confirm-message="Bạn có chắc chắn muốn hủy phiếu mượn cuốn sách '@item.TenSach'? Thao tác không thể hoàn tác."
-                                                data-confirm-ok="Hủy phiếu"
-                                                data-confirm-class="btn-danger">
-
-                                            Hủy phiếu
-                                        </button>
-                                    </form>
-                                }
-                            </td>
-                        </tr>
-                    }
-
-                    @if (!Model.Loans.Any())
-                    {
-                        <tr>
-                            <td colspan="7" class="text-center text-muted py-5">
-                                <p class="mb-2">Không có phiếu mượn nào trong mục này.</p>
-                                <a asp-controller="Home" asp-action="Index" class="btn btn-sm btn-outline-primary">
-                                    Khám phá kho sách để mượn ngay
-                                </a>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+    <div id="myLoansContainer">
+        <partial name="_MyLoansListPartial" model="Model" />
     </div>
 </div>
+
+@section Scripts {
+    <script>
+    (() => {
+        const container = document.getElementById('myLoansContainer');
+        if (!container) return;
+
+        let currentUrl = window.location.href;
+
+        const showAlert = (message, type = 'success') => {
+            const alertBox = document.getElementById('myLoansAlertContainer');
+            if (!alertBox) return;
+            alertBox.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>`;
+            alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        };
+
+        const loadContent = async (url, pushState = true) => {
+            try {
+                const res = await fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (!res.ok) throw new Error('Network error');
+                const html = await res.text();
+                container.innerHTML = html;
+                currentUrl = url;
+                if (pushState) {
+                    history.pushState(null, '', url);
+                }
+            } catch (err) {
+                console.error('Failed to load my loans content', err);
+                window.location.href = url;
+            }
+        };
+
+        // Click chuyển tab phân loại bằng AJAX
+        container.addEventListener('click', (e) => {
+            const tabLink = e.target.closest('a.myloans-tab-link');
+            if (tabLink && tabLink.href) {
+                e.preventDefault();
+                loadContent(tabLink.href);
+            }
+        });
+
+        // Xử lý hủy phiếu bằng AJAX (được gọi sau khi người dùng xác nhận trên modal)
+        document.addEventListener('submit', async (e) => {
+            const form = e.target.closest('.myloans-cancel-form');
+            if (!form) return;
+
+            e.preventDefault();
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            try {
+                const res = await fetch(form.action, {
+                    method: form.method || 'POST',
+                    body: new FormData(form),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json, text/html;q=0.9'
+                    }
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    showAlert(data.message || 'Đã hủy phiếu mượn thành công.', 'success');
+                } else {
+                    showAlert(data.message || 'Không thể hủy phiếu mượn.', 'danger');
+                }
+                await loadContent(currentUrl, false);
+            } catch (err) {
+                console.error('Cancel loan error', err);
+                window.location.reload();
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        });
+
+        // Back / Forward browser navigation
+        window.addEventListener('popstate', () => {
+            loadContent(window.location.href, false);
+        });
+    })();
+    </script>
+}
