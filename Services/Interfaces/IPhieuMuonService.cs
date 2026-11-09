@@ -7,7 +7,7 @@ using QuanLyThuVien_UNETI4_TI17A1CL.ViewModels;
 
 namespace QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces;
 
-public sealed record PhieuMuonManageSummary(int ChoDuyet, int DaDuyet, int DangMuon, int QuaHan, int ChuaNhanSach);
+public sealed record PhieuMuonManageSummary(int ChoDuyet, int DaDuyet, int DangMuon, int QuaHan, int ChuaNhanSach, int HoanThanh = 0);
 
 public static class LoanRules
 {
@@ -70,6 +70,16 @@ public interface IPhieuMuonService
     /// Thủ thư giao sách cho bạn đọc (chuyển sang Đang mượn, ghi nhận NgayMuon và HanTra theo cấu hình thư viện).
     /// </summary>
     Task<ServiceResult> DeliverBookAsync(int maPhieuMuon, int actingMaTaiKhoan, CancellationToken ct = default);
+
+    /// <summary>
+    /// Thủ thư / Admin hủy phiếu mượn đã duyệt nhưng chưa giao sách (hoặc phiếu chờ duyệt).
+    /// </summary>
+    Task<ServiceResult> CancelLoanByStaffAsync(int maPhieuMuon, int actingMaTaiKhoan, string? lyDo = null, CancellationToken ct = default);
+
+    /// <summary>
+    /// Tự động hủy tất cả phiếu mượn đã duyệt nhưng chưa đến nhận sách quá 7 ngày.
+    /// </summary>
+    Task<int> AutoCancelOverdueApprovedLoansAsync(CancellationToken ct = default);
 
     /// <summary>Số liệu nhanh cho trang quản lý phiếu mượn.</summary>
     Task<PhieuMuonManageSummary> GetManageSummaryAsync(CancellationToken ct = default);
