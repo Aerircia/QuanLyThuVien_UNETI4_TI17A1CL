@@ -256,12 +256,14 @@ public sealed record PhieuMuonManageFilter(
     int? MaTheLoai,
     bool? OverdueOnly,
     int Page = 1,
-    int PageSize = PagingDefaults.DefaultPageSize);
+    int PageSize = PagingDefaults.DefaultPageSize,
+    string? GroupFilter = null);
 
 public sealed class PhieuMuonManageListViewModel
 {
     public string? Search { get; set; }
     public TrangThaiPhieuMuon? TrangThai { get; set; }
+    public string? GroupFilter { get; set; }
     public int? MaTheLoai { get; set; }
     public bool? OverdueOnly { get; set; }
     public int PageSize { get; set; } = PagingDefaults.DefaultPageSize;
@@ -269,9 +271,12 @@ public sealed class PhieuMuonManageListViewModel
     public PagedResult<PhieuMuonItemViewModel> Result { get; set; } = default!;
     public PagerViewModel Pager { get; set; } = default!;
 
+    public int ChoDuyetGiaoCount { get; set; }
+    public int DangMuonCount { get; set; }
+    public int HoanThanhCount { get; set; }
+
     public int ChoDuyetCount { get; set; }
     public int DaDuyetCount { get; set; }
-    public int DangMuonCount { get; set; }
     public int OverdueCount { get; set; }
 }
 

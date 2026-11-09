@@ -352,7 +352,7 @@ public class BanDocController : Controller
         var hoatDong = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.HoatDong, HttpContext.RequestAborted);
         var ngungHoatDong = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.NgungHoatDong || b.TrangThai == TrangThaiBanDoc.TuChoi, HttpContext.RequestAborted);
 
-        return View(new BanDocListViewModel
+        var model = new BanDocListViewModel
         {
             Search = search,
             LoaiBanDoc = null,
@@ -364,7 +364,13 @@ public class BanDocController : Controller
             SoBanDocChoDuyet = choDuyet,
             SoBanDocHoatDong = hoatDong,
             SoBanDocNgungHoatDong = ngungHoatDong
-        });
+        };
+
+        var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Query.ContainsKey("ajax");
+        if (isAjax)
+            return PartialView("_DuyetTheContentPartial", model);
+
+        return View(model);
     }
 
     [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
@@ -373,10 +379,20 @@ public class BanDocController : Controller
     public async Task<IActionResult> Duyet(int id, string? returnUrl)
     {
         var result = await _banDocService.DuyetTheAsync(id, HttpContext.RequestAborted);
+        var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+
         if (result.Succeeded)
-            TempData["ThongBao"] = "Đã phê duyệt và kích hoạt thẻ bạn đọc thành công.";
+        {
+            var msg = "Đã phê duyệt và kích hoạt thẻ bạn đọc thành công.";
+            if (isAjax) return Json(new { success = true, message = msg });
+            TempData["ThongBao"] = msg;
+        }
         else
-            TempData["Loi"] = result.FirstError;
+        {
+            var msg = result.FirstError;
+            if (isAjax) return Json(new { success = false, message = msg });
+            TempData["Loi"] = msg;
+        }
 
         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             return LocalRedirect(returnUrl);
@@ -390,10 +406,20 @@ public class BanDocController : Controller
     public async Task<IActionResult> TuChoi(int id, string? returnUrl)
     {
         var result = await _banDocService.TuChoiTheAsync(id, null, HttpContext.RequestAborted);
+        var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+
         if (result.Succeeded)
-            TempData["ThongBao"] = "Đã từ chối yêu cầu đăng ký thẻ bạn đọc.";
+        {
+            var msg = "Đã từ chối yêu cầu đăng ký thẻ bạn đọc.";
+            if (isAjax) return Json(new { success = true, message = msg });
+            TempData["ThongBao"] = msg;
+        }
         else
-            TempData["Loi"] = result.FirstError;
+        {
+            var msg = result.FirstError;
+            if (isAjax) return Json(new { success = false, message = msg });
+            TempData["Loi"] = msg;
+        }
 
         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             return LocalRedirect(returnUrl);
