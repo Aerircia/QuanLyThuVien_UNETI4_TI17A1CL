@@ -101,6 +101,58 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                         });
                 });
 
+            modelBuilder.Entity("QuanLyThuVien_UNETI4_TI17A1CL.Models.CaiDatThongBao", b =>
+                {
+                    b.Property<int>("MaCaiDat")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaCaiDat"));
+
+                    b.Property<bool>("BatThongBaoEmail")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("BatThongBaoWeb")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<int>("MaTaiKhoan")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("NgayCapNhat")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("NhomGiaHan")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("NhomHeThong")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("NhomMuonTra")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("NhomTienPhat")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.HasKey("MaCaiDat");
+
+                    b.HasIndex("MaTaiKhoan")
+                        .IsUnique();
+
+                    b.ToTable("CaiDatThongBao");
+                });
+
             modelBuilder.Entity("QuanLyThuVien_UNETI4_TI17A1CL.Models.CauHinhThuVien", b =>
                 {
                     b.Property<int>("MaCauHinh")
@@ -582,6 +634,80 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                     b.ToTable("TheLoai");
                 });
 
+            modelBuilder.Entity("QuanLyThuVien_UNETI4_TI17A1CL.Models.ThongBao", b =>
+                {
+                    b.Property<int>("MaThongBao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaThongBao"));
+
+                    b.Property<bool>("DaDoc")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("DangHienThi")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("DuongDan")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Icon")
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("KhoaSuKien")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("nvarchar(160)");
+
+                    b.Property<string>("LoaiDoiTuong")
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("LoaiThongBao")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int?>("MaDoiTuong")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaTaiKhoan")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MucDo")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
+                    b.Property<DateTime?>("NgayDoc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("NgayTao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NoiDung")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("TieuDe")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.HasKey("MaThongBao");
+
+                    b.HasIndex("MaTaiKhoan", "KhoaSuKien")
+                        .IsUnique();
+
+                    b.HasIndex("MaTaiKhoan", "DangHienThi", "DaDoc", "NgayTao")
+                        .HasDatabaseName("IX_ThongBao_Inbox");
+
+                    b.ToTable("ThongBao");
+                });
+
             modelBuilder.Entity("QuanLyThuVien_UNETI4_TI17A1CL.Models.TraSach", b =>
                 {
                     b.Property<int>("MaTra")
@@ -640,6 +766,17 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                     b.HasOne("QuanLyThuVien_UNETI4_TI17A1CL.Models.TaiKhoan", "TaiKhoan")
                         .WithOne("BanDoc")
                         .HasForeignKey("QuanLyThuVien_UNETI4_TI17A1CL.Models.BanDoc", "MaTaiKhoan")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("TaiKhoan");
+                });
+
+            modelBuilder.Entity("QuanLyThuVien_UNETI4_TI17A1CL.Models.CaiDatThongBao", b =>
+                {
+                    b.HasOne("QuanLyThuVien_UNETI4_TI17A1CL.Models.TaiKhoan", "TaiKhoan")
+                        .WithMany()
+                        .HasForeignKey("MaTaiKhoan")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -741,6 +878,17 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
                         .IsRequired();
 
                     b.Navigation("TheLoai");
+                });
+
+            modelBuilder.Entity("QuanLyThuVien_UNETI4_TI17A1CL.Models.ThongBao", b =>
+                {
+                    b.HasOne("QuanLyThuVien_UNETI4_TI17A1CL.Models.TaiKhoan", "TaiKhoan")
+                        .WithMany()
+                        .HasForeignKey("MaTaiKhoan")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("TaiKhoan");
                 });
 
             modelBuilder.Entity("QuanLyThuVien_UNETI4_TI17A1CL.Models.TraSach", b =>
