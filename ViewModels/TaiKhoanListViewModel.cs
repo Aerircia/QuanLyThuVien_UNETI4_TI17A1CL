@@ -13,6 +13,7 @@ public class TaiKhoanListViewModel
     public string? Search { get; set; }
     public VaiTro? VaiTro { get; set; }
     public TrangThaiTaiKhoan? TrangThai { get; set; }
+    public string Sort { get; set; } = "username";
     public int PageSize { get; set; } = PagingDefaults.DefaultPageSize;
 
     /// <summary>Tài khoản đang đăng nhập (View dùng để ẩn nút khóa/xóa chính mình; service vẫn kiểm tra lại).</summary>

@@ -13,7 +13,8 @@ public sealed record ThanhToanFilter(
     DateOnly? Tu,
     DateOnly? Den,
     int Page = 1,
-    int PageSize = PagingDefaults.DefaultPageSize);
+    int PageSize = PagingDefaults.DefaultPageSize,
+    string? Sort = null);
 
 public sealed record GiaoDichListItem(
     int MaGiaoDich,
@@ -57,18 +58,6 @@ public sealed record GiaoDichDetail(
     string? GhiChu,
     IReadOnlyList<GiaoDichLine> Lines);
 
-public sealed record DebtorItem(int MaBanDoc, string HoTen, string? MaSoThe, int SoKhoan, decimal TongNo);
-
-public sealed record UnpaidFine(
-    int MaTra,
-    int MaPhieuMuon,
-    string TenSach,
-    DateOnly NgayTra,
-    TinhTrangSach TinhTrangSach,
-    int SoNgayTre,
-    decimal TienPhat,
-    bool DangCho);
-
 public interface IThanhToanService
 {
     bool IsOnlineEnabled { get; }
@@ -96,8 +85,4 @@ public interface IThanhToanService
     Task<GiaoDichDetail?> GetAsync(int maGiaoDich, int? maBanDoc, CancellationToken ct = default);
 
     Task<GiaoDichDetail?> GetByOrderCodeAsync(long orderCode, int? maBanDoc, CancellationToken ct = default);
-
-    Task<PagedResult<DebtorItem>> GetDebtorsAsync(string? search, int page, int pageSize, CancellationToken ct = default);
-
-    Task<IReadOnlyList<UnpaidFine>> GetUnpaidFinesAsync(int maBanDoc, CancellationToken ct = default);
 }

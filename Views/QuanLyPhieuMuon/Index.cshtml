@@ -16,7 +16,7 @@
             <p class="text-muted small mb-0">Xử lý yêu cầu đăng ký mượn sách, xác nhận duyệt, giao sách, hủy phiếu và giám sát hạn trả.</p>
         </div>
         <div>
-            <form asp-action="TuDongHuyQuaHan" method="post" class="d-inline loan-action-form" id="autoCancelOverdueForm">
+        <form asp-action="TuDongHuyQuaHan" method="post" class="d-inline loan-action-form" id="autoCancelOverdueForm" data-ajax-action="json" data-ajax-refresh="#manageLoansContainer" data-ajax-alert="#manageLoansAlertContainer">
                 <input type="hidden" name="returnUrl" value="@returnUrl" />
                 <button type="button" class="btn btn-outline-danger"
                         data-confirm-form="#autoCancelOverdueForm"
@@ -32,112 +32,7 @@
 
     <partial name="_AlertsPartial" />
 
-    <div id="manageLoansContainer">
+    <div id="manageLoansContainer" data-ajax-list data-ajax-form="#manageFilterForm">
         <partial name="_ManageLoansContentPartial" model="Model" />
     </div>
 </div>
-
-@section Scripts {
-    <script>
-    (() => {
-        const container = document.getElementById('manageLoansContainer');
-        if (!container) return;
-
-        let currentUrl = window.location.href;
-
-        const showAlert = (message, type = 'success') => {
-            const alertBox = document.getElementById('manageLoansAlertContainer');
-            if (!alertBox) return;
-            alertBox.innerHTML = `
-                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>`;
-            alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        };
-
-        const loadContent = async (url, pushState = true) => {
-            try {
-                const res = await fetch(url, {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                });
-                if (!res.ok) throw new Error('Network error');
-                const html = await res.text();
-                container.innerHTML = html;
-                currentUrl = url;
-                if (pushState) {
-                    history.pushState(null, '', url);
-                }
-            } catch (err) {
-                console.error('Failed to load manage loans content', err);
-                window.location.href = url;
-            }
-        };
-
-        // Click các thẻ lọc 3 nhóm và phân trang
-        container.addEventListener('click', (e) => {
-            const link = e.target.closest('a.filter-card-link, .pagination a');
-            if (link && link.href) {
-                e.preventDefault();
-                loadContent(link.href);
-            }
-        });
-
-        // Submit form lọc tìm kiếm
-        container.addEventListener('submit', (e) => {
-            const form = e.target.closest('#manageFilterForm');
-            if (form) {
-                e.preventDefault();
-                const formData = new FormData(form);
-                const params = new URLSearchParams(formData);
-                const url = `${form.action}?${params.toString()}`;
-                loadContent(url);
-            }
-        });
-
-        // Xử lý gửi các form thao tác (Duyệt, Từ chối, Giao sách, Hủy phiếu, Tự động hủy) qua AJAX
-        document.addEventListener('submit', async (e) => {
-            const form = e.target.closest('.loan-action-form');
-            if (!form) return;
-
-            e.preventDefault();
-            const submitBtn = form.querySelector('button[type="submit"]');
-            if (submitBtn) submitBtn.disabled = true;
-
-            const modalEl = form.closest('.modal');
-            if (modalEl && window.bootstrap) {
-                bootstrap.Modal.getInstance(modalEl)?.hide();
-            }
-
-            try {
-                const res = await fetch(form.action, {
-                    method: form.method || 'POST',
-                    body: new FormData(form),
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json, text/html;q=0.9'
-                    }
-                });
-
-                const data = await res.json();
-                if (data.success) {
-                    showAlert(data.message || 'Thao tác thành công.', 'success');
-                } else {
-                    showAlert(data.message || 'Thao tác không thành công.', 'danger');
-                }
-                await loadContent(currentUrl, false);
-            } catch (err) {
-                console.error('Action submit error', err);
-                window.location.reload();
-            } finally {
-                if (submitBtn) submitBtn.disabled = false;
-            }
-        });
-
-        // Lịch sử duyệt web (Back/Forward)
-        window.addEventListener('popstate', () => {
-            loadContent(window.location.href, false);
-        });
-    })();
-    </script>
-}

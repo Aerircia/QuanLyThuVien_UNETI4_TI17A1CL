@@ -12,7 +12,8 @@ public sealed record TaiKhoanFilter(
     VaiTro? VaiTro,
     TrangThaiTaiKhoan? TrangThai,
     int Page = 1,
-    int PageSize = PagingDefaults.DefaultPageSize);
+    int PageSize = PagingDefaults.DefaultPageSize,
+    string? Sort = null);
 
 public sealed record TaiKhoanListItem(
     int MaTaiKhoan,
