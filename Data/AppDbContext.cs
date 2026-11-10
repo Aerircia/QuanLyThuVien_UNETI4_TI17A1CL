@@ -25,6 +25,8 @@ public class AppDbContext : DbContext
     public DbSet<Otp> Otps => Set<Otp>();
     public DbSet<GiaoDichThanhToan> GiaoDichThanhToans => Set<GiaoDichThanhToan>();
     public DbSet<GiaoDichThanhToanChiTiet> GiaoDichThanhToanChiTiets => Set<GiaoDichThanhToanChiTiet>();
+    public DbSet<ThongBao> ThongBaos => Set<ThongBao>();
+    public DbSet<CaiDatThongBao> CaiDatThongBaos => Set<CaiDatThongBao>();
 
     // Enums are stored as strings holding the member name, so the filters below compare against those names.
     private static readonly string ActiveLoanFilter =
@@ -128,6 +130,39 @@ public class AppDbContext : DbContext
         // ---- Never cascade-delete (keeps history, avoids SQL Server multiple-cascade-path errors) ----
         foreach (var fk in b.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             fk.DeleteBehavior = DeleteBehavior.Restrict;
+
+        // ---- Notifications ----
+        b.Entity<ThongBao>(entity =>
+        {
+            entity.HasKey(x => x.MaThongBao);
+            entity.Property(x => x.TieuDe).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.NoiDung).HasMaxLength(1000).IsRequired();
+            entity.Property(x => x.LoaiThongBao).HasMaxLength(30).IsRequired();
+            entity.Property(x => x.MucDo).HasMaxLength(2).IsRequired();
+            entity.Property(x => x.Icon).HasMaxLength(40);
+            entity.Property(x => x.LoaiDoiTuong).HasMaxLength(40);
+            entity.Property(x => x.DuongDan).HasMaxLength(500);
+            entity.Property(x => x.KhoaSuKien).HasMaxLength(160).IsRequired();
+            entity.HasOne(x => x.TaiKhoan).WithMany().HasForeignKey(x => x.MaTaiKhoan)
+                .OnDelete(DeleteBehavior.Restrict).IsRequired();
+            entity.HasIndex(x => new { x.MaTaiKhoan, x.KhoaSuKien }).IsUnique();
+            entity.HasIndex(x => new { x.MaTaiKhoan, x.DangHienThi, x.DaDoc, x.NgayTao })
+                .HasDatabaseName("IX_ThongBao_Inbox");
+        });
+
+        b.Entity<CaiDatThongBao>(entity =>
+        {
+            entity.HasKey(x => x.MaCaiDat);
+            entity.HasOne(x => x.TaiKhoan).WithMany().HasForeignKey(x => x.MaTaiKhoan)
+                .OnDelete(DeleteBehavior.Restrict).IsRequired();
+            entity.Property(x => x.BatThongBaoWeb).HasDefaultValue(true);
+            entity.Property(x => x.BatThongBaoEmail).HasDefaultValue(true);
+            entity.Property(x => x.NhomMuonTra).HasDefaultValue(true);
+            entity.Property(x => x.NhomGiaHan).HasDefaultValue(true);
+            entity.Property(x => x.NhomTienPhat).HasDefaultValue(true);
+            entity.Property(x => x.NhomHeThong).HasDefaultValue(true);
+            entity.HasIndex(x => x.MaTaiKhoan).IsUnique();
+        });
 
         // ---- Configure GiaoDichThanhToan and GiaoDichThanhToanChiTiet ----
         b.ConfigureThanhToan();
