@@ -36,64 +36,14 @@
                 </div>
                 <div class="col-md-3 d-flex gap-2">
                     <button type="submit" class="btn btn-primary flex-fill">Lọc</button>
-                    <a asp-action="Index" id="nut-xoa-loc-the-loai" class="btn btn-outline-secondary flex-fill">Xóa lọc</a>
+                    <a asp-action="Index" id="nut-xoa-loc-the-loai" data-ajax-clear class="btn btn-outline-secondary flex-fill">Xóa lọc</a>
                 </div>
             </form>
         </div>
     </div>
 
     @* Vùng kết quả được thay bằng partial _BangTheLoai khi lọc/tìm kiếm/phân trang qua AJAX *@
-    <div id="vung-ket-qua-the-loai">
+    <div id="vung-ket-qua-the-loai" data-ajax-list data-ajax-form="#bo-loc-the-loai">
         <partial name="_BangTheLoai" model="Model" />
     </div>
 </div>
-
-@section Scripts {
-<script>
-    // Lọc/tìm kiếm/phân trang bằng AJAX: server trả về partial _BangTheLoai (header X-Requested-With).
-    (function () {
-        var vung = document.getElementById('vung-ket-qua-the-loai');
-        var form = document.getElementById('bo-loc-the-loai');
-        if (!vung || !form) return;
-
-        function nap(url, push) {
-            vung.style.opacity = '0.55';
-            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                .then(function (r) { return r.text(); })
-                .then(function (html) {
-                    vung.innerHTML = html;
-                    vung.style.opacity = '1';
-                    if (push) history.pushState(null, '', url);
-                })
-                .catch(function () { vung.style.opacity = '1'; });
-        }
-
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            nap(form.getAttribute('action') + '?' + new URLSearchParams(new FormData(form)).toString(), true);
-        });
-
-        form.addEventListener('click', function (e) {
-            var a = e.target.closest('a[href]');
-            if (!a) return;
-            e.preventDefault();
-            // Xóa lọc: dọn trắng các ô nhập/select (giữ input ẩn pageSize) rồi nạp lại danh sách
-            if (a.id === 'nut-xoa-loc-the-loai') {
-                form.querySelectorAll('input[name], select[name]').forEach(function (el) {
-                    if (el.type !== 'hidden') el.value = '';
-                });
-            }
-            nap(a.getAttribute('href'), true);
-        });
-
-        vung.addEventListener('click', function (e) {
-            var a = e.target.closest('a[href]');
-            if (!a || !a.closest('.phan-trang')) return;
-            e.preventDefault();
-            nap(a.getAttribute('href'), true);
-        });
-
-        window.addEventListener('popstate', function () { nap(location.href, false); });
-    })();
-</script>
-}

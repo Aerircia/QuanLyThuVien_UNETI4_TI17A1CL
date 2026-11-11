@@ -14,23 +14,9 @@ public sealed class ThanhToanListViewModel
     public TrangThaiGiaoDich? TrangThai { get; set; }
     public DateOnly? Tu { get; set; }
     public DateOnly? Den { get; set; }
+    public string Sort { get; set; } = "newest";
     public PagedResult<GiaoDichListItem> Result { get; set; } = default!;
     public PagerViewModel Pager { get; set; } = default!;
-}
-
-public sealed class DebtorListViewModel
-{
-    public string? Search { get; set; }
-    public PagedResult<DebtorItem> Result { get; set; } = default!;
-    public PagerViewModel Pager { get; set; } = default!;
-}
-
-public sealed class ThuPhatBanDocViewModel
-{
-    public int MaBanDoc { get; set; }
-    public string HoTen { get; set; } = string.Empty;
-    public string? MaSoThe { get; set; }
-    public IReadOnlyList<UnpaidFine> Fines { get; set; } = Array.Empty<UnpaidFine>();
 }
 
 public static class ThanhToanUi

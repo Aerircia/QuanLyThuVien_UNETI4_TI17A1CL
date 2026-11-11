@@ -47,9 +47,15 @@ public class TaiKhoanService : ITaiKhoanService
         if (filter.TrangThai is { } trangThai)
             query = query.Where(t => t.TrangThai == trangThai);
 
-        var projected = query
-            .OrderBy(t => t.TenDangNhap)
-            .ThenBy(t => t.MaTaiKhoan)
+        var projected = (filter.Sort?.ToLowerInvariant() switch
+        {
+            "name" => query.OrderBy(t => t.HoTen).ThenBy(t => t.MaTaiKhoan),
+            "email" => query.OrderBy(t => t.Email).ThenBy(t => t.MaTaiKhoan),
+            "role" => query.OrderBy(t => t.VaiTro).ThenBy(t => t.TenDangNhap),
+            "status" => query.OrderBy(t => t.TrangThai).ThenBy(t => t.TenDangNhap),
+            "username_desc" => query.OrderByDescending(t => t.TenDangNhap).ThenBy(t => t.MaTaiKhoan),
+            _ => query.OrderBy(t => t.TenDangNhap).ThenBy(t => t.MaTaiKhoan)
+        })
             .Select(t => new TaiKhoanListItem(
                 t.MaTaiKhoan,
                 t.TenDangNhap,

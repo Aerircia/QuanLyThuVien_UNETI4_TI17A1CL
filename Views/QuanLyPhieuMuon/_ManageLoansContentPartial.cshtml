@@ -152,7 +152,7 @@
 
                             @if (item.TrangThai == TrangThaiPhieuMuon.ChoDuyet)
                             {
-                                <form asp-action="Duyet" asp-route-id="@item.MaPhieuMuon" method="post" class="d-inline loan-action-form" id="duyetLoanForm-@item.MaPhieuMuon">
+                                <form asp-action="Duyet" asp-route-id="@item.MaPhieuMuon" method="post" class="d-inline loan-action-form" id="duyetLoanForm-@item.MaPhieuMuon" data-ajax-action="json" data-ajax-refresh="#manageLoansContainer" data-ajax-alert="#manageLoansAlertContainer" data-ajax-hide-modal="true">
                                     <input type="hidden" name="returnUrl" value="@returnUrl" />
                                     <button type="button" class="btn btn-sm btn-success"
                                             data-confirm-form="#duyetLoanForm-@item.MaPhieuMuon"
@@ -172,7 +172,7 @@
                                 <div class="modal fade" id="rejectModal-@item.MaPhieuMuon" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog">
                                         <div class="modal-content text-start">
-                                            <form asp-action="TuChoi" asp-route-id="@item.MaPhieuMuon" method="post" class="loan-action-form" id="tuChoiLoanForm-@item.MaPhieuMuon">
+                                            <form asp-action="TuChoi" asp-route-id="@item.MaPhieuMuon" method="post" class="loan-action-form" id="tuChoiLoanForm-@item.MaPhieuMuon" data-ajax-action="json" data-ajax-refresh="#manageLoansContainer" data-ajax-alert="#manageLoansAlertContainer" data-ajax-hide-modal="true">
                                                 <input type="hidden" name="returnUrl" value="@returnUrl" />
                                                 <div class="modal-header">
                                                     <h5 class="modal-title">Từ chối phiếu mượn #@item.MaPhieuMuon</h5>
@@ -197,7 +197,7 @@
 
                             @if (item.TrangThai == TrangThaiPhieuMuon.DaDuyet)
                             {
-                                <form asp-action="GiaoSach" asp-route-id="@item.MaPhieuMuon" method="post" class="d-inline loan-action-form" id="giaoSachForm-@item.MaPhieuMuon">
+                                <form asp-action="GiaoSach" asp-route-id="@item.MaPhieuMuon" method="post" class="d-inline loan-action-form" id="giaoSachForm-@item.MaPhieuMuon" data-ajax-action="json" data-ajax-refresh="#manageLoansContainer" data-ajax-alert="#manageLoansAlertContainer">
                                     <input type="hidden" name="returnUrl" value="@returnUrl" />
                                     <button type="button" class="btn btn-sm btn-primary"
                                             data-confirm-form="#giaoSachForm-@item.MaPhieuMuon"
@@ -209,7 +209,7 @@
                                     </button>
                                 </form>
 
-                                <form asp-action="HuyPhieu" asp-route-id="@item.MaPhieuMuon" method="post" class="d-inline loan-action-form" id="cancelLoanForm-@item.MaPhieuMuon">
+                                <form asp-action="HuyPhieu" asp-route-id="@item.MaPhieuMuon" method="post" class="d-inline loan-action-form" id="cancelLoanForm-@item.MaPhieuMuon" data-ajax-action="json" data-ajax-refresh="#manageLoansContainer" data-ajax-alert="#manageLoansAlertContainer" data-ajax-hide-modal="true">
                                     <input type="hidden" name="returnUrl" value="@returnUrl" />
                                     <button type="button" class="btn btn-sm btn-outline-danger"
                                             data-confirm-form="#cancelLoanForm-@item.MaPhieuMuon"

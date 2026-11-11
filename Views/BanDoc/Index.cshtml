@@ -36,16 +36,16 @@
 
     <!-- Quick filter tabs: click chuyển tab qua AJAX, không tải lại trang -->
     <div class="d-flex flex-wrap gap-2 mb-3" id="tab-loc-ban-doc">
-        <a asp-action="Index" class="btn btn-sm quick-tab-ban-doc @(!Model.TrangThai.HasValue ? "btn-primary" : "btn-light border")" data-active-class="btn-primary" data-gia-tri="">
+        <a asp-action="Index" data-ajax-list-target="#vung-ket-qua-ban-doc" data-ajax-clear-form="#bo-loc-ban-doc" class="btn btn-sm quick-tab-ban-doc @(!Model.TrangThai.HasValue ? "btn-primary" : "btn-light border")" data-active-class="btn-primary" data-gia-tri="">
             Tất cả (@Model.TongSoBanDoc)
         </a>
-        <a asp-action="Index" asp-route-trangThai="@(nameof(TrangThaiBanDoc.ChoDuyet))" class="btn btn-sm quick-tab-ban-doc @(Model.TrangThai == TrangThaiBanDoc.ChoDuyet ? "btn-warning" : "btn-light border")" data-active-class="btn-warning" data-gia-tri="@((int)TrangThaiBanDoc.ChoDuyet)">
+        <a asp-action="Index" asp-route-trangThai="@(nameof(TrangThaiBanDoc.ChoDuyet))" data-ajax-list-target="#vung-ket-qua-ban-doc" data-ajax-clear-form="#bo-loc-ban-doc" class="btn btn-sm quick-tab-ban-doc @(Model.TrangThai == TrangThaiBanDoc.ChoDuyet ? "btn-warning" : "btn-light border")" data-active-class="btn-warning" data-gia-tri="@((int)TrangThaiBanDoc.ChoDuyet)">
             Chờ duyệt cấp thẻ (@Model.SoBanDocChoDuyet)
         </a>
-        <a asp-action="Index" asp-route-trangThai="@(nameof(TrangThaiBanDoc.HoatDong))" class="btn btn-sm quick-tab-ban-doc @(Model.TrangThai == TrangThaiBanDoc.HoatDong ? "btn-primary" : "btn-light border")" data-active-class="btn-primary" data-gia-tri="@((int)TrangThaiBanDoc.HoatDong)">
+        <a asp-action="Index" asp-route-trangThai="@(nameof(TrangThaiBanDoc.HoatDong))" data-ajax-list-target="#vung-ket-qua-ban-doc" data-ajax-clear-form="#bo-loc-ban-doc" class="btn btn-sm quick-tab-ban-doc @(Model.TrangThai == TrangThaiBanDoc.HoatDong ? "btn-primary" : "btn-light border")" data-active-class="btn-primary" data-gia-tri="@((int)TrangThaiBanDoc.HoatDong)">
             Đang hoạt động (@Model.SoBanDocHoatDong)
         </a>
-        <a asp-action="Index" asp-route-trangThai="@(nameof(TrangThaiBanDoc.NgungHoatDong))" class="btn btn-sm quick-tab-ban-doc @(Model.TrangThai == TrangThaiBanDoc.NgungHoatDong ? "btn-primary" : "btn-light border")" data-active-class="btn-primary" data-gia-tri="@((int)TrangThaiBanDoc.NgungHoatDong)">
+        <a asp-action="Index" asp-route-trangThai="@(nameof(TrangThaiBanDoc.NgungHoatDong))" data-ajax-list-target="#vung-ket-qua-ban-doc" data-ajax-clear-form="#bo-loc-ban-doc" class="btn btn-sm quick-tab-ban-doc @(Model.TrangThai == TrangThaiBanDoc.NgungHoatDong ? "btn-primary" : "btn-light border")" data-active-class="btn-primary" data-gia-tri="@((int)TrangThaiBanDoc.NgungHoatDong)">
             Ngừng hoạt động / Khóa (@Model.SoBanDocNgungHoatDong)
         </a>
     </div>
@@ -77,7 +77,7 @@
     </div>
 
     @* Vùng kết quả: lọc/tìm kiếm/phân trang qua AJAX - JS tải cả trang rồi cắt vùng này thay vào *@
-    <div id="vung-ket-qua-ban-doc">
+    <div id="vung-ket-qua-ban-doc" data-ajax-list data-ajax-form="#bo-loc-ban-doc" data-ajax-document-selector="#vung-ket-qua-ban-doc" data-ajax-tabs="#tab-loc-ban-doc">
     <div class="table-responsive">
         <table class="table table-striped align-middle mb-0">
             <thead>
@@ -231,85 +231,3 @@
     </div>
     </div>
 </div>
-
-@section Scripts {
-<script>
-    // Lọc/tìm kiếm/phân trang/tab nhanh bằng AJAX: server trả về cả trang như thường,
-    // JS tải về rồi cắt lấy vùng kết quả thay vào; URL vẫn cập nhật để chia sẻ và nút Back hoạt động.
-    (function () {
-        var vung = document.getElementById('vung-ket-qua-ban-doc');
-        var form = document.getElementById('bo-loc-ban-doc');
-        var tabs = document.getElementById('tab-loc-ban-doc');
-        if (!vung || !form) return;
-
-        function nap(url, push) {
-            vung.style.opacity = '0.55';
-            fetch(url)
-                .then(function (r) {
-                    if (!r.ok) throw new Error('HTTP ' + r.status);
-                    return r.text();
-                })
-                .then(function (html) {
-                    // Tải cả trang rồi cắt lấy vùng kết quả trong HTML trả về
-                    var doc = new DOMParser().parseFromString(html, 'text/html');
-                    var vungMoi = doc.getElementById('vung-ket-qua-ban-doc');
-                    if (!vungMoi) { location.assign(url); return; }
-                    vung.innerHTML = vungMoi.innerHTML;
-                    vung.style.opacity = '1';
-                    if (push) history.pushState(null, '', url);
-                })
-                .catch(function () { vung.style.opacity = '1'; });
-        }
-
-        // Tab nhanh: nạp AJAX rồi tự đổi màu tab đang chọn theo tham số trangThai trên URL.
-        // trangThai trên URL có thể là tên enum (link tab) hoặc số (select bộ lọc) -> so khớp cả hai.
-        function capNhatTab(href) {
-            if (!tabs) return;
-            var trangThai = new URL(href, location.origin).searchParams.get('trangThai') || '';
-            tabs.querySelectorAll('.quick-tab-ban-doc').forEach(function (tab) {
-                var cuaTab = new URL(tab.getAttribute('href'), location.origin).searchParams.get('trangThai') || '';
-                var active = cuaTab === trangThai || (tab.dataset.giaTri || '') === trangThai;
-                tab.classList.remove('btn-primary', 'btn-warning', 'btn-light', 'border');
-                if (active) {
-                    tab.classList.add(tab.dataset.activeClass || 'btn-primary');
-                } else {
-                    tab.classList.add('btn-light', 'border');
-                }
-            });
-        }
-
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            var url = form.getAttribute('action') + '?' + new URLSearchParams(new FormData(form)).toString();
-            capNhatTab(url);
-            nap(url, true);
-        });
-
-        if (tabs) {
-            tabs.addEventListener('click', function (e) {
-                var a = e.target.closest('a[href]');
-                if (!a) return;
-                e.preventDefault();
-                // Tab là bộ lọc độc lập: dọn trắng ô lọc để không còn chữ tìm kiếm cũ gây hiểu nhầm
-                form.querySelectorAll('input[name], select[name]').forEach(function (el) {
-                    if (el.type !== 'hidden') el.value = '';
-                });
-                capNhatTab(a.getAttribute('href'));
-                nap(a.getAttribute('href'), true);
-            });
-        }
-
-        vung.addEventListener('click', function (e) {
-            var a = e.target.closest('a[href]');
-            if (!a || !a.closest('.phan-trang')) return;
-            e.preventDefault();
-            nap(a.getAttribute('href'), true);
-        });
-
-        window.addEventListener('popstate', function () {
-            nap(location.href, false);
-            capNhatTab(location.href);
-        });
-    })();
-</script>
-}
