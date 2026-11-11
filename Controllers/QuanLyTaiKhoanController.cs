@@ -30,8 +30,7 @@ public class QuanLyTaiKhoanController : Controller
     private int ActingId => _current.User!.MaTaiKhoan;
 
     // ---------- Danh sách ----------
-
-    [HttpGet]
+    [HttpGet("/Admin/QuanLyTaiKhoan")]
     public async Task<IActionResult> Index(
         string? search,
         VaiTro? vaiTro,
@@ -73,10 +72,9 @@ public class QuanLyTaiKhoanController : Controller
 
     // ---------- Thêm ----------
 
-    [HttpGet]
+    [HttpGet("/Admin/QuanLyTaiKhoan/Create")]
     public IActionResult Create() => View(new TaiKhoanCreateViewModel());
-
-    [HttpPost]
+    [HttpPost("/Admin/QuanLyTaiKhoan/Create")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(TaiKhoanCreateViewModel model)
     {
@@ -99,8 +97,7 @@ public class QuanLyTaiKhoanController : Controller
     }
 
     // ---------- Sửa ----------
-
-    [HttpGet]
+    [HttpGet("/Admin/QuanLyTaiKhoan/Edit/{id:int}")]
     public async Task<IActionResult> Edit(int id)
     {
         var detail = await _service.GetAsync(id, HttpContext.RequestAborted);
@@ -117,8 +114,7 @@ public class QuanLyTaiKhoanController : Controller
             TrangThai = detail.TrangThai
         });
     }
-
-    [HttpPost]
+    [HttpPost("/Admin/QuanLyTaiKhoan/Edit/{id:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(TaiKhoanEditViewModel model)
     {
@@ -147,8 +143,7 @@ public class QuanLyTaiKhoanController : Controller
     }
 
     // ---------- Khóa / mở khóa ----------
-
-    [HttpPost]
+    [HttpPost("/Admin/QuanLyTaiKhoan/SetStatus/{id:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SetStatus(int id, TrangThaiTaiKhoan trangThai, string? returnUrl)
     {
@@ -168,8 +163,7 @@ public class QuanLyTaiKhoanController : Controller
     }
 
     // ---------- Đặt lại mật khẩu (Admin) ----------
-
-    [HttpGet]
+    [HttpGet("/Admin/QuanLyTaiKhoan/ResetPassword/{id:int}")]
     public async Task<IActionResult> ResetPassword(int id)
     {
         var detail = await _service.GetAsync(id, HttpContext.RequestAborted);
@@ -177,8 +171,7 @@ public class QuanLyTaiKhoanController : Controller
 
         return View(new AdminResetPasswordViewModel { MaTaiKhoan = id, TenDangNhap = detail.TenDangNhap });
     }
-
-    [HttpPost]
+    [HttpPost("/Admin/QuanLyTaiKhoan/ResetPassword/{id:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ResetPassword(AdminResetPasswordViewModel model)
     {
@@ -205,8 +198,7 @@ public class QuanLyTaiKhoanController : Controller
     }
 
     // ---------- Xóa ----------
-
-    [HttpGet]
+    [HttpGet("/Admin/QuanLyTaiKhoan/Delete/{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
         var detail = await _service.GetAsync(id, HttpContext.RequestAborted);
@@ -215,7 +207,7 @@ public class QuanLyTaiKhoanController : Controller
         return View(detail);
     }
 
-    [HttpPost, ActionName("Delete")]
+    [HttpPost("/Admin/QuanLyTaiKhoan/Delete/{id:int}"), ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {

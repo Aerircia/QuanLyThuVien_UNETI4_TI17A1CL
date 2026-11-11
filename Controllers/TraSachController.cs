@@ -32,7 +32,7 @@ public class TraSachController : Controller
     }
 
 // Lịch sử trả sách và tiền phạt 
-    [HttpGet]
+    [HttpGet("/ThuThu/QuanLyTraSach")]
     public async Task<IActionResult> Index(
         string? search,
         TinhTrangSach? tinhTrang,
@@ -68,7 +68,7 @@ public class TraSachController : Controller
         return View(vm);
     }
 // Phiếu đang mượn chờ nhận trả
-    [HttpGet]
+    [HttpGet("/ThuThu/SachChoTra")]
     public async Task<IActionResult> ChoTra(
         string? search,
         bool chiQuaHan = false,
@@ -100,7 +100,7 @@ public class TraSachController : Controller
     }
 
 //Nhận trả sách 
-    [HttpGet("TraSach/Create/{maPhieuMuon:int}")]
+    [HttpGet("/ThuThu/QuanLyTraSach/Create/{maPhieuMuon:int}")]
     public async Task<IActionResult> Create(int maPhieuMuon)
     {
         var preview = await _service.GetPreviewAsync(maPhieuMuon, HttpContext.RequestAborted);
@@ -109,8 +109,7 @@ public class TraSachController : Controller
 
         return View(new TraSachCreateViewModel { Preview = preview });
     }
-
-    [HttpPost("TraSach/Create/{maPhieuMuon:int}")]
+    [HttpPost("/ThuThu/QuanLyTraSach/Create/{maPhieuMuon:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(int maPhieuMuon, TraSachCreateViewModel model)
     {
@@ -146,7 +145,7 @@ public class TraSachController : Controller
     }
 
 //Chi tiết
-    [HttpGet]
+    [HttpGet("/ThuThu/QuanLyTraSach/Details/{id:int}")]
     public async Task<IActionResult> Details(int id)
     {
         var detail = await _service.GetAsync(id, HttpContext.RequestAborted);
@@ -157,7 +156,7 @@ public class TraSachController : Controller
     }
 
 // Đánh dấu đã nộp phạt 
-    [HttpPost]
+    [HttpPost("/ThuThu/QuanLyTraSach/MarkPaid/{id:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkPaid(int id)
     {

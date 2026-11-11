@@ -24,13 +24,13 @@ await DbSeeder.SeedAsync(app.Services);
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/Loi");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 // Mọi mã lỗi không có nội dung (404 khi gõ sai đường dẫn, NotFound() trong controller...) được trả về trang Error.
-app.UseStatusCodePagesWithReExecute("/Home/Error", "?statusCode={0}");
+app.UseStatusCodePagesWithReExecute("/Loi", "?statusCode={0}");
 
 app.UseHttpsRedirection();
 
@@ -51,6 +51,8 @@ app.UseSession();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+
+app.MapGet("/", () => Results.Redirect("/TrangChu"));
 
 app.MapControllerRoute(
     name: "default",

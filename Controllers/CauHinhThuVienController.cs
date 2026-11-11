@@ -20,8 +20,7 @@ public class CauHinhThuVienController : Controller
     {
         _service = service;
     }
-
-    [HttpGet]
+    [HttpGet("/Admin/CauHinhThuVien")]
     public async Task<IActionResult> Index()
     {
         var c = await _service.GetAsync();
@@ -39,8 +38,7 @@ public class CauHinhThuVienController : Controller
         };
         return View(vm);
     }
-
-    [HttpPost]
+    [HttpPost("/Admin/CauHinhThuVien")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Index(CauHinhThuVienViewModel vm)
     {

@@ -19,8 +19,7 @@ public class QuanLyLichSuThanhToanController : Controller
     {
         _service = service;
     }
-
-    [HttpGet]
+    [HttpGet("/ThuThu/LichSuThanhToan")]
     public async Task<IActionResult> Index(
         string? search, PhuongThucThanhToan? phuongThuc, TrangThaiGiaoDich? trangThai,
         DateOnly? tu, DateOnly? den, int page = 1, int pageSize = PagingDefaults.DefaultPageSize, string? sort = null)
@@ -55,8 +54,7 @@ public class QuanLyLichSuThanhToanController : Controller
             ? PartialView("_IndexResults", model)
             : View(model);
     }
-
-    [HttpGet]
+    [HttpGet("/ThuThu/LichSuThanhToan/Details/{id:int}")]
     public async Task<IActionResult> Details(int id)
     {
         var detail = await _service.GetAsync(id, null, HttpContext.RequestAborted);

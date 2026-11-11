@@ -209,7 +209,7 @@ public sealed class ThongBaoService : IThongBaoService
             .Select(x => (int?)x.BanDoc!.MaTaiKhoan).FirstOrDefaultAsync(ct);
         if (accountId.HasValue)
             await CreateAsync(accountId.Value, tieuDe, noiDung, khoaSuKien,
-                loaiThongBao, "in", duongDan ?? $"/PhieuMuon/Details/{maPhieuMuon}", "PhieuMuon", maPhieuMuon, ct);
+                loaiThongBao, "in", duongDan ?? $"/BanDoc/PhieuMuonCuaToi/Details/{maPhieuMuon}", "PhieuMuon", maPhieuMuon, ct);
     }
 
     public async Task NotifyReaderForExtensionAsync(int maGiaHan, string tieuDe, string noiDung,
@@ -220,7 +220,7 @@ public sealed class ThongBaoService : IThongBaoService
             .Select(x => (int?)x.PhieuMuon!.BanDoc!.MaTaiKhoan).FirstOrDefaultAsync(ct);
         if (accountId.HasValue)
             await CreateAsync(accountId.Value, tieuDe, noiDung, khoaSuKien,
-                loaiThongBao, "in", duongDan ?? "/PhieuMuon/MyLoans", "GiaHanMuon", maGiaHan, ct);
+                loaiThongBao, "in", duongDan ?? "/BanDoc/PhieuMuonCuaToi", "GiaHanMuon", maGiaHan, ct);
     }
 
     public async Task NotifyReaderForFineAsync(int maTraSach, string tieuDe, string noiDung,
@@ -234,7 +234,7 @@ public sealed class ThongBaoService : IThongBaoService
         if (accountId.HasValue)
         {
             await CreateAsync(accountId.Value, tieuDe, noiDung, khoaSuKien,
-                "fine", "in", duongDan ?? "/PhieuMuon/MyFines", "TraSach", maTraSach, ct);
+                "fine", "in", duongDan ?? "/BanDoc/TienPhat", "TraSach", maTraSach, ct);
         }
         else
         {
@@ -251,6 +251,6 @@ public sealed class ThongBaoService : IThongBaoService
             .Select(x => x.MaTaiKhoan).ToListAsync(ct);
         foreach (var id in staffIds)
             await CreateAsync(id, tieuDe, noiDung, khoaSuKien, loaiThongBao, "in",
-                duongDan ?? "/QuanLyPhieuMuon", "PhieuMuon", null, ct);
+                duongDan ?? "/ThuThu/QuanLyPhieuMuon", "PhieuMuon", null, ct);
     }
 }
