@@ -66,8 +66,10 @@
                     </div>
                 </div>
                 <div class="app-staff-header-actions">
-                    <button type="button" class="app-header-icon-button app-help-trigger" data-help-trigger aria-label="Hướng dẫn sử dụng" title="Hướng dẫn sử dụng">?</button>
                     <partial name="_NotificationBellPartial" />
+                    <button type="button" class="app-header-icon-button app-help-trigger" data-help-trigger aria-controls="appHelpModal" aria-label="Trợ giúp" title="Trợ giúp">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.6 9a2.5 2.5 0 1 1 4.1 1.9c-1 .8-1.7 1.2-1.7 2.6M12 17h.01"></path></svg>
+                    </button>
                     <partial name="_LoginPartial" />
                 </div>
             </header>
