@@ -1,0 +1,64 @@
+@* Họ và tên: Vũ Ngọc Hương Giang *@
+@* Mã sinh viên: 23103100280 *@
+@* Nội dung thực hiện: view gửi thông báo chung của Thủ thư/Admin tới bạn đọc hoặc nhân viên, có modal xác nhận *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.GuiThongBaoViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Notifications
+@{
+    ViewData["Title"] = "Gửi thông báo";
+}
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="mb-0">Gửi thông báo</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form asp-action="Gui" method="post" id="form-gui-thong-bao">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="TieuDe" class="form-label"></label>
+                <input asp-for="TieuDe" class="form-control" maxlength="120" />
+                <span asp-validation-for="TieuDe" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="NoiDung" class="form-label"></label>
+                <textarea asp-for="NoiDung" class="form-control" rows="5" maxlength="1000"></textarea>
+                <span asp-validation-for="NoiDung" class="text-danger"></span>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="NhomNhan" class="form-label"></label>
+                    <select asp-for="NhomNhan" class="form-select">
+                        <option value="BanDoc">Tất cả bạn đọc</option>
+                        <option value="NhanVien">Thủ thư và Admin</option>
+                        <option value="TatCa">Tất cả mọi người</option>
+                    </select>
+                    <span asp-validation-for="NhomNhan" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="MucDo" class="form-label"></label>
+                    <select asp-for="MucDo" class="form-select">
+                        @foreach (var ma in ThongBaoHienThi.CacMucDo)
+                        {
+                            <option value="@ma">@ThongBaoHienThi.TenMucDo(ma)</option>
+                        }
+                    </select>
+                    <span asp-validation-for="MucDo" class="text-danger"></span>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-primary"
+                    data-confirm-form="#form-gui-thong-bao"
+                    data-confirm-title="Gửi thông báo"
+                    data-confirm-message="Bạn có chắc muốn gửi thông báo này tới những người nhận đã chọn?"
+                    data-confirm-ok="Gửi"
+                    data-confirm-class="btn-primary">
+                Gửi thông báo
+            </button>
+        </form>
+    </div>
+</div>
