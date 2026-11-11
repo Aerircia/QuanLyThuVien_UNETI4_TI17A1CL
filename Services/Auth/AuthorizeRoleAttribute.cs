@@ -1,9 +1,12 @@
 // Họ và tên: Lại Anh Quân
 // Mã sinh viên: 23103100255
-// Nội dung thực hiện: Xây dựng AuthorizeRoleAttribute để kiểm tra đăng nhập + vai trò TẠI SERVER, trước khi action chạy.
+// Nội dung thực hiện: Kiểm tra xác thực, trạng thái tài khoản và vai trò tại server trước khi action chạy.
+// Thay thế Session để lưu tài khoản sang Authentication, sử dụng cookies auth
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces;
 
@@ -12,7 +15,7 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Services.Auth;
 /// <summary>
 /// Dùng: [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]. Không truyền vai trò = chỉ cần đã đăng nhập.
 /// Mỗi request kiểm tra lại tài khoản trong DB: tài khoản bị khóa/xóa sẽ bị đăng xuất ngay,
-/// và đổi vai trò có hiệu lực ngay (Session được làm mới).
+/// và đổi vai trò có hiệu lực ngay (authentication ticket được làm mới).
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
 public sealed class AuthorizeRoleAttribute : Attribute, IAsyncAuthorizationFilter
@@ -24,7 +27,9 @@ public sealed class AuthorizeRoleAttribute : Attribute, IAsyncAuthorizationFilte
     public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
         var http = context.HttpContext;
-        var sessionUser = http.Session.GetCurrentUser();
+        var sessionUser = http.User.Identity?.IsAuthenticated == true
+            ? http.RequestServices.GetRequiredService<ICurrentUserService>().User
+            : null;
 
         if (sessionUser is null)
         {
@@ -37,7 +42,7 @@ public sealed class AuthorizeRoleAttribute : Attribute, IAsyncAuthorizationFilte
 
         if (!check.Succeeded)
         {
-            http.Session.SignOut();
+            await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             context.Result = NotSignedIn(context,
                 reason: check.Failure == LoginFailure.AccountLocked ? "locked" : "invalid");
             return;
@@ -45,7 +50,21 @@ public sealed class AuthorizeRoleAttribute : Attribute, IAsyncAuthorizationFilte
 
         var user = check.User!;
         if (user != sessionUser)
-            http.Session.SignIn(user); // họ tên / vai trò đã đổi trong DB
+        {
+            var claims = new List<System.Security.Claims.Claim>
+            {
+                new(System.Security.Claims.ClaimTypes.NameIdentifier, user.MaTaiKhoan.ToString()),
+                new(System.Security.Claims.ClaimTypes.Name, user.HoTen),
+                new(System.Security.Claims.ClaimTypes.Role, user.VaiTro.ToString()),
+                new(System.Security.Claims.ClaimTypes.Email, user.Email),
+                new("lms:username", user.TenDangNhap)
+            };
+            var identity = new System.Security.Claims.ClaimsIdentity(
+                claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            await http.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
+                new System.Security.Claims.ClaimsPrincipal(identity));
+            http.User = new System.Security.Claims.ClaimsPrincipal(identity);
+        }
 
         if (_roles.Length > 0 && !_roles.Contains(user.VaiTro))
             context.Result = Forbidden(context);

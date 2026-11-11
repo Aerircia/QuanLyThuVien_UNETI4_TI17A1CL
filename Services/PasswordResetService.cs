@@ -12,6 +12,7 @@ using QuanLyThuVien_UNETI4_TI17A1CL.Models;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Auth;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces;
+using QuanLyThuVien_UNETI4_TI17A1CL.Services.Notifications;
 
 namespace QuanLyThuVien_UNETI4_TI17A1CL.Services;
 
@@ -19,7 +20,7 @@ public class PasswordResetService : IPasswordResetService
 {
     private readonly AppDbContext _db;
     private readonly IOtpService _otp;
-    private readonly IEmailSender _email;
+    private readonly IEmailQueue _emailQueue;
     private readonly IPasswordHasher<TaiKhoan> _hasher;
     private readonly OtpOptions _otpOptions;
     private readonly ILogger<PasswordResetService> _logger;
@@ -27,14 +28,14 @@ public class PasswordResetService : IPasswordResetService
     public PasswordResetService(
         AppDbContext db,
         IOtpService otp,
-        IEmailSender email,
+        IEmailQueue emailQueue,
         IPasswordHasher<TaiKhoan> hasher,
         IOptions<OtpOptions> otpOptions,
         ILogger<PasswordResetService> logger)
     {
         _db = db;
         _otp = otp;
-        _email = email;
+        _emailQueue = emailQueue;
         _hasher = hasher;
         _otpOptions = otpOptions.Value;
         _logger = logger;
@@ -66,18 +67,20 @@ public class PasswordResetService : IPasswordResetService
 
         try
         {
-            await _email.SendAsync(tk.Email, "Mã OTP đặt lại mật khẩu", body, ct);
+            // Queue the send so response time doesn't reveal whether this email
+            // belongs to an account. The worker revokes the OTP if delivery fails.
+            await _emailQueue.EnqueueAsync(new EmailQueueItem(
+                tk.Email,
+                "Mã OTP đặt lại mật khẩu",
+                body,
+                string.Empty,
+                issue.Code), ct);
         }
         catch (Exception ex)
         {
-            // Mã đã được lưu nhưng chưa tới tay người dùng: thu hồi để lần yêu cầu hỏng này
-            // không kích hoạt thời gian chờ gửi lại và không tính vào giới hạn mỗi giờ.
             await RevokeQuietlyAsync(tk.Email, issue.Code!);
-
-            if (ex is OperationCanceledException)
-                throw; // người dùng hủy yêu cầu: không phải lỗi gửi email
-
-            _logger.LogError(ex, "Không gửi được email OTP cho tài khoản {MaTaiKhoan}", tk.MaTaiKhoan);
+            if (ex is OperationCanceledException) throw;
+            _logger.LogError(ex, "Không đưa được email OTP vào hàng đợi cho tài khoản {MaTaiKhoan}", tk.MaTaiKhoan);
             return new RequestResetResult(RequestResetStatus.EmailSendFailed);
         }
 

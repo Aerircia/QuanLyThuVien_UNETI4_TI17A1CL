@@ -25,10 +25,29 @@ public sealed class EmailNotificationBackgroundService : BackgroundService
             {
                 using var scope = _scopeFactory.CreateScope();
                 var sender = scope.ServiceProvider.GetRequiredService<IEmailSender>();
-                await sender.SendHtmlAsync(item.To, item.Subject, item.TextBody, item.HtmlBody, stoppingToken);
+                if (string.IsNullOrWhiteSpace(item.HtmlBody))
+                    await sender.SendAsync(item.To, item.Subject, item.TextBody, stoppingToken);
+                else
+                    await sender.SendHtmlAsync(item.To, item.Subject, item.TextBody, item.HtmlBody, stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { break; }
-            catch (Exception ex) { _logger.LogError(ex, "Gửi email thông báo thất bại tới {Recipient}; email không chặn nghiệp vụ.", item.To); }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Gửi email thất bại tới {Recipient}.", item.To);
+                if (item.RevokeOtpOnFailure is not null)
+                {
+                    try
+                    {
+                        using var scope = _scopeFactory.CreateScope();
+                        var otp = scope.ServiceProvider.GetRequiredService<IOtpService>();
+                        await otp.RevokeAsync(item.To, item.RevokeOtpOnFailure, CancellationToken.None);
+                    }
+                    catch (Exception revokeError)
+                    {
+                        _logger.LogWarning(revokeError, "Không thu hồi được OTP sau khi gửi email thất bại.");
+                    }
+                }
+            }
         }
     }
 }
