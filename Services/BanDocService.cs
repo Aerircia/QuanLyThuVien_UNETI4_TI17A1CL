@@ -17,11 +17,13 @@ public class BanDocService : IBanDocService
 {
     private readonly AppDbContext _db;
     private readonly ITaiKhoanService _taiKhoanService;
+    private readonly IThongBaoService _thongBaoService;
 
-    public BanDocService(AppDbContext db, ITaiKhoanService taiKhoanService)
+    public BanDocService(AppDbContext db, ITaiKhoanService taiKhoanService, IThongBaoService thongBaoService)
     {
         _db = db;
         _taiKhoanService = taiKhoanService;
+        _thongBaoService = thongBaoService;
     }
 
     public async Task<PagedResult<BanDocListItem>> GetListAsync(BanDocFilter filter, CancellationToken ct = default)
@@ -544,6 +546,11 @@ public class BanDocService : IBanDocService
             return ServiceResult<int>.Error(string.Empty, $"Không thể gửi hồ sơ đăng ký: {msg}");
         }
 
+        await _thongBaoService.NotifyStaffAsync(
+            "Có yêu cầu đăng ký thẻ bạn đọc mới",
+            $"Bạn đọc {banDoc.HoTen} vừa gửi yêu cầu đăng ký thẻ. Vui lòng kiểm tra và duyệt hồ sơ.",
+            $"card-register:{banDoc.MaBanDoc}", "/BanDoc", "system", ct);
+
         return ServiceResult<int>.Ok(banDoc.MaBanDoc);
     }
 
@@ -562,6 +569,11 @@ public class BanDocService : IBanDocService
         banDoc.NgayHetHanThe = homNay.AddYears(1);
 
         await _db.SaveChangesAsync(ct);
+        if (banDoc.MaTaiKhoan > 0)
+            await _thongBaoService.CreateAsync(banDoc.MaTaiKhoan,
+                "Thẻ thư viện của bạn đã được duyệt",
+                $"Xin chúc mừng {banDoc.HoTen}! Thẻ bạn đọc {banDoc.MaSoThe} đã được duyệt và có hiệu lực từ {banDoc.NgayCapThe:dd/MM/yyyy} đến {banDoc.NgayHetHanThe:dd/MM/yyyy}.",
+                $"card-approved:{banDoc.MaBanDoc}", "system", "success", "/BanDoc/MyProfile", "BanDoc", banDoc.MaBanDoc, ct);
         return ServiceResult.Success();
     }
 
@@ -576,6 +588,11 @@ public class BanDocService : IBanDocService
 
         banDoc.TrangThai = TrangThaiBanDoc.TuChoi;
         await _db.SaveChangesAsync(ct);
+        if (banDoc.MaTaiKhoan > 0)
+            await _thongBaoService.CreateAsync(banDoc.MaTaiKhoan,
+                "Yêu cầu đăng ký thẻ chưa được chấp thuận",
+                string.IsNullOrWhiteSpace(lyDo) ? "Hồ sơ đăng ký thẻ của bạn chưa được chấp thuận. Vui lòng liên hệ thư viện để biết thêm chi tiết." : $"Hồ sơ đăng ký thẻ của bạn chưa được chấp thuận. Lý do: {lyDo.Trim()}",
+                $"card-rejected:{banDoc.MaBanDoc}", "system", "warning", "/BanDoc/MyProfile", "BanDoc", banDoc.MaBanDoc, ct);
         return ServiceResult.Success();
     }
 

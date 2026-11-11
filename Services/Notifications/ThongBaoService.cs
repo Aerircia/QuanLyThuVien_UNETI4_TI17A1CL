@@ -12,13 +12,13 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Services.Notifications;
 public sealed class ThongBaoService : IThongBaoService
 {
     private readonly AppDbContext _db;
-    private readonly IEmailSender _email;
+    private readonly IEmailQueue _emailQueue;
     private readonly ILogger<ThongBaoService> _logger;
 
-    public ThongBaoService(AppDbContext db, IEmailSender email, ILogger<ThongBaoService> logger)
+    public ThongBaoService(AppDbContext db, IEmailQueue emailQueue, ILogger<ThongBaoService> logger)
     {
         _db = db;
-        _email = email;
+        _emailQueue = emailQueue;
         _logger = logger;
     }
 
@@ -31,6 +31,49 @@ public sealed class ThongBaoService : IThongBaoService
 
     public async Task<int> GetUnreadCountAsync(int maTaiKhoan, CancellationToken ct = default) =>
         await _db.ThongBaos.CountAsync(x => x.MaTaiKhoan == maTaiKhoan && x.DangHienThi && !x.DaDoc, ct);
+
+    public async Task<ThongBaoPageResult> GetPageAsync(int maTaiKhoan, string filter = "all", int page = 1,
+        int pageSize = 12, CancellationToken ct = default)
+    {
+        var baseQuery = _db.ThongBaos.AsNoTracking()
+            .Where(x => x.MaTaiKhoan == maTaiKhoan && x.DangHienThi);
+
+        var total = await baseQuery.CountAsync(ct);
+        var unread = await baseQuery.CountAsync(x => !x.DaDoc, ct);
+
+        var query = filter switch
+        {
+            "unread" => baseQuery.Where(x => !x.DaDoc),
+            "loan" => baseQuery.Where(x => x.LoaiThongBao == "loan" || x.LoaiThongBao == "due"),
+            "extension" => baseQuery.Where(x => x.LoaiThongBao == "extension"),
+            "fine" => baseQuery.Where(x => x.LoaiThongBao == "fine"),
+            "system" => baseQuery.Where(x => x.LoaiThongBao != "loan" && x.LoaiThongBao != "due"
+                && x.LoaiThongBao != "extension" && x.LoaiThongBao != "fine"),
+            _ => baseQuery
+        };
+
+        var filteredTotal = await query.CountAsync(ct);
+        pageSize = Math.Clamp(pageSize, 5, 50);
+        var pageCount = Math.Max(1, (int)Math.Ceiling(filteredTotal / (double)pageSize));
+        page = Math.Clamp(page, 1, pageCount);
+
+        var items = await query.OrderByDescending(x => x.NgayTao)
+            .ThenByDescending(x => x.MaThongBao)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new ThongBaoItem(x.MaThongBao, x.TieuDe, x.NoiDung, x.LoaiThongBao,
+                x.MucDo, x.Icon, x.DuongDan, x.NgayTao, x.DaDoc))
+            .ToListAsync(ct);
+
+        return new ThongBaoPageResult(items, total, unread, filteredTotal, page, pageCount);
+    }
+
+    public async Task<ThongBaoItem?> GetByIdAsync(int maThongBao, int maTaiKhoan, CancellationToken ct = default) =>
+        await _db.ThongBaos.AsNoTracking()
+            .Where(x => x.MaThongBao == maThongBao && x.MaTaiKhoan == maTaiKhoan && x.DangHienThi)
+            .Select(x => new ThongBaoItem(x.MaThongBao, x.TieuDe, x.NoiDung, x.LoaiThongBao,
+                x.MucDo, x.Icon, x.DuongDan, x.NgayTao, x.DaDoc))
+            .FirstOrDefaultAsync(ct);
 
     public async Task<IReadOnlyList<ThongBaoItem>> GetListAsync(int maTaiKhoan, int take = 20, CancellationToken ct = default) =>
         await _db.ThongBaos.AsNoTracking()
@@ -69,25 +112,30 @@ public sealed class ThongBaoService : IThongBaoService
 
     public async Task<bool> MarkReadAsync(int maThongBao, int maTaiKhoan, CancellationToken ct = default)
     {
-        var item = await _db.ThongBaos.FirstOrDefaultAsync(x => x.MaThongBao == maThongBao
-            && x.MaTaiKhoan == maTaiKhoan && x.DangHienThi, ct);
-        if (item is null) return false;
-        if (!item.DaDoc)
-        {
-            item.DaDoc = true;
-            item.NgayDoc = DateTime.UtcNow;
-            await _db.SaveChangesAsync(ct);
-        }
-        return true;
+        var now = DateTime.UtcNow;
+        var affected = await _db.ThongBaos
+            .Where(x => x.MaThongBao == maThongBao && x.MaTaiKhoan == maTaiKhoan
+                     && x.DangHienThi && !x.DaDoc)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(x => x.DaDoc, true)
+                .SetProperty(x => x.NgayDoc, now), ct);
+
+        if (affected > 0) return true;
+
+        // Trường hợp đã đọc từ trước vẫn trả true, không tìm thấy/không thuộc tài khoản thì false
+        return await _db.ThongBaos.AsNoTracking().AnyAsync(x =>
+            x.MaThongBao == maThongBao && x.MaTaiKhoan == maTaiKhoan && x.DangHienThi, ct);
     }
 
     public async Task<int> MarkAllReadAsync(int maTaiKhoan, CancellationToken ct = default)
     {
-        var items = await _db.ThongBaos.Where(x => x.MaTaiKhoan == maTaiKhoan && x.DangHienThi && !x.DaDoc).ToListAsync(ct);
+        // UPDATE trực tiếp trong SQL, không tải toàn bộ thông báo chưa đọc vào bộ nhớ ứng dụng
         var now = DateTime.UtcNow;
-        foreach (var item in items) { item.DaDoc = true; item.NgayDoc = now; }
-        await _db.SaveChangesAsync(ct);
-        return items.Count;
+        return await _db.ThongBaos
+            .Where(x => x.MaTaiKhoan == maTaiKhoan && x.DangHienThi && !x.DaDoc)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(x => x.DaDoc, true)
+                .SetProperty(x => x.NgayDoc, now), ct);
     }
 
     public async Task UpdateAsync(int maThongBao, int maTaiKhoan, string tieuDe, string noiDung,
@@ -146,15 +194,10 @@ public sealed class ThongBaoService : IThongBaoService
         var emailEnabled = settings.BatThongBaoEmail && IsCategoryEnabled(settings, loaiThongBao);
         if (isNewNotification && emailEnabled && !string.IsNullOrWhiteSpace(account.Email))
         {
-            try
-            {
-                await _email.SendAsync(account.Email, $"[Thư viện UNETI] {tieuDe}",
-                    $"Xin chào {account.HoTen},\n\n{noiDung}\n\nVui lòng đăng nhập website Thư viện UNETI để xem chi tiết.", ct);
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                _logger.LogError(ex, "Không gửi được email thông báo tới tài khoản {MaTaiKhoan}", maTaiKhoan);
-            }
+            var html = EmailNotificationTemplate.Build(account.HoTen, tieuDe, noiDung, duongDan);
+            var plainText = $"Xin chào {account.HoTen},\n\n{noiDung}\n\nVui lòng đăng nhập Thư viện UNETI để xem chi tiết.";
+            await _emailQueue.EnqueueAsync(new EmailQueueItem(account.Email,
+                $"[Thư viện UNETI] {tieuDe}", plainText, html), ct);
         }
     }
 
@@ -178,6 +221,25 @@ public sealed class ThongBaoService : IThongBaoService
         if (accountId.HasValue)
             await CreateAsync(accountId.Value, tieuDe, noiDung, khoaSuKien,
                 loaiThongBao, "in", duongDan ?? "/PhieuMuon/MyLoans", "GiaHanMuon", maGiaHan, ct);
+    }
+
+    public async Task NotifyReaderForFineAsync(int maTraSach, string tieuDe, string noiDung,
+        string khoaSuKien, string? duongDan = null, CancellationToken ct = default)
+    {
+        var accountId = await _db.TraSachs.AsNoTracking()
+            .Where(x => x.MaTra == maTraSach)
+            .Select(x => (int?)x.PhieuMuon!.BanDoc!.MaTaiKhoan)
+            .FirstOrDefaultAsync(ct);
+
+        if (accountId.HasValue)
+        {
+            await CreateAsync(accountId.Value, tieuDe, noiDung, khoaSuKien,
+                "fine", "in", duongDan ?? "/PhieuMuon/MyFines", "TraSach", maTraSach, ct);
+        }
+        else
+        {
+            _logger.LogWarning("Không tìm thấy tài khoản bạn đọc cho bản ghi trả sách {MaTraSach}.", maTraSach);
+        }
     }
 
     public async Task NotifyStaffAsync(string tieuDe, string noiDung, string khoaSuKien,

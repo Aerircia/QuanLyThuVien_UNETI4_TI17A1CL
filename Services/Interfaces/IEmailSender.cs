@@ -8,4 +8,5 @@ public interface IEmailSender
 {
     /// <summary>Gửi email văn bản thuần. Ném exception nếu gửi thất bại.</summary>
     Task SendAsync(string toAddress, string subject, string body, CancellationToken ct = default);
+    Task SendHtmlAsync(string toAddress, string subject, string textBody, string htmlBody, CancellationToken ct = default);
 }

@@ -678,8 +678,8 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Migrations
 
                     b.Property<string>("MucDo")
                         .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("nvarchar(2)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTime?>("NgayDoc")
                         .HasColumnType("datetime2");

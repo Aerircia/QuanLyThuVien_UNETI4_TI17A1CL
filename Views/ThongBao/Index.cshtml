@@ -1,0 +1,181 @@
+@* Họ và tên: Phùng Ngọc Bảo *@
+@* Mã sinh viên: 23103100278 *@
+@* Nội dung thực hiện: Trang xem tất cả thông báo, lọc và phân trang *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.ThongBaoIndexViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Common
+
+@{
+    ViewData["Title"] = "Tất cả thông báo";
+    var filters = new[]
+    {
+        (Key: "all", Label: "Tất cả"),
+        (Key: "unread", Label: "Chưa đọc"),
+        (Key: "loan", Label: "Mượn / Trả"),
+        (Key: "extension", Label: "Gia hạn"),
+        (Key: "fine", Label: "Tiền phạt"),
+        (Key: "system", Label: "Hệ thống")
+    };
+}
+
+<div class="reader-page reader-notifications" data-notifications-page>
+    <partial name="_AlertsPartial" />
+
+    <div class="reader-page-heading reader-notification-heading-page reader-reveal">
+        <div>
+            <h1>Thông báo</h1>
+        </div>
+        @if (Model.ChuaDoc > 0)
+        {
+            <form asp-action="MarkAllReadPage" method="post" class="reader-notification-readall" data-notification-read-all-page>
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="filter" value="@Model.BoLoc" />
+                <button type="submit" class="btn btn-outline-success">
+                    <span aria-hidden="true">✓</span> Đánh dấu tất cả đã đọc
+                </button>
+            </form>
+        }
+    </div>
+
+    <div class="reader-notification-layout">
+        <main class="reader-notification-main">
+        <div class="reader-notification-overview reader-reveal" style="--reader-delay:50ms">
+            <div class="reader-notification-overview-card">
+                <span>Tổng thông báo</span>
+                <strong>@Model.TongSo</strong>
+            </div>
+            <div class="reader-notification-overview-card is-unread">
+                <span>Chưa đọc</span>
+                <strong>@Model.ChuaDoc</strong>
+            </div>
+            <div class="reader-notification-overview-card">
+                <span>Đang hiển thị</span>
+                <strong>@Model.TongTheoBoLoc</strong>
+            </div>
+        </div>
+
+        <nav class="reader-notification-filters reader-reveal" aria-label="Lọc thông báo">
+            @foreach (var filter in filters)
+            {
+                <a asp-action="Index" asp-route-filter="@filter.Key" asp-route-page="1"
+                   class="@(Model.BoLoc == filter.Key ? "is-active" : "")">
+                    @filter.Label
+                    @if (filter.Key == "all") { <span>@Model.TongSo</span> }
+                    else if (filter.Key == "unread") { <span>@Model.ChuaDoc</span> }
+                </a>
+            }
+        </nav>
+
+        @if (Model.DanhSach.Count > 0)
+        {
+            <section class="reader-notification-feed" aria-label="Danh sách thông báo">
+                @for (var index = 0; index < Model.DanhSach.Count; index++)
+                {
+                    var item = Model.DanhSach[index];
+                    var isFine = item.LoaiThongBao == "fine";
+                    var isExtension = item.LoaiThongBao == "extension";
+                    var isDue = item.LoaiThongBao == "due";
+                    var iconClass = isFine ? "is-fine" : isExtension ? "is-extension" : isDue ? "is-due" : "";
+                    var icon = isFine ? "₫" : isExtension ? "↻" : isDue ? "⌛" : item.LoaiThongBao == "loan" ? "▤" : "♧";
+                    <a class="reader-notification-row @(item.DaDoc ? "" : "is-unread") reader-reveal"
+                       style="--reader-delay: @((Math.Min(8, index) * 35))ms"
+                       asp-action="Open" asp-route-id="@item.MaThongBao">
+                        <span class="reader-notification-row-icon @iconClass" aria-hidden="true">@icon</span>
+                        <span class="reader-notification-row-main">
+                            <span class="reader-notification-row-title">@item.TieuDe</span>
+                            <span class="reader-notification-row-body">@item.NoiDung</span>
+                            <small>@LibraryClock.ToVietnamTime(item.NgayTao).ToString("HH:mm · dd/MM/yyyy")</small>
+                        </span>
+                        <span class="reader-notification-row-state">
+                            @if (!item.DaDoc) { <i aria-label="Chưa đọc"></i><span>Mới</span> }
+                            else { <span>Đã đọc</span> }
+                        </span>
+                        <span class="reader-notification-row-arrow" aria-hidden="true">›</span>
+                    </a>
+                }
+            </section>
+
+            @if (Model.SoTrang > 1)
+            {
+                <nav class="reader-notification-pagination" aria-label="Phân trang thông báo">
+                    @if (Model.Trang > 1)
+                    {
+                        <a asp-action="Index" asp-route-filter="@Model.BoLoc" asp-route-page="@(Model.Trang - 1)" aria-label="Trang trước">‹</a>
+                    }
+                    @for (var p = Math.Max(1, Model.Trang - 2); p <= Math.Min(Model.SoTrang, Model.Trang + 2); p++)
+                    {
+                        <a asp-action="Index" asp-route-filter="@Model.BoLoc" asp-route-page="@p" class="@(p == Model.Trang ? "is-active" : "")">@p</a>
+                    }
+                    @if (Model.Trang < Model.SoTrang)
+                    {
+                        <a asp-action="Index" asp-route-filter="@Model.BoLoc" asp-route-page="@(Model.Trang + 1)" aria-label="Trang sau">›</a>
+                    }
+                </nav>
+            }
+        }
+        else
+        {
+            <div class="reader-notification-empty-page reader-reveal">
+                <span aria-hidden="true">✓</span>
+                <strong>Chưa có thông báo trong mục này</strong>
+                <p>Khi có cập nhật mới từ thư viện, thông báo sẽ xuất hiện tại đây.</p>
+                @if (Model.BoLoc != "all")
+                {
+                    <a asp-action="Index" asp-route-filter="all" class="btn btn-outline-success">Xem tất cả thông báo</a>
+                }
+            </div>
+        }
+        </main>
+
+        <aside class="reader-notification-sidebar" aria-label="Cài đặt thông báo">
+    <section class="reader-notification-settings reader-reveal" data-notification-settings>
+        <div class="reader-notification-settings-heading">
+            <div>
+                <h2>Cài đặt thông báo</h2>
+                <p>Chọn cách thức và nội dung thông báo bạn muốn nhận.</p>
+            </div>
+            <span aria-hidden="true">⚙</span>
+        </div>
+        <form asp-action="SaveSettings" method="post" data-notification-settings-form>
+            @Html.AntiForgeryToken()
+            <div class="reader-notification-settings-grid">
+                <div class="reader-notification-settings-group">
+                    <h3>Kênh nhận thông báo</h3>
+                    <label class="reader-notification-setting">
+                        <span><strong>Thông báo trên website</strong><small>Hiển thị tại chuông thông báo.</small></span>
+                        <input type="checkbox" name="BatThongBaoWeb" value="true" checked="@Model.CaiDat.BatThongBaoWeb" />
+                    </label>
+                    <label class="reader-notification-setting">
+                        <span><strong>Thông báo qua Email</strong><small>Gửi cập nhật đến email tài khoản.</small></span>
+                        <input type="checkbox" name="BatThongBaoEmail" value="true" checked="@Model.CaiDat.BatThongBaoEmail" />
+                    </label>
+                </div>
+                <div class="reader-notification-settings-group">
+                    <h3>Nhóm thông báo</h3>
+                    <label class="reader-notification-setting">
+                        <span><strong>Mượn và trả sách</strong><small>Yêu cầu mượn, nhận sách và trả sách.</small></span>
+                        <input type="checkbox" name="NhomMuonTra" value="true" checked="@Model.CaiDat.NhomMuonTra" />
+                    </label>
+                    <label class="reader-notification-setting">
+                        <span><strong>Gia hạn phiếu mượn</strong><small>Kết quả và cập nhật gia hạn.</small></span>
+                        <input type="checkbox" name="NhomGiaHan" value="true" checked="@Model.CaiDat.NhomGiaHan" />
+                    </label>
+                    <label class="reader-notification-setting">
+                        <span><strong>Tiền phạt</strong><small>Thông tin phí phạt và thanh toán.</small></span>
+                        <input type="checkbox" name="NhomTienPhat" value="true" checked="@Model.CaiDat.NhomTienPhat" />
+                    </label>
+                    <label class="reader-notification-setting">
+                        <span><strong>Hệ thống</strong><small>Các cập nhật chung từ thư viện.</small></span>
+                        <input type="checkbox" name="NhomHeThong" value="true" checked="@Model.CaiDat.NhomHeThong" />
+                    </label>
+                </div>
+            </div>
+            <div class="reader-notification-settings-footer">
+                <span role="status" aria-live="polite" data-notification-settings-status></span>
+                <button type="submit" class="btn btn-success">Lưu cài đặt</button>
+                <button type="button" class="btn btn-outline-secondary" data-notification-settings-reset>Khôi phục mặc định</button>
+            </div>
+        </form>
+    </section>
+        </aside>
+    </div>
+</div>

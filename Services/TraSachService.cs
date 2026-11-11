@@ -9,6 +9,7 @@ using QuanLyThuVien_UNETI4_TI17A1CL.Models;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Common;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace QuanLyThuVien_UNETI4_TI17A1CL.Services;
 
@@ -22,17 +23,29 @@ public class TraSachService : ITraSachService
     private readonly TimeProvider _time;
     private readonly ITienPhatTreHanService _phatTre;
     private readonly ITienPhatTinhTrangSachService _phatTinhTrang;
+    private readonly IThongBaoService _thongBao;
+    private readonly ILogger<TraSachService> _logger;
 
     public TraSachService(
         AppDbContext db,
         TimeProvider time,
         ITienPhatTreHanService phatTre,
-        ITienPhatTinhTrangSachService phatTinhTrang)
+        ITienPhatTinhTrangSachService phatTinhTrang,
+        IThongBaoService thongBao,
+        ILogger<TraSachService> logger)
     {
         _db = db;
         _time = time;
         _phatTre = phatTre;
         _phatTinhTrang = phatTinhTrang;
+        _thongBao = thongBao;
+        _logger = logger;
+    }
+
+    private async Task NotifySafelyAsync(Func<Task> action, string eventName)
+    {
+        try { await action(); }
+        catch (Exception ex) { _logger.LogError(ex, "Không thể tạo thông báo cho sự kiện {EventName}", eventName); }
     }
 
     private DateOnly Today => DateOnly.FromDateTime(_time.GetLocalNow().DateTime);
@@ -275,6 +288,16 @@ public class TraSachService : ITraSachService
             return ServiceResult<int>.Error(string.Empty, MsgSaveFailed);
         }
 
+        if (tienPhat > 0)
+            await NotifySafelyAsync(() => _thongBao.NotifyReaderForFineAsync(
+                traSach.MaTra, "Bạn có khoản tiền phạt mới",
+                $"Sách đã được nhận trả. Khoản phạt hiện tại: {tienPhat:N0} đ. Vui lòng xem chi tiết trong mục Tiền phạt.",
+                $"fine-created:{traSach.MaTra}", "/PhieuMuon/MyFines", ct), "fine-created");
+        else
+            await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
+                phieu.MaPhieuMuon, "Trả sách thành công",
+                "Thư viện đã ghi nhận bạn trả sách thành công. Cảm ơn bạn đã sử dụng dịch vụ.",
+                $"loan-returned:{phieu.MaPhieuMuon}", "/PhieuMuon/MyLoans", "loan", ct), "loan-returned");
         return ServiceResult<int>.Ok(traSach.MaTra);
     }
 
@@ -300,6 +323,10 @@ public class TraSachService : ITraSachService
             return ServiceResult.Fail(MsgSaveFailed);
         }
 
+        await NotifySafelyAsync(() => _thongBao.NotifyReaderForFineAsync(
+            traSach.MaTra, "Khoản tiền phạt đã được thanh toán",
+            "Thư viện đã xác nhận khoản tiền phạt của bạn được thanh toán.",
+            $"fine-paid:{traSach.MaTra}", "/PhieuMuon/MyFines", ct), "fine-paid");
         return ServiceResult.Success();
     }
 

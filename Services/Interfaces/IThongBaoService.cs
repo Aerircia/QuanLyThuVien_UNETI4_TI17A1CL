@@ -11,6 +11,14 @@ public sealed record ThongBaoItem(
 
 public sealed record ThongBaoBellResult(int ChuaDoc, IReadOnlyList<ThongBaoItem> DanhSach);
 
+public sealed record ThongBaoPageResult(
+    IReadOnlyList<ThongBaoItem> DanhSach,
+    int TongSo,
+    int ChuaDoc,
+    int TongTheoBoLoc,
+    int Trang,
+    int SoTrang);
+
 // Hop dong dung chung cho ca hai nhanh Admin/Thu thu va Ban doc
 public interface IThongBaoService
 {
@@ -25,6 +33,9 @@ public interface IThongBaoService
     Task<int> GetUnreadCountAsync(int maTaiKhoan, CancellationToken ct = default);
     Task<IReadOnlyList<ThongBaoItem>> GetListAsync(int maTaiKhoan, int take = 20, CancellationToken ct = default);
     Task<ThongBaoBellResult> GetBellAsync(int maTaiKhoan, int take = 8, CancellationToken ct = default);
+    Task<ThongBaoPageResult> GetPageAsync(int maTaiKhoan, string filter = "all", int page = 1,
+        int pageSize = 12, CancellationToken ct = default);
+    Task<ThongBaoItem?> GetByIdAsync(int maThongBao, int maTaiKhoan, CancellationToken ct = default);
     Task<bool> MarkReadAsync(int maThongBao, int maTaiKhoan, CancellationToken ct = default);
     Task<int> MarkAllReadAsync(int maTaiKhoan, CancellationToken ct = default);
     Task<bool> HideAsync(int maThongBao, int maTaiKhoan, CancellationToken ct = default);
@@ -37,6 +48,8 @@ public interface IThongBaoService
         string? duongDan = null, string loaiThongBao = "loan", CancellationToken ct = default);
     Task NotifyReaderForExtensionAsync(int maGiaHan, string tieuDe, string noiDung, string khoaSuKien,
         string? duongDan = null, string loaiThongBao = "extension", CancellationToken ct = default);
+    Task NotifyReaderForFineAsync(int maTraSach, string tieuDe, string noiDung, string khoaSuKien,
+        string? duongDan = null, CancellationToken ct = default);
     Task NotifyStaffAsync(string tieuDe, string noiDung, string khoaSuKien,
         string? duongDan = null, string loaiThongBao = "loan", CancellationToken ct = default);
 }

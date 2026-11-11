@@ -32,6 +32,7 @@
     @await RenderSectionAsync("Styles", required: false)
     <link rel="stylesheet" href="~/css/thongke.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/QuanLyThuVien_UNETI4_TI17A1CL.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/reader.css" asp-append-version="true" />
 </head>
 <body class="app-body @(isStaffLayout ? "app-body--staff" : "app-body--public")">
 @if (isStaffLayout)
@@ -64,7 +65,13 @@
                         <div class="app-topbar-context">Không gian làm việc</div>
                     </div>
                 </div>
-                <partial name="_LoginPartial" />
+                <div class="app-staff-header-actions">
+                    <partial name="_NotificationBellPartial" />
+                    <button type="button" class="app-header-icon-button app-help-trigger" data-help-trigger aria-controls="appHelpModal" aria-label="Trợ giúp" title="Trợ giúp">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.6 9a2.5 2.5 0 1 1 4.1 1.9c-1 .8-1.7 1.2-1.7 2.6M12 17h.01"></path></svg>
+                    </button>
+                    <partial name="_LoginPartial" />
+                </div>
             </header>
             <main id="main-content" class="app-content" role="main">
                 @RenderBody()
@@ -79,24 +86,79 @@
 else
 {
     <div class="app-public-shell">
-        <header class="app-public-header">
-            <a class="app-brand app-brand--public" asp-controller="Home" asp-action="Index">
-                <span class="app-brand-mark" aria-hidden="true">U</span>
-                <span class="app-brand-copy">
-                    <strong>Thư viện UNETI</strong>
-                    <small>Tri thức mở lối tương lai</small>
-                </span>
-            </a>
-            <button type="button" class="app-icon-button app-public-nav-toggle" data-app-nav-toggle aria-controls="appPublicNav" aria-expanded="false" aria-label="Mở menu">
-                <span aria-hidden="true">☰</span>
-            </button>
-            <nav id="appPublicNav" class="app-public-nav-container" aria-label="Điều hướng chính">
-                <partial name="_MenuPartial" />
+        @{
+            var publicController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+            var publicAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+            var currentReader = Current.IsInRole(VaiTro.BanDoc);
+            var readerHasCard = currentReader && await Current.HasActiveBanDocAsync();
+        }
+        @{
+            var isPublicHome = publicController == "Home" && publicAction == "Index";
+        }
+        <header class="app-public-header @(isPublicHome ? "app-public-header--home" : "")" id="appPublicHeader"
+                data-home-search="@(isPublicHome ? "true" : "false")">
+            <div class="app-public-brand-search">
+                <a class="app-brand app-brand--public" asp-controller="Home" asp-action="Index" aria-label="Thư viện UNETI - Trang chủ">
+                    <span class="app-brand-mark" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 0 4 22.5z"/><path d="M4 20a2.5 2.5 0 0 1 2.5-2.5H20M8 7h8M8 10h8"/></svg>
+                    </span>
+                    <span class="app-brand-copy"><strong>Thư viện UNETI</strong><small>Tri thức mở lối tương lai</small></span>
+                </a>
+                @if (isPublicHome)
+                {
+                    <form class="app-header-search" asp-controller="Home" asp-action="Catalog" method="get" role="search" aria-label="Tìm nhanh trong thư viện">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
+                        <input type="search" name="search" placeholder="Tìm sách, tác giả..." aria-label="Tìm sách hoặc tác giả" />
+                        <button type="submit" aria-label="Tìm kiếm">Tìm</button>
+                    </form>
+                }
+            </div>
+            <nav class="app-reader-nav" aria-label="Điều hướng chính">
+                <a class="app-reader-nav-link @(publicController == "Home" && publicAction == "Index" ? "is-active" : "")"
+                   asp-controller="Home" asp-action="Index" title="Trang chủ" aria-label="Trang chủ">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Trang chủ</span>
+                </a>
+                <a class="app-reader-nav-link @(publicController == "Home" && (publicAction == "Catalog" || publicAction == "Book") ? "is-active" : "")"
+                   asp-controller="Home" asp-action="Catalog" title="Kho sách" aria-label="Kho sách">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 0 4 22.5z"/><path d="M4 20a2.5 2.5 0 0 1 2.5-2.5H20M8 7h8M8 10h8"/></svg><span>Kho sách</span>
+                </a>
+                @if (readerHasCard)
+                {
+                    <a class="app-reader-nav-link @(publicController == "PhieuMuon" ? "is-active" : "")"
+                       asp-controller="PhieuMuon" asp-action="MyLoans" title="Phiếu mượn của tôi" aria-label="Phiếu mượn của tôi">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>Phiếu mượn</span>
+                    </a>
+                }
             </nav>
-            <div class="app-public-account">
-                <partial name="_LoginPartial" />
+            <div class="app-public-actions">
+                <partial name="_NotificationBellPartial" />
+                <button type="button" class="app-header-icon-button app-help-trigger" data-help-trigger aria-controls="appHelpModal" aria-label="Trợ giúp" title="Trợ giúp">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.6 9a2.5 2.5 0 1 1 4.1 1.9c-1 .8-1.7 1.2-1.7 2.6M12 17h.01"></path></svg>
+                </button>
+                <div class="app-public-account"><partial name="_LoginPartial" /></div>
             </div>
         </header>
+        @if (currentReader)
+        {
+            <nav class="app-reader-tabbar" aria-label="Điều hướng nhanh">
+                <a class="@(publicController == "Home" && publicAction == "Index" ? "is-active" : "")" asp-controller="Home" asp-action="Index"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Trang chủ</span></a>
+                <a class="@(publicController == "Home" && (publicAction == "Catalog" || publicAction == "Book") ? "is-active" : "")" asp-controller="Home" asp-action="Catalog"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 0 4 22.5z"/><path d="M4 20a2.5 2.5 0 0 1 2.5-2.5H20"/></svg><span>Kho sách</span></a>
+                @if (readerHasCard)
+                {
+                    <a class="@(publicController == "PhieuMuon" ? "is-active" : "")" asp-controller="PhieuMuon" asp-action="MyLoans"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>Phiếu mượn</span></a>
+                }
+                <a class="@(publicController == "BanDoc" ? "is-active" : "")" asp-controller="BanDoc" asp-action="MyProfile"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Hồ sơ</span></a>
+            </nav>
+        }
+        else if (!Current.IsAuthenticated)
+        {
+            <nav class="app-reader-tabbar app-reader-tabbar--guest" aria-label="Điều hướng nhanh">
+                <a class="@(publicController == "Home" && publicAction == "Index" ? "is-active" : "")" asp-controller="Home" asp-action="Index"><span>⌂</span><span>Trang chủ</span></a>
+                <a class="@(publicController == "Home" && (publicAction == "Catalog" || publicAction == "Book") ? "is-active" : "")" asp-controller="Home" asp-action="Catalog"><span>▤</span><span>Kho sách</span></a>
+                <a asp-controller="TaiKhoan" asp-action="Login"><span>↪</span><span>Đăng nhập</span></a>
+                <a asp-controller="TaiKhoan" asp-action="Register"><span>＋</span><span>Đăng ký</span></a>
+            </nav>
+        }
         <main id="main-content" class="app-public-content" role="main">
             <div class="app-page-container">
                 @RenderBody()
@@ -114,10 +176,12 @@ else
     </div>
 }
     <partial name="_ConfirmModal" />
+    <partial name="_HelpModalPartial" />
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/forms.js" asp-append-version="true"></script>
+    <script src="~/js/reader-header.js" asp-append-version="true"></script>
     <script src="~/js/ajax.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

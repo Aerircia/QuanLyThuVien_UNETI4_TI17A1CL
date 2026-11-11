@@ -4,6 +4,7 @@ using QuanLyThuVien_UNETI4_TI17A1CL.Services.Auth;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Email;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Payment;
+using QuanLyThuVien_UNETI4_TI17A1CL.Services.Notifications;
 
 namespace QuanLyThuVien_UNETI4_TI17A1CL.Services;
 
@@ -30,6 +31,9 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddHttpContextAccessor();
+        // Cho phép AJAX gửi antiforgery token qua header RequestVerificationToken
+        // Các form MVC truyền thống vẫn tiếp tục dùng hidden field __RequestVerificationToken
+        services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");
 
         // module email / otp / password reset
         services.AddMemoryCache();
@@ -99,6 +103,10 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IThongKeService, ThongKeService>();
         services.AddScoped<IHomeService, HomeService>();
+        services.AddSingleton<IEmailQueue, EmailQueue>();
+        services.AddHostedService<EmailNotificationBackgroundService>();
+        services.AddScoped<IThongBaoService, ThongBaoService>();
+        services.AddHostedService<LoanOverdueBackgroundService>();
 
         return services;
     }

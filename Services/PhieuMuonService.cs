@@ -9,6 +9,7 @@ using QuanLyThuVien_UNETI4_TI17A1CL.Models;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Common;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 using QuanLyThuVien_UNETI4_TI17A1CL.ViewModels;
 
 namespace QuanLyThuVien_UNETI4_TI17A1CL.Services;
@@ -16,10 +17,20 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Services;
 public class PhieuMuonService : IPhieuMuonService
 {
     private readonly AppDbContext _db;
+    private readonly IThongBaoService _thongBao;
+    private readonly ILogger<PhieuMuonService> _logger;
 
-    public PhieuMuonService(AppDbContext db)
+    public PhieuMuonService(AppDbContext db, IThongBaoService thongBao, ILogger<PhieuMuonService> logger)
     {
         _db = db;
+        _thongBao = thongBao;
+        _logger = logger;
+    }
+
+    private async Task NotifySafelyAsync(Func<Task> action, string eventName)
+    {
+        try { await action(); }
+        catch (Exception ex) { _logger.LogError(ex, "Không thể tạo thông báo cho sự kiện {EventName}", eventName); }
     }
 
     private async Task<CauHinhThuVien> GetCauHinhAsync(CancellationToken ct = default)
@@ -31,7 +42,7 @@ public class PhieuMuonService : IPhieuMuonService
     public async Task<LoanEligibilityResult> CheckCanBorrowAsync(int maBanDoc, int maSach, CancellationToken ct = default)
     {
         var result = new LoanEligibilityResult { CanBorrow = true };
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = LibraryClock.Today();
         var cauHinh = await GetCauHinhAsync(ct);
 
         // 1. Bạn đọc tồn tại, đang hoạt động và thẻ thư viện còn hạn
@@ -157,7 +168,7 @@ public class PhieuMuonService : IPhieuMuonService
         var banDoc = await _db.BanDocs.FindAsync(new object[] { maBanDoc }, ct);
         if (banDoc is null) return ServiceResult<int>.Error(string.Empty, "Bạn đọc không tồn tại.");
 
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = LibraryClock.Today();
         var phieuMuon = new PhieuMuon
         {
             MaBanDoc = maBanDoc,
@@ -179,7 +190,7 @@ public class PhieuMuonService : IPhieuMuonService
             PhieuMuon = phieuMuon,
             TrangThaiCu = null,
             TrangThaiMoi = TrangThaiPhieuMuon.ChoDuyet,
-            NgayThucHien = DateTime.Now,
+            NgayThucHien = LibraryClock.LocalDateTime(),
             MaNguoiThucHien = banDoc.MaTaiKhoan,
             GhiChu = "Bạn đọc đăng ký mượn sách trực tuyến"
         };
@@ -194,6 +205,9 @@ public class PhieuMuonService : IPhieuMuonService
             return ServiceResult<int>.Error(string.Empty, "Không thể tạo phiếu mượn do vi phạm ràng buộc dữ liệu.");
         }
 
+        await NotifySafelyAsync(() => _thongBao.NotifyStaffAsync(
+            "Có yêu cầu mượn sách mới", $"Bạn đọc vừa đăng ký mượn sách (phiếu #{phieuMuon.MaPhieuMuon}).",
+            $"loan-register:{phieuMuon.MaPhieuMuon}", "/QuanLyPhieuMuon", "loan", ct), "loan-register");
         return ServiceResult<int>.Ok(phieuMuon.MaPhieuMuon);
     }
 
@@ -227,19 +241,22 @@ public class PhieuMuonService : IPhieuMuonService
             MaPhieuMuon = phieu.MaPhieuMuon,
             TrangThaiCu = oldStatus,
             TrangThaiMoi = TrangThaiPhieuMuon.DaHuy,
-            NgayThucHien = DateTime.Now,
+            NgayThucHien = LibraryClock.LocalDateTime(),
             MaNguoiThucHien = phieu.BanDoc!.MaTaiKhoan,
             GhiChu = "Bạn đọc tự hủy phiếu mượn"
         });
 
         await _db.SaveChangesAsync(ct);
+        await NotifySafelyAsync(() => _thongBao.NotifyStaffAsync(
+            "Bạn đọc đã hủy yêu cầu mượn", $"Phiếu #{phieu.MaPhieuMuon} đã được bạn đọc hủy.",
+            $"loan-reader-cancel:{phieu.MaPhieuMuon}", "/QuanLyPhieuMuon", "loan", ct), "loan-reader-cancel");
         return ServiceResult.Success();
     }
 
     // 7.5. Theo dõi phiếu mượn (Dành cho bạn đọc)
     public async Task<List<PhieuMuonItemViewModel>> GetMyLoansAsync(int maBanDoc, string? filter = null, CancellationToken ct = default)
     {
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = LibraryClock.Today();
         var query = _db.PhieuMuons
             .Include(p => p.Sach)
                 .ThenInclude(s => s!.TheLoai)
@@ -312,7 +329,7 @@ public class PhieuMuonService : IPhieuMuonService
 
     public async Task<PhieuMuonDetailViewModel?> GetLoanDetailAsync(int maPhieuMuon, int? requiredMaBanDoc = null, CancellationToken ct = default)
     {
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = LibraryClock.Today();
         var query = _db.PhieuMuons
             .Include(p => p.Sach)
                 .ThenInclude(s => s!.TheLoai)
@@ -439,7 +456,7 @@ public class PhieuMuonService : IPhieuMuonService
     // Quản lý phiếu mượn (Thủ thư / Admin)
     public async Task<PagedResult<PhieuMuonItemViewModel>> GetManageListAsync(PhieuMuonManageFilter filter, CancellationToken ct = default)
     {
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = LibraryClock.Today();
         var query = _db.PhieuMuons
             .Include(p => p.Sach)
                 .ThenInclude(s => s!.TheLoai)
@@ -520,7 +537,7 @@ public class PhieuMuonService : IPhieuMuonService
     // Tổng hợp số liệu cho trang quản lý phiếu mượn (thủ thư / Admin)
     public async Task<PhieuMuonManageSummary> GetManageSummaryAsync(CancellationToken ct = default)
     {
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = LibraryClock.Today();
         var map = (await _db.PhieuMuons.AsNoTracking()
                 .GroupBy(p => p.TrangThai)
                 .Select(g => new { g.Key, N = g.Count() })
@@ -532,7 +549,7 @@ public class PhieuMuonService : IPhieuMuonService
 
         var cutoff = today.AddDays(-LoanRules.UncollectedDays);
         var chuaNhan = await _db.PhieuMuons.CountAsync(
-            p => p.TrangThai == TrangThaiPhieuMuon.DaDuyet && (p.NgayXuLy ?? p.NgayDangKy) < cutoff, ct);
+            p => p.TrangThai == TrangThaiPhieuMuon.DaDuyet && (p.NgayXuLy ?? p.NgayDangKy) <= cutoff, ct);
 
         var hoanThanh = map.GetValueOrDefault(TrangThaiPhieuMuon.DaTra)
                       + map.GetValueOrDefault(TrangThaiPhieuMuon.TuChoi)
@@ -550,11 +567,11 @@ public class PhieuMuonService : IPhieuMuonService
     // Phiếu Đã duyệt quá LoanRules.UncollectedDays ngày mà bạn đọc chưa đến nhận (vẫn đang giữ một bản sách).
     public async Task<List<PhieuMuonItemViewModel>> GetUncollectedAsync(CancellationToken ct = default)
     {
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = LibraryClock.Today();
         var cutoff = today.AddDays(-LoanRules.UncollectedDays);
 
         return await _db.PhieuMuons.AsNoTracking()
-            .Where(p => p.TrangThai == TrangThaiPhieuMuon.DaDuyet && (p.NgayXuLy ?? p.NgayDangKy) < cutoff)
+            .Where(p => p.TrangThai == TrangThaiPhieuMuon.DaDuyet && (p.NgayXuLy ?? p.NgayDangKy) <= cutoff)
             .OrderBy(p => p.NgayXuLy ?? p.NgayDangKy)
             .ThenBy(p => p.MaPhieuMuon)
             .Select(p => new PhieuMuonItemViewModel
@@ -597,7 +614,7 @@ public class PhieuMuonService : IPhieuMuonService
 
         // Kiểm tra lại mọi điều kiện: bất kỳ điều kiện nào không đạt thì chặn duyệt.
         var errors = new List<string>();
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = LibraryClock.Today();
 
         if (phieu.BanDoc is null)
             errors.Add("Hồ sơ bạn đọc không tồn tại.");
@@ -639,7 +656,7 @@ public class PhieuMuonService : IPhieuMuonService
             MaPhieuMuon = phieu.MaPhieuMuon,
             TrangThaiCu = oldStatus,
             TrangThaiMoi = TrangThaiPhieuMuon.DaDuyet,
-            NgayThucHien = DateTime.Now,
+            NgayThucHien = LibraryClock.LocalDateTime(),
             MaNguoiThucHien = actingMaTaiKhoan,
             GhiChu = phieu.NhanXetThuThu
         });
@@ -654,6 +671,10 @@ public class PhieuMuonService : IPhieuMuonService
             return ServiceResult.Fail("Không thể lưu thay đổi. Vui lòng thử lại.");
         }
 
+        await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
+            phieu.MaPhieuMuon, "Yêu cầu mượn sách đã được duyệt",
+            "Yêu cầu mượn sách của bạn đã được duyệt. Vui lòng đến thư viện nhận sách trong thời hạn quy định.",
+            $"loan-approved:{phieu.MaPhieuMuon}", $"/PhieuMuon/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-approved");
         return ServiceResult.Success();
     }
 
@@ -674,7 +695,7 @@ public class PhieuMuonService : IPhieuMuonService
 
         var oldStatus = phieu.TrangThai;
         phieu.TrangThai = TrangThaiPhieuMuon.TuChoi;
-        phieu.NgayXuLy = DateOnly.FromDateTime(DateTime.Today);
+        phieu.NgayXuLy = LibraryClock.Today();
         phieu.NhanXetThuThu = nhanXet;
 
         _db.PhieuMuonLichSus.Add(new PhieuMuonLichSu
@@ -682,12 +703,16 @@ public class PhieuMuonService : IPhieuMuonService
             MaPhieuMuon = phieu.MaPhieuMuon,
             TrangThaiCu = oldStatus,
             TrangThaiMoi = TrangThaiPhieuMuon.TuChoi,
-            NgayThucHien = DateTime.Now,
+            NgayThucHien = LibraryClock.LocalDateTime(),
             MaNguoiThucHien = actingMaTaiKhoan,
             GhiChu = phieu.NhanXetThuThu
         });
 
         await _db.SaveChangesAsync(ct);
+        await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
+            phieu.MaPhieuMuon, "Yêu cầu mượn sách bị từ chối",
+            $"Yêu cầu mượn sách của bạn đã bị từ chối. Lý do: {nhanXet}",
+            $"loan-rejected:{phieu.MaPhieuMuon}", $"/PhieuMuon/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-rejected");
         return ServiceResult.Success();
     }
 
@@ -703,7 +728,7 @@ public class PhieuMuonService : IPhieuMuonService
         if (phieu.TrangThai != TrangThaiPhieuMuon.DaDuyet)
             return ServiceResult.Fail($"Chỉ có thể giao sách cho phiếu ở trạng thái 'Đã duyệt' (hiện tại: {phieu.TrangThai.GetDisplayName()}).");
 
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = LibraryClock.Today();
         var cauHinh = await GetCauHinhAsync(ct);
 
         // Số ngày mượn theo loại bạn đọc từ cấu hình thư viện
@@ -725,12 +750,16 @@ public class PhieuMuonService : IPhieuMuonService
             MaPhieuMuon = phieu.MaPhieuMuon,
             TrangThaiCu = oldStatus,
             TrangThaiMoi = TrangThaiPhieuMuon.DangMuon,
-            NgayThucHien = DateTime.Now,
+            NgayThucHien = LibraryClock.LocalDateTime(),
             MaNguoiThucHien = actingMaTaiKhoan,
             GhiChu = $"Giao sách thành công. Hạn trả: {phieu.HanTra:dd/MM/yyyy} ({soNgayMuon} ngày)"
         });
 
         await _db.SaveChangesAsync(ct);
+        await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
+            phieu.MaPhieuMuon, "Bạn đã nhận sách thành công",
+            $"Thư viện đã bàn giao sách cho bạn. Hạn trả: {phieu.HanTra:dd/MM/yyyy}.",
+            $"loan-delivered:{phieu.MaPhieuMuon}", $"/PhieuMuon/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-delivered");
         return ServiceResult.Success();
     }
 
@@ -763,35 +792,47 @@ public class PhieuMuonService : IPhieuMuonService
             MaPhieuMuon = phieu.MaPhieuMuon,
             TrangThaiCu = oldStatus,
             TrangThaiMoi = TrangThaiPhieuMuon.DaHuy,
-            NgayThucHien = DateTime.Now,
+            NgayThucHien = LibraryClock.LocalDateTime(),
             MaNguoiThucHien = actingMaTaiKhoan,
             GhiChu = phieu.NhanXetThuThu
         });
 
         await _db.SaveChangesAsync(ct);
+        await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
+            phieu.MaPhieuMuon, "Phiếu mượn đã bị hủy",
+            $"Phiếu mượn của bạn đã bị hủy. Lý do: {phieu.NhanXetThuThu}",
+            $"loan-staff-cancel:{phieu.MaPhieuMuon}", $"/PhieuMuon/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-staff-cancel");
         return ServiceResult.Success();
     }
 
     public async Task<int> AutoCancelOverdueApprovedLoansAsync(CancellationToken ct = default)
     {
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        // Ngày hết hạn là ngày duyệt + 7 ngày. Phiếu được hủy ngay từ 00:00 của ngày đó
+        var today = LibraryClock.Today();
         var cutoff = today.AddDays(-LoanRules.UncollectedDays);
+
+        // Serializable ngăn việc bàn giao sách xảy ra đồng thời với tác vụ tự hủy
+        await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
 
         var overdueLoans = await _db.PhieuMuons
             .Include(p => p.BanDoc)
             .Where(p => p.TrangThai == TrangThaiPhieuMuon.DaDuyet
                      && !p.NgayMuon.HasValue
-                     && (p.NgayXuLy ?? p.NgayDangKy) < cutoff)
+                     && (p.NgayXuLy ?? p.NgayDangKy) <= cutoff)
             .ToListAsync(ct);
 
-        if (overdueLoans.Count == 0) return 0;
+        if (overdueLoans.Count == 0)
+        {
+            await tx.CommitAsync(ct);
+            return 0;
+        }
 
-        var now = DateTime.Now;
+        var now = LibraryClock.LocalDateTime();
         foreach (var phieu in overdueLoans)
         {
             var oldStatus = phieu.TrangThai;
             phieu.TrangThai = TrangThaiPhieuMuon.DaHuy;
-            phieu.NhanXetThuThu = "Hệ thống tự động hủy do quá 7 ngày kể từ khi duyệt mà bạn đọc chưa đến nhận sách.";
+            phieu.NhanXetThuThu = "Hệ thống tự động hủy do đã hết 7 ngày kể từ khi duyệt mà bạn đọc chưa đến nhận sách.";
 
             _db.PhieuMuonLichSus.Add(new PhieuMuonLichSu
             {
@@ -800,11 +841,19 @@ public class PhieuMuonService : IPhieuMuonService
                 TrangThaiMoi = TrangThaiPhieuMuon.DaHuy,
                 NgayThucHien = now,
                 MaNguoiThucHien = phieu.BanDoc != null ? phieu.BanDoc.MaTaiKhoan : 1,
-                GhiChu = "Tự động hủy do quá 7 ngày chưa đến nhận sách"
+                GhiChu = "Tự động hủy lúc 00:00 ngày hết hạn nhận sách (7 ngày sau khi duyệt)"
             });
         }
 
         await _db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+
+        // Chỉ gửi thông báo sau khi giao dịch cập nhật trạng thái đã commit.
+        foreach (var phieu in overdueLoans)
+            await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
+                phieu.MaPhieuMuon, "Phiếu mượn tự động bị hủy",
+                "Phiếu mượn đã được hệ thống tự động hủy vì bạn chưa đến nhận sách trong vòng 7 ngày kể từ ngày duyệt. Sách đã được giải phóng để phục vụ bạn đọc khác.",
+                $"loan-auto-cancel:{phieu.MaPhieuMuon}", $"/PhieuMuon/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-auto-cancel");
         return overdueLoans.Count;
     }
 }

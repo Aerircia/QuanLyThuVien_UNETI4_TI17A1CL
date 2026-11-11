@@ -48,4 +48,12 @@ public class LogEmailSender : IEmailSender
         _logger.LogWarning("[DEV EMAIL - đã gửi thật] Tới: {To} | Tiêu đề: {Subject}{NewLine}{Body}",
             toAddress, subject, Environment.NewLine, body);
     }
+    public async Task SendHtmlAsync(string toAddress, string subject, string textBody, string htmlBody, CancellationToken ct = default)
+    {
+        if (_inner is null)
+        { _logger.LogWarning("[DEV EMAIL - không gửi thật] Tới: {To} | Tiêu đề: {Subject}{NewLine}{Body}", toAddress, subject, Environment.NewLine, textBody); return; }
+        await _inner.SendHtmlAsync(toAddress, subject, textBody, htmlBody, ct);
+        _logger.LogInformation("[DEV EMAIL - đã gửi thật] Tới: {To} | Tiêu đề: {Subject}", toAddress, subject);
+    }
+
 }
