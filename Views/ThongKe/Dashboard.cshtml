@@ -14,8 +14,6 @@
     var statusTotal = Math.Max(report.PhieuMuonTheoTrangThai.Sum(x => x.SoPhieu), 1);
     var cards = new[]
     {
-        new { Label = "Tổng thể loại", Value = summary.TongTheLoai.ToString("N0"), Note = "Nhóm đầu sách", Tone = "violet", Icon = "folder" },
-        new { Label = "Tổng đầu sách", Value = summary.TongDauSach.ToString("N0"), Note = "Số tên sách trong kho", Tone = "violet", Icon = "book" },
         new { Label = "Tổng số cuốn", Value = summary.TongCuonSach.ToString("N0"), Note = "Quy mô kho sách", Tone = "cyan", Icon = "layers" },
         new { Label = "Bạn đọc", Value = summary.TongBanDoc.ToString("N0"), Note = "Thẻ đã được cấp", Tone = "green", Icon = "users" },
         new { Label = "Tổng phiếu mượn", Value = summary.TongPhieuMuon.ToString("N0"), Note = "Mọi trạng thái", Tone = "cyan", Icon = "clipboard" },

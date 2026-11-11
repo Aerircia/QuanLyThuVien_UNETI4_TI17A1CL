@@ -11,7 +11,7 @@ public sealed record PhieuMuonManageSummary(int ChoDuyet, int DaDuyet, int DangM
 
 public static class LoanRules
 {
-    /// <summary>Phiếu Đã duyệt quá số ngày này mà bạn đọc chưa đến nhận sách thì được liệt kê ở danh sách "chưa nhận sách".</summary>
+    /// <summary>Phiếu Đã duyệt đến ngày hết hạn (ngày duyệt + số ngày này) mà bạn đọc chưa đến nhận sách thì được liệt kê ở danh sách "chưa nhận sách".</summary>
     public const int UncollectedDays = 7;
 }
 
@@ -77,13 +77,13 @@ public interface IPhieuMuonService
     Task<ServiceResult> CancelLoanByStaffAsync(int maPhieuMuon, int actingMaTaiKhoan, string? lyDo = null, CancellationToken ct = default);
 
     /// <summary>
-    /// Tự động hủy tất cả phiếu mượn đã duyệt nhưng chưa đến nhận sách quá 7 ngày.
+    /// Tự động hủy phiếu đã duyệt nhưng chưa nhận sách vào 00:00 ngày thứ 7 kể từ ngày duyệt.
     /// </summary>
     Task<int> AutoCancelOverdueApprovedLoansAsync(CancellationToken ct = default);
 
     /// <summary>Số liệu nhanh cho trang quản lý phiếu mượn.</summary>
     Task<PhieuMuonManageSummary> GetManageSummaryAsync(CancellationToken ct = default);
 
-    /// <summary>Phiếu Đã duyệt quá LoanRules.UncollectedDays ngày chưa được nhận sách (vẫn giữ một bản).</summary>
+    /// <summary>Phiếu Đã duyệt đến ngày hết hạn nhận sách nhưng chưa được nhận (vẫn giữ một bản).</summary>
     Task<List<PhieuMuonItemViewModel>> GetUncollectedAsync(CancellationToken ct = default);
 }

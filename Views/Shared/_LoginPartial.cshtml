@@ -9,7 +9,7 @@
 {
     var avatarText = string.IsNullOrWhiteSpace(user.HoTen) ? "U" : user.HoTen.Trim().Substring(0, 1).ToUpperInvariant();
     <div class="dropdown app-account">
-        <button class="app-account-trigger dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <button class="app-account-trigger dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Mở menu tài khoản">
             <span class="app-avatar" aria-hidden="true">@avatarText</span>
             <span class="app-account-meta">
                 <strong>@user.HoTen</strong>
