@@ -9,6 +9,7 @@ using QuanLyThuVien_UNETI4_TI17A1CL.Models;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Common;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace QuanLyThuVien_UNETI4_TI17A1CL.Services;
 
@@ -20,11 +21,21 @@ public class GiaHanMuonService : IGiaHanMuonService
 
     private readonly AppDbContext _db;
     private readonly TimeProvider _time;
+    private readonly IThongBaoService _thongBao;
+    private readonly ILogger<GiaHanMuonService> _logger;
 
-    public GiaHanMuonService(AppDbContext db, TimeProvider time)
+    public GiaHanMuonService(AppDbContext db, TimeProvider time, IThongBaoService thongBao, ILogger<GiaHanMuonService> logger)
     {
         _db = db;
         _time = time;
+        _thongBao = thongBao;
+        _logger = logger;
+    }
+
+    private async Task NotifySafelyAsync(Func<Task> action, string eventName)
+    {
+        try { await action(); }
+        catch (Exception ex) { _logger.LogError(ex, "Không thể tạo thông báo cho sự kiện {EventName}", eventName); }
     }
 
     private DateOnly Today => DateOnly.FromDateTime(_time.GetLocalNow().DateTime);
@@ -134,6 +145,9 @@ public class GiaHanMuonService : IGiaHanMuonService
             return ServiceResult<int>.Error(string.Empty, "Phiếu này đã có yêu cầu gia hạn đang chờ duyệt.");
         }
 
+        await NotifySafelyAsync(() => _thongBao.NotifyStaffAsync(
+            "Có yêu cầu gia hạn mới", $"Bạn đọc vừa gửi yêu cầu gia hạn phiếu #{giaHan.MaPhieuMuon}.",
+            $"extension-request:{giaHan.MaGiaHan}", "/GiaHanMuon", "extension", ct), "extension-request");
         return ServiceResult<int>.Ok(giaHan.MaGiaHan);
     }
 
@@ -240,6 +254,12 @@ public class GiaHanMuonService : IGiaHanMuonService
             return ServiceResult.Fail(MsgSaveFailed);
         }
 
+        var title = input.Duyet ? "Yêu cầu gia hạn đã được duyệt" : "Yêu cầu gia hạn bị từ chối";
+        var content = input.Duyet
+            ? $"Yêu cầu gia hạn phiếu #{giaHan.MaPhieuMuon} đã được duyệt. Hạn trả mới: {giaHan.HanTraMoi:dd/MM/yyyy}."
+            : $"Yêu cầu gia hạn phiếu #{giaHan.MaPhieuMuon} đã bị từ chối. Lý do: {giaHan.NhanXet}";
+        await NotifySafelyAsync(() => _thongBao.NotifyReaderForExtensionAsync(
+            giaHan.MaGiaHan, title, content, $"extension-processed:{giaHan.MaGiaHan}", "/PhieuMuon/MyLoans", "extension", ct), "extension-processed");
         return ServiceResult.Success();
     }
 

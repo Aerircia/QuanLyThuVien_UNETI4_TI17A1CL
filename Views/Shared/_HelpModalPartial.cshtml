@@ -1,0 +1,68 @@
+@* Họ và tên: Phùng Ngọc Bảo *@
+@* Mã sinh viên: 23103100278 *@
+@* Nội dung thực hiện: Hướng dẫn nhanh *@
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces
+@inject ICurrentUserService Current
+@{
+    var helpTitle = Current.IsInRole(VaiTro.Admin) ? "Hướng dẫn dành cho quản trị viên"
+        : Current.IsInRole(VaiTro.ThuThu) ? "Hướng dẫn dành cho thủ thư"
+        : Current.IsInRole(VaiTro.BanDoc) ? "Hướng dẫn dành cho bạn đọc"
+        : "Bắt đầu với Thư viện UNETI";
+}
+<div class="modal fade" id="appHelpModal" tabindex="-1" aria-labelledby="appHelpTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content app-help-modal">
+            <div class="modal-header">
+                <div><span class="app-help-eyebrow">TRỢ GIÚP &amp; HỖ TRỢ</span>
+                    <h2 class="modal-title" id="appHelpTitle">@helpTitle</h2>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                @if (Current.IsInRole(VaiTro.BanDoc))
+                {
+                    <ol class="app-help-steps">
+                        <li><b>Tìm sách</b><span>Tìm nhanh ngay trên khung Trang chủ; khi cuộn xuống, ô tìm kiếm trên header sẽ xuất hiện. Bạn cũng có thể mở Kho sách để lọc theo tên, tác giả hoặc thể loại.</span></li>
+                        <li><b>Đăng ký mượn</b><span>Mở chi tiết sách, chọn Đăng ký mượn và xác nhận thông tin. Hệ thống sẽ kiểm tra điều kiện trước khi tạo phiếu.</span></li>
+                        <li><b>Chờ thủ thư duyệt</b><span>Theo dõi trạng thái tại Phiếu mượn của tôi. Khi phiếu được duyệt, bạn sẽ nhận thông báo và cần đến quầy nhận sách trong thời hạn 7 ngày.</span></li>
+                        <li><b>Theo dõi và gia hạn</b><span>Khi đã nhận sách, xem hạn trả trong chi tiết phiếu. Gửi yêu cầu gia hạn trước khi quá hạn nếu phiếu còn đủ điều kiện.</span></li>
+                        <li><b>Trả sách và tiền phạt</b><span>Mang sách đến quầy để thủ thư xác nhận tình trạng. Các khoản phạt (nếu có) được xem tại mục Tiền phạt.</span></li>
+                        <li><b>Quản lý thẻ</b><span>Mở menu tài khoản để xem Thẻ &amp; hồ sơ, cập nhật thông tin và đổi mật khẩu.</span></li>
+                    </ol>
+                }
+                else if (Current.IsInRole(VaiTro.ThuThu))
+                {
+                    <ol class="app-help-steps">
+                        <li><b>Duyệt phiếu mượn</b><span>Mở Quản lý phiếu mượn, kiểm tra điều kiện và duyệt hoặc từ chối yêu cầu kèm nhận xét.</span></li>
+                        <li><b>Giao sách</b><span>Khi bạn đọc đến quầy, mở phiếu đã duyệt và xác nhận giao sách để hệ thống bắt đầu tính hạn trả.</span></li>
+                        <li><b>Nhận trả sách</b><span>Ghi nhận ngày trả, tình trạng sách và khoản phạt tương ứng (nếu phát sinh).</span></li>
+                        <li><b>Theo dõi yêu cầu khác</b><span>Sử dụng các mục Gia hạn, Bạn đọc, Sách và Thống kê ở thanh điều hướng quản trị.</span></li>
+                    </ol>
+                }
+                else if (Current.IsInRole(VaiTro.Admin))
+                {
+                    <ol class="app-help-steps">
+                        <li><b>Quản lý hệ thống</b><span>Sử dụng Dashboard và Thống kê để theo dõi tình hình hoạt động.</span></li>
+                        <li><b>Quản lý nghiệp vụ</b><span>Quản lý phiếu mượn, sách, bạn đọc, gia hạn và trả sách theo phân quyền.</span></li>
+                        <li><b>Quản lý tài khoản</b><span>Vào mục Tài khoản để tạo, chỉnh sửa, phân quyền hoặc khóa tài khoản.</span></li>
+                    </ol>
+                }
+                else
+                {
+                    <ol class="app-help-steps">
+                        <li><b>Tạo tài khoản</b><span>Đăng ký và xác thực thông tin theo hướng dẫn trên màn hình.</span></li>
+                        <li><b>Đăng ký thẻ thư viện</b><span>Sau khi đăng nhập, mở Thẻ &amp; hồ sơ để gửi yêu cầu cấp thẻ bạn đọc.</span></li>
+                        <li><b>Tìm và chọn sách</b><span>Khám phá Kho sách, tìm theo tên sách, tác giả hoặc thể loại.</span></li>
+                        <li><b>Gửi yêu cầu mượn</b><span>Khi thẻ đã được kích hoạt, bạn có thể đăng ký mượn trực tuyến và theo dõi kết quả trên website.</span></li>
+                    </ol>
+                }
+                @if (Current.IsInRole(VaiTro.BanDoc))
+                {
+                    <div class="app-help-note"><strong>Cần hỗ trợ thêm?</strong> Vui lòng liên hệ thủ thư tại quầy thư viện để được hướng dẫn trực tiếp.</div>
+                }
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">Đã hiểu</button></div>
+        </div>
+    </div>
+</div>

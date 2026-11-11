@@ -23,13 +23,19 @@ public class SmtpEmailSender : IEmailSender
         _options = options.Value;
     }
 
-    public async Task SendAsync(string toAddress, string subject, string body, CancellationToken ct = default)
+    public Task SendAsync(string toAddress, string subject, string body, CancellationToken ct = default) =>
+        SendCoreAsync(toAddress, subject, new TextPart("plain") { Text = body }, ct);
+
+    public Task SendHtmlAsync(string toAddress, string subject, string textBody, string htmlBody, CancellationToken ct = default) =>
+        SendCoreAsync(toAddress, subject, new MultipartAlternative { new TextPart("plain") { Text = textBody }, new TextPart("html") { Text = htmlBody } }, ct);
+
+    private async Task SendCoreAsync(string toAddress, string subject, MimeEntity body, CancellationToken ct)
     {
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress(_options.FromName, _options.FromAddress));
         message.To.Add(MailboxAddress.Parse(toAddress));
         message.Subject = subject;
-        message.Body = new TextPart("plain") { Text = body };
+        message.Body = body;
 
         // Giới hạn TỔNG thời gian kết nối + xác thực + gửi. Hết giờ thì ném TimeoutException
         // (không phải OperationCanceledException) để PasswordResetService xử lý như một lỗi gửi mail.

@@ -138,7 +138,7 @@ public class AppDbContext : DbContext
             entity.Property(x => x.TieuDe).HasMaxLength(120).IsRequired();
             entity.Property(x => x.NoiDung).HasMaxLength(1000).IsRequired();
             entity.Property(x => x.LoaiThongBao).HasMaxLength(30).IsRequired();
-            entity.Property(x => x.MucDo).HasMaxLength(2).IsRequired();
+            entity.Property(x => x.MucDo).HasMaxLength(20).IsRequired();
             entity.Property(x => x.Icon).HasMaxLength(40);
             entity.Property(x => x.LoaiDoiTuong).HasMaxLength(40);
             entity.Property(x => x.DuongDan).HasMaxLength(500);

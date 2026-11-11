@@ -9,6 +9,7 @@ using QuanLyThuVien_UNETI4_TI17A1CL.Models;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Common;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 using QuanLyThuVien_UNETI4_TI17A1CL.ViewModels;
 
 namespace QuanLyThuVien_UNETI4_TI17A1CL.Services;
@@ -16,10 +17,20 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Services;
 public class PhieuMuonService : IPhieuMuonService
 {
     private readonly AppDbContext _db;
+    private readonly IThongBaoService _thongBao;
+    private readonly ILogger<PhieuMuonService> _logger;
 
-    public PhieuMuonService(AppDbContext db)
+    public PhieuMuonService(AppDbContext db, IThongBaoService thongBao, ILogger<PhieuMuonService> logger)
     {
         _db = db;
+        _thongBao = thongBao;
+        _logger = logger;
+    }
+
+    private async Task NotifySafelyAsync(Func<Task> action, string eventName)
+    {
+        try { await action(); }
+        catch (Exception ex) { _logger.LogError(ex, "Không thể tạo thông báo cho sự kiện {EventName}", eventName); }
     }
 
     private async Task<CauHinhThuVien> GetCauHinhAsync(CancellationToken ct = default)
@@ -194,6 +205,9 @@ public class PhieuMuonService : IPhieuMuonService
             return ServiceResult<int>.Error(string.Empty, "Không thể tạo phiếu mượn do vi phạm ràng buộc dữ liệu.");
         }
 
+        await NotifySafelyAsync(() => _thongBao.NotifyStaffAsync(
+            "Có yêu cầu mượn sách mới", $"Bạn đọc vừa đăng ký mượn sách (phiếu #{phieuMuon.MaPhieuMuon}).",
+            $"loan-register:{phieuMuon.MaPhieuMuon}", "/QuanLyPhieuMuon", "loan", ct), "loan-register");
         return ServiceResult<int>.Ok(phieuMuon.MaPhieuMuon);
     }
 
@@ -233,6 +247,9 @@ public class PhieuMuonService : IPhieuMuonService
         });
 
         await _db.SaveChangesAsync(ct);
+        await NotifySafelyAsync(() => _thongBao.NotifyStaffAsync(
+            "Bạn đọc đã hủy yêu cầu mượn", $"Phiếu #{phieu.MaPhieuMuon} đã được bạn đọc hủy.",
+            $"loan-reader-cancel:{phieu.MaPhieuMuon}", "/QuanLyPhieuMuon", "loan", ct), "loan-reader-cancel");
         return ServiceResult.Success();
     }
 
@@ -654,6 +671,10 @@ public class PhieuMuonService : IPhieuMuonService
             return ServiceResult.Fail("Không thể lưu thay đổi. Vui lòng thử lại.");
         }
 
+        await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
+            phieu.MaPhieuMuon, "Yêu cầu mượn sách đã được duyệt",
+            "Yêu cầu mượn sách của bạn đã được duyệt. Vui lòng đến thư viện nhận sách trong thời hạn quy định.",
+            $"loan-approved:{phieu.MaPhieuMuon}", $"/PhieuMuon/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-approved");
         return ServiceResult.Success();
     }
 
@@ -688,6 +709,10 @@ public class PhieuMuonService : IPhieuMuonService
         });
 
         await _db.SaveChangesAsync(ct);
+        await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
+            phieu.MaPhieuMuon, "Yêu cầu mượn sách bị từ chối",
+            $"Yêu cầu mượn sách của bạn đã bị từ chối. Lý do: {nhanXet}",
+            $"loan-rejected:{phieu.MaPhieuMuon}", $"/PhieuMuon/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-rejected");
         return ServiceResult.Success();
     }
 
@@ -731,6 +756,10 @@ public class PhieuMuonService : IPhieuMuonService
         });
 
         await _db.SaveChangesAsync(ct);
+        await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
+            phieu.MaPhieuMuon, "Bạn đã nhận sách thành công",
+            $"Thư viện đã bàn giao sách cho bạn. Hạn trả: {phieu.HanTra:dd/MM/yyyy}.",
+            $"loan-delivered:{phieu.MaPhieuMuon}", $"/PhieuMuon/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-delivered");
         return ServiceResult.Success();
     }
 
@@ -769,6 +798,10 @@ public class PhieuMuonService : IPhieuMuonService
         });
 
         await _db.SaveChangesAsync(ct);
+        await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
+            phieu.MaPhieuMuon, "Phiếu mượn đã bị hủy",
+            $"Phiếu mượn của bạn đã bị hủy. Lý do: {phieu.NhanXetThuThu}",
+            $"loan-staff-cancel:{phieu.MaPhieuMuon}", $"/PhieuMuon/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-staff-cancel");
         return ServiceResult.Success();
     }
 
@@ -805,6 +838,11 @@ public class PhieuMuonService : IPhieuMuonService
         }
 
         await _db.SaveChangesAsync(ct);
+        foreach (var phieu in overdueLoans)
+            await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
+                phieu.MaPhieuMuon, "Phiếu mượn tự động bị hủy",
+                "Phiếu mượn đã bị hệ thống tự động hủy vì bạn chưa đến nhận sách trong thời hạn 7 ngày.",
+                $"loan-auto-cancel:{phieu.MaPhieuMuon}", $"/PhieuMuon/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-auto-cancel");
         return overdueLoans.Count;
     }
 }

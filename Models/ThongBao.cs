@@ -14,7 +14,7 @@ public class ThongBao
     [Required, StringLength(120)] public string TieuDe { get; set; } = string.Empty;
     [Required, StringLength(1000)] public string NoiDung { get; set; } = string.Empty;
     [Required, StringLength(30)] public string LoaiThongBao { get; set; } = "loan";
-    [Required, StringLength(2)] public string MucDo { get; set; } = "in";
+    [Required, StringLength(20)] public string MucDo { get; set; } = "in";
     [StringLength(40)] public string? Icon { get; set; }
     [StringLength(40)] public string? LoaiDoiTuong { get; set; }
     public int? MaDoiTuong { get; set; }
