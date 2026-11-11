@@ -39,7 +39,7 @@ public class GiaHanMuonController : Controller
     }
 
 // Bạn đọc gửi yêu cầu gia hạn 
-    [HttpGet("GiaHanMuon/Create/{maPhieuMuon:int}")]
+    [HttpGet("/BanDoc/XinGiaHan/{maPhieuMuon:int}")]
     [AuthorizeRole(VaiTro.BanDoc)]
     [RequireActiveCard]
     public async Task<IActionResult> Create(int maPhieuMuon)
@@ -57,8 +57,7 @@ public class GiaHanMuonController : Controller
             HanTraMoi = info.HanTraMoiToiDa  
         });
     }
-
-    [HttpPost("GiaHanMuon/Create/{maPhieuMuon:int}")]
+    [HttpPost("/BanDoc/XinGiaHan/{maPhieuMuon:int}")]
     [AuthorizeRole(VaiTro.BanDoc)]
     [RequireActiveCard]
     [ValidateAntiForgeryToken]
@@ -92,7 +91,7 @@ public class GiaHanMuonController : Controller
     }
 
 //Thủ thư: danh sách yêu cầu
-    [HttpGet]
+    [HttpGet("/ThuThu/YeuCauGiaHan")]
     [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
     public async Task<IActionResult> Index(
         string? search,
@@ -127,7 +126,7 @@ public class GiaHanMuonController : Controller
     }
 
 // Thủ thư: duyệt
-    [HttpGet("GiaHanMuon/Process/{id:int}")]
+    [HttpGet("/ThuThu/YeuCauGiaHan/Process/{id:int}")]
     [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
     public async Task<IActionResult> Process(int id)
     {
@@ -141,8 +140,7 @@ public class GiaHanMuonController : Controller
 
         return View(vm);
     }
-
-    [HttpPost("GiaHanMuon/Process/{id:int}")]
+    [HttpPost("/ThuThu/YeuCauGiaHan/Process/{id:int}")]
     [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Process(int id, GiaHanMuonProcessViewModel model, bool duyet)

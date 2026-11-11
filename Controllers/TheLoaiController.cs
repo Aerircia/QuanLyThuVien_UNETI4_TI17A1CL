@@ -21,8 +21,7 @@ public class TheLoaiController : Controller
         _service = service;
         _current = current;
     }
-
-    [HttpGet]
+    [HttpGet("/Admin/QuanLyTheLoai")]
     [AuthorizeRole(VaiTro.Admin)]
     public async Task<IActionResult> Index(
         string? search,
@@ -49,8 +48,7 @@ public class TheLoaiController : Controller
         ViewBag.TrangThai = trangThai;
         return View(result);
     }
-
-    [HttpGet]
+    [HttpGet("/Admin/QuanLyTheLoai/Details/{id:int}")]
     [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu, VaiTro.BanDoc)]
     public async Task<IActionResult> Details(int id)
     {
@@ -66,11 +64,10 @@ public class TheLoaiController : Controller
         return View(detail);
     }
 
-    [HttpGet]
+    [HttpGet("/Admin/QuanLyTheLoai/Create")]
     [AuthorizeRole(VaiTro.Admin)]
     public IActionResult Create() => View(new TheLoai());
-
-    [HttpPost]
+    [HttpPost("/Admin/QuanLyTheLoai/Create")]
     [AuthorizeRole(VaiTro.Admin)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(TheLoai model)
@@ -97,8 +94,7 @@ public class TheLoaiController : Controller
             return Json(new { success = true, redirectUrl = Url.Action(nameof(Index)), message = "Đã thêm thể loại." });
         return RedirectToAction(nameof(Index));
     }
-
-    [HttpGet]
+    [HttpGet("/Admin/QuanLyTheLoai/Edit/{id:int}")]
     [AuthorizeRole(VaiTro.Admin)]
     public async Task<IActionResult> Edit(int id)
     {
@@ -108,8 +104,7 @@ public class TheLoaiController : Controller
 
         return View(ToModel(detail));
     }
-
-    [HttpPost]
+    [HttpPost("/Admin/QuanLyTheLoai/Edit/{id:int}")]
     [AuthorizeRole(VaiTro.Admin)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, TheLoai model)
@@ -142,7 +137,7 @@ public class TheLoaiController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    [HttpPost, ActionName("Delete")]
+    [HttpPost("/Admin/QuanLyTheLoai/Delete/{id:int}"), ActionName("Delete")]
     [AuthorizeRole(VaiTro.Admin)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -161,8 +156,7 @@ public class TheLoaiController : Controller
             return Json(new { success = false, redirectUrl = Url.Action(nameof(Details), new { id }), message = result.FirstError });
         return RedirectToAction(nameof(Details), new { id });
     }
-
-    [HttpPost]
+    [HttpPost("/Admin/QuanLyTheLoai/ToggleTrangThai/{id:int}")]
     [AuthorizeRole(VaiTro.Admin)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ToggleTrangThai(int id, string? returnUrl)

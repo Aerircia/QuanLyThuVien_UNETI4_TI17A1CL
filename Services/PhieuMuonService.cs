@@ -207,7 +207,7 @@ public class PhieuMuonService : IPhieuMuonService
 
         await NotifySafelyAsync(() => _thongBao.NotifyStaffAsync(
             "Có yêu cầu mượn sách mới", $"Bạn đọc vừa đăng ký mượn sách (phiếu #{phieuMuon.MaPhieuMuon}).",
-            $"loan-register:{phieuMuon.MaPhieuMuon}", "/QuanLyPhieuMuon", "loan", ct), "loan-register");
+            $"loan-register:{phieuMuon.MaPhieuMuon}", "/ThuThu/QuanLyPhieuMuon", "loan", ct), "loan-register");
         return ServiceResult<int>.Ok(phieuMuon.MaPhieuMuon);
     }
 
@@ -249,7 +249,7 @@ public class PhieuMuonService : IPhieuMuonService
         await _db.SaveChangesAsync(ct);
         await NotifySafelyAsync(() => _thongBao.NotifyStaffAsync(
             "Bạn đọc đã hủy yêu cầu mượn", $"Phiếu #{phieu.MaPhieuMuon} đã được bạn đọc hủy.",
-            $"loan-reader-cancel:{phieu.MaPhieuMuon}", "/QuanLyPhieuMuon", "loan", ct), "loan-reader-cancel");
+            $"loan-reader-cancel:{phieu.MaPhieuMuon}", "/ThuThu/QuanLyPhieuMuon", "loan", ct), "loan-reader-cancel");
         return ServiceResult.Success();
     }
 
@@ -674,7 +674,7 @@ public class PhieuMuonService : IPhieuMuonService
         await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
             phieu.MaPhieuMuon, "Yêu cầu mượn sách đã được duyệt",
             "Yêu cầu mượn sách của bạn đã được duyệt. Vui lòng đến thư viện nhận sách trong thời hạn quy định.",
-            $"loan-approved:{phieu.MaPhieuMuon}", $"/PhieuMuon/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-approved");
+            $"loan-approved:{phieu.MaPhieuMuon}", $"/BanDoc/PhieuMuonCuaToi/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-approved");
         return ServiceResult.Success();
     }
 
@@ -712,7 +712,7 @@ public class PhieuMuonService : IPhieuMuonService
         await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
             phieu.MaPhieuMuon, "Yêu cầu mượn sách bị từ chối",
             $"Yêu cầu mượn sách của bạn đã bị từ chối. Lý do: {nhanXet}",
-            $"loan-rejected:{phieu.MaPhieuMuon}", $"/PhieuMuon/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-rejected");
+            $"loan-rejected:{phieu.MaPhieuMuon}", $"/BanDoc/PhieuMuonCuaToi/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-rejected");
         return ServiceResult.Success();
     }
 
@@ -759,7 +759,7 @@ public class PhieuMuonService : IPhieuMuonService
         await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
             phieu.MaPhieuMuon, "Bạn đã nhận sách thành công",
             $"Thư viện đã bàn giao sách cho bạn. Hạn trả: {phieu.HanTra:dd/MM/yyyy}.",
-            $"loan-delivered:{phieu.MaPhieuMuon}", $"/PhieuMuon/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-delivered");
+            $"loan-delivered:{phieu.MaPhieuMuon}", $"/BanDoc/PhieuMuonCuaToi/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-delivered");
         return ServiceResult.Success();
     }
 
@@ -801,7 +801,7 @@ public class PhieuMuonService : IPhieuMuonService
         await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
             phieu.MaPhieuMuon, "Phiếu mượn đã bị hủy",
             $"Phiếu mượn của bạn đã bị hủy. Lý do: {phieu.NhanXetThuThu}",
-            $"loan-staff-cancel:{phieu.MaPhieuMuon}", $"/PhieuMuon/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-staff-cancel");
+            $"loan-staff-cancel:{phieu.MaPhieuMuon}", $"/BanDoc/PhieuMuonCuaToi/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-staff-cancel");
         return ServiceResult.Success();
     }
 
@@ -853,7 +853,7 @@ public class PhieuMuonService : IPhieuMuonService
             await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
                 phieu.MaPhieuMuon, "Phiếu mượn tự động bị hủy",
                 "Phiếu mượn đã được hệ thống tự động hủy vì bạn chưa đến nhận sách trong vòng 7 ngày kể từ ngày duyệt. Sách đã được giải phóng để phục vụ bạn đọc khác.",
-                $"loan-auto-cancel:{phieu.MaPhieuMuon}", $"/PhieuMuon/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-auto-cancel");
+                $"loan-auto-cancel:{phieu.MaPhieuMuon}", $"/BanDoc/PhieuMuonCuaToi/Details/{phieu.MaPhieuMuon}", "loan", ct), "loan-auto-cancel");
         return overdueLoans.Count;
     }
 }

@@ -47,7 +47,7 @@ public class TaiKhoanController : Controller
 
     // ---------- Đăng nhập ----------
 
-    [HttpGet]
+    [HttpGet("/TaiKhoan/DangNhap")]
     public IActionResult Login(string? returnUrl = null, string? reason = null)
     {
         if (_current.IsAuthenticated)
@@ -62,8 +62,7 @@ public class TaiKhoanController : Controller
 
         return View(new LoginViewModel { ReturnUrl = returnUrl });
     }
-
-    [HttpPost]
+    [HttpPost("/TaiKhoan/DangNhap")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel model)
     {
@@ -95,7 +94,7 @@ public class TaiKhoanController : Controller
 
     // ---------- Đăng ký (chỉ tạo TaiKhoan vai trò Bạn đọc) ----------
 
-    [HttpGet]
+    [HttpGet("/TaiKhoan/DangKy")]
     public IActionResult Register()
     {
         if (_current.IsAuthenticated)
@@ -103,8 +102,7 @@ public class TaiKhoanController : Controller
 
         return View(new RegisterViewModel());
     }
-
-    [HttpPost]
+    [HttpPost("/TaiKhoan/DangKy")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
@@ -137,7 +135,7 @@ public class TaiKhoanController : Controller
 
     // ---------- Đăng xuất ----------
 
-    [HttpPost]
+    [HttpPost("/TaiKhoan/DangXuat")]
     [ValidateAntiForgeryToken]
     public IActionResult Logout()
     {
@@ -147,7 +145,7 @@ public class TaiKhoanController : Controller
 
     // ---------- Từ chối truy cập ----------
 
-    [HttpGet]
+    [HttpGet("/TaiKhoan/KhongDuQuyen")]
     public IActionResult AccessDenied()
     {
         Response.StatusCode = StatusCodes.Status403Forbidden;
@@ -157,11 +155,11 @@ public class TaiKhoanController : Controller
     // ---------- Đổi mật khẩu ----------
 
     [AuthorizeRole]
-    [HttpGet]
+    [HttpGet("/TaiKhoan/DoiMatKhau")]
     public IActionResult ChangePassword() => View(new ChangePasswordViewModel());
 
     [AuthorizeRole]
-    [HttpPost]
+    [HttpPost("/TaiKhoan/DoiMatKhau")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
     {
@@ -199,7 +197,7 @@ public class TaiKhoanController : Controller
     // Email đang đặt lại được giữ trong Session (HttpContext.Session.Set/Get/ClearResetEmail),
     // các bước sau không còn nhận email qua URL.
 
-    [HttpGet]
+    [HttpGet("/TaiKhoan/QuenMatKhau")]
     public IActionResult ForgotPassword()
     {
         // Còn phiên đặt lại dở dang: điền sẵn email và cho phép quay lại bước nhập mã.
@@ -207,8 +205,7 @@ public class TaiKhoanController : Controller
         ViewBag.PendingEmail = pending;
         return View(new ForgotPasswordViewModel { Email = pending ?? string.Empty });
     }
-
-    [HttpPost]
+    [HttpPost("/TaiKhoan/QuenMatKhau")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
     {
@@ -238,7 +235,7 @@ public class TaiKhoanController : Controller
 
     // ---------- Quên mật khẩu, bước 2: nhập mã OTP (chỉ kiểm tra, chưa tiêu thụ mã) ----------
 
-    [HttpGet]
+    [HttpGet("/TaiKhoan/XacMinhMa")]
     public IActionResult VerifyOtp()
     {
         var email = HttpContext.Session.GetResetEmail();
@@ -254,8 +251,7 @@ public class TaiKhoanController : Controller
             CooldownSeconds = TempData[KeyCooldown] as int? ?? 0
         });
     }
-
-    [HttpPost]
+    [HttpPost("/TaiKhoan/XacMinhMa")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> VerifyOtp(VerifyOtpViewModel model)
     {
@@ -310,7 +306,7 @@ public class TaiKhoanController : Controller
         return View(model);
     }
 
-    [HttpPost]
+    [HttpPost("/TaiKhoan/GuiLaiMa")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ResendOtp()
     {
@@ -340,7 +336,7 @@ public class TaiKhoanController : Controller
 
     // ---------- Quên mật khẩu, bước 3: đặt mật khẩu mới (kiểm tra lại và tiêu thụ OTP) ----------
 
-    [HttpGet]
+    [HttpGet("/TaiKhoan/DatLaiMatKhau")]
     public IActionResult ResetPassword()
     {
         var email = HttpContext.Session.GetResetEmail();
@@ -354,8 +350,7 @@ public class TaiKhoanController : Controller
 
         return View(new ResetPasswordViewModel { Email = email, MaOtp = otp });
     }
-
-    [HttpPost]
+    [HttpPost("/TaiKhoan/DatLaiMatKhau")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
     {
