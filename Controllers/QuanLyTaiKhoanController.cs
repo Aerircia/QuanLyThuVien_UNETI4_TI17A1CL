@@ -37,30 +37,38 @@ public class QuanLyTaiKhoanController : Controller
         VaiTro? vaiTro,
         TrangThaiTaiKhoan? trangThai,
         int page = 1,
-        int pageSize = PagingDefaults.DefaultPageSize)
+        int pageSize = PagingDefaults.DefaultPageSize,
+        string? sort = null)
     {
         if (vaiTro.HasValue && !Enum.IsDefined(vaiTro.Value)) vaiTro = null;
         if (trangThai.HasValue && !Enum.IsDefined(trangThai.Value)) trangThai = null;
         search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+        sort = sort is "name" or "email" or "role" or "status" or "username_desc" ? sort : "username";
 
         var result = await _service.GetListAsync(
-            new TaiKhoanFilter(search, vaiTro, trangThai, page, pageSize), HttpContext.RequestAborted);
+            new TaiKhoanFilter(search, vaiTro, trangThai, page, pageSize, sort), HttpContext.RequestAborted);
 
         var routeValues = new Dictionary<string, string>();
         if (search is not null) routeValues["search"] = search;
         if (vaiTro.HasValue) routeValues["vaiTro"] = vaiTro.Value.ToString();
         if (trangThai.HasValue) routeValues["trangThai"] = trangThai.Value.ToString();
+        if (sort != "username") routeValues["sort"] = sort;
 
-        return View(new TaiKhoanListViewModel
+        var model = new TaiKhoanListViewModel
         {
             Search = search,
             VaiTro = vaiTro,
             TrangThai = trangThai,
+            Sort = sort,
             PageSize = result.PageSize,
             CurrentMaTaiKhoan = ActingId,
             Result = result,
             Pager = PagerViewModel.From(result, "QuanLyTaiKhoan", nameof(Index), routeValues)
-        });
+        };
+        Response.Headers.Vary = "X-Requested-With";
+        return Request.Headers["X-Requested-With"] == "XMLHttpRequest"
+            ? PartialView("_IndexResults", model)
+            : View(model);
     }
 
     // ---------- Thêm ----------

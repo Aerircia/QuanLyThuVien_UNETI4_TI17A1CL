@@ -6,7 +6,6 @@
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
 @{
     ViewData["Title"] = "Quản lý tài khoản";
-    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
 
     var vaiTroItems = Html.GetEnumSelectList<VaiTro>().ToList();
     foreach (var item in vaiTroItems)
@@ -16,7 +15,6 @@
     foreach (var item in trangThaiItems)
         item.Selected = Model.TrangThai is { } t && item.Value == ((int)t).ToString();
 }
-
 @section Styles {
     <link rel="stylesheet" href="~/css/accounts.css" asp-append-version="true" />
 }
@@ -33,117 +31,46 @@
 
 <partial name="_AlertsPartial" />
 
-<form method="get" asp-action="Index" class="app-card filter-bar">
+<form id="accountFilter" method="get" asp-action="Index" class="app-card filter-bar">
     <input type="hidden" name="pageSize" value="@Model.PageSize" />
     <div class="row g-2 align-items-end">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <label for="fSearch" class="form-label">Tìm kiếm</label>
-            <input id="fSearch" name="search" value="@Model.Search" class="form-control"
+            <input id="fSearch" name="search" value="@Model.Search" data-ajax-search data-ajax-search-min="2" class="form-control"
                    placeholder="Tên đăng nhập, họ tên, email" />
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <label for="fRole" class="form-label">Vai trò</label>
             <select id="fRole" name="vaiTro" class="form-select" asp-items="vaiTroItems">
                 <option value="">Tất cả vai trò</option>
             </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
+            <label for="fSort" class="form-label">Sắp xếp</label>
+            <select id="fSort" name="sort" class="form-select">
+                <option value="username" selected="@(Model.Sort == "username")">Tên đăng nhập A–Z</option>
+                <option value="username_desc" selected="@(Model.Sort == "username_desc")">Tên đăng nhập Z–A</option>
+                <option value="name" selected="@(Model.Sort == "name")">Họ tên</option>
+                <option value="email" selected="@(Model.Sort == "email")">Email</option>
+                <option value="role" selected="@(Model.Sort == "role")">Vai trò</option>
+                <option value="status" selected="@(Model.Sort == "status")">Trạng thái</option>
+            </select>
+        </div>
+        <div class="col-md-2">
             <label for="fStatus" class="form-label">Trạng thái</label>
             <select id="fStatus" name="trangThai" class="form-select" asp-items="trangThaiItems">
                 <option value="">Tất cả trạng thái</option>
             </select>
         </div>
-        <div class="col-md-2 d-grid">
+        <div class="col-md-3 d-grid">
             <button type="submit" class="btn btn-outline-primary">Lọc</button>
         </div>
     </div>
 </form>
 
-<div class="table-responsive">
-    <table class="table align-middle">
-        <thead>
-            <tr>
-                <th>Tài khoản</th>
-                <th>Email</th>
-                <th>Vai trò</th>
-                <th>Trạng thái</th>
-                <th>Hồ sơ bạn đọc</th>
-                <th class="text-end">Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model.Result.Items)
-            {
-                var isSelf = item.MaTaiKhoan == Model.CurrentMaTaiKhoan;
-                var locked = item.TrangThai == TrangThaiTaiKhoan.BiKhoa;
-                var initial = string.IsNullOrWhiteSpace(item.HoTen) ? "?" : item.HoTen.Trim().Substring(0, 1).ToUpperInvariant();
-                var roleClass = item.VaiTro switch
-                {
-                    VaiTro.Admin => "badge-soft-danger",
-                    VaiTro.ThuThu => "badge-soft-info",
-                    _ => "badge-soft-secondary"
-                };
-                <tr>
-                    <td>
-                        <div class="acc-cell">
-                            <span class="app-avatar acc-avatar" aria-hidden="true">@initial</span>
-                            <div>
-                                <div class="fw-semibold">@item.HoTen @if (isSelf) { <span class="badge badge-soft-primary">Bạn</span> }</div>
-                                <div class="text-muted small">@item.TenDangNhap</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>@item.Email</td>
-                    <td><span class="badge @roleClass">@item.VaiTro.GetDisplayName()</span></td>
-                    <td><span class="badge @(locked ? "badge-soft-danger" : "badge-soft-success")">@item.TrangThai.GetDisplayName()</span></td>
-                    <td>@(item.CoHoSoBanDoc ? "Có" : "—")</td>
-                    <td class="text-end text-nowrap">
-                        <a asp-action="Edit" asp-route-id="@item.MaTaiKhoan" class="btn btn-sm btn-outline-secondary">Sửa</a>
-                        <a asp-action="ResetPassword" asp-route-id="@item.MaTaiKhoan" class="btn btn-sm btn-outline-secondary">Đặt lại MK</a>
-
-                        @if (!isSelf)
-                        {
-                            <form id="status-@item.MaTaiKhoan" asp-action="SetStatus" method="post" class="d-none">
-                                <input type="hidden" name="id" value="@item.MaTaiKhoan" />
-                                <input type="hidden" name="trangThai" value="@(locked ? nameof(TrangThaiTaiKhoan.HoatDong) : nameof(TrangThaiTaiKhoan.BiKhoa))" />
-                                <input type="hidden" name="returnUrl" value="@returnUrl" />
-                            </form>
-                            <button type="button" class="btn btn-sm @(locked ? "btn-outline-success" : "btn-outline-warning")"
-                                    data-confirm-form="#status-@item.MaTaiKhoan"
-                                    data-confirm-title="@(locked ? "Mở khóa tài khoản" : "Khóa tài khoản")"
-                                    data-confirm-message="@(locked ? $"Mở khóa tài khoản {item.TenDangNhap}? Người dùng sẽ đăng nhập lại được." : $"Khóa tài khoản {item.TenDangNhap}? Người dùng sẽ bị đăng xuất và không đăng nhập được cho đến khi mở khóa.")"
-                                    data-confirm-ok="@(locked ? "Mở khóa" : "Khóa")"
-                                    data-confirm-class="@(locked ? "btn-success" : "btn-warning")">
-                                @(locked ? "Mở khóa" : "Khóa")
-                            </button>
-
-                            <form id="delete-@item.MaTaiKhoan" asp-action="Delete" method="post" class="d-none">
-                                <input type="hidden" name="id" value="@item.MaTaiKhoan" />
-                            </form>
-                            <button type="button" class="btn btn-sm btn-outline-danger"
-                                    data-confirm-form="#delete-@item.MaTaiKhoan"
-                                    data-confirm-title="Xóa tài khoản"
-                                    data-confirm-message="@($"Xóa tài khoản {item.TenDangNhap}? Tài khoản đã có phiếu mượn hoặc đã xử lý phiếu sẽ không xóa được, khi đó hãy dùng Khóa để giữ lịch sử.")"
-                                    data-confirm-ok="Xóa"
-                                    data-confirm-class="btn-danger">
-                                Xóa
-                            </button>
-                        }
-                    </td>
-                </tr>
-            }
-
-            @if (!Model.Result.Items.Any())
-            {
-                <tr><td colspan="6" class="text-center text-muted py-4">Không có tài khoản nào phù hợp.</td></tr>
-            }
-        </tbody>
-    </table>
+<div id="accountResults" data-ajax-list data-ajax-form="#accountFilter" data-ajax-change>
+<partial name="_IndexResults" model="Model" />
 </div>
 
-<partial name="_PagerPartial" model="Model.Pager" />
-
-
-@section Scripts {
-    <script src="~/js/forms.js" asp-append-version="true"></script>
-}
+@* AJAX-enabled filter state; form submit remains a normal GET without JavaScript. *@
+@* The results partial includes the table and pager. *@

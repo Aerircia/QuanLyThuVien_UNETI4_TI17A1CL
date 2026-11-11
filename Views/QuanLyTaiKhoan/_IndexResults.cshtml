@@ -1,0 +1,26 @@
+@* Họ và tên: Lại Anh Quân *@
+@* Mã sinh viên: 23103100255 *@
+@* Nội dung thực hiện: bảng kết quả AJAX quản lý tài khoản *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.TaiKhoanListViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{ var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}"; }
+<div class="table-responsive"><table class="table align-middle">
+<thead><tr><th>Tài khoản</th><th>Email</th><th>Vai trò</th><th>Trạng thái</th><th>Hồ sơ bạn đọc</th><th class="text-end">Thao tác</th></tr></thead><tbody>
+@foreach (var item in Model.Result.Items)
+{
+    var isSelf = item.MaTaiKhoan == Model.CurrentMaTaiKhoan; var locked = item.TrangThai == TrangThaiTaiKhoan.BiKhoa;
+    var initial = string.IsNullOrWhiteSpace(item.HoTen) ? "?" : item.HoTen.Trim().Substring(0, 1).ToUpperInvariant();
+    var roleClass = item.VaiTro switch { VaiTro.Admin => "badge-soft-danger", VaiTro.ThuThu => "badge-soft-info", _ => "badge-soft-secondary" };
+    <tr><td><div class="acc-cell"><span class="app-avatar acc-avatar">@initial</span><div><div class="fw-semibold">@item.HoTen @if (isSelf) { <span class="badge badge-soft-primary">Bạn</span> }</div><div class="text-muted small">@item.TenDangNhap</div></div></div></td>
+    <td>@item.Email</td><td><span class="badge @roleClass">@item.VaiTro.GetDisplayName()</span></td><td><span class="badge @(locked ? "badge-soft-danger" : "badge-soft-success")">@item.TrangThai.GetDisplayName()</span></td><td>@(item.CoHoSoBanDoc ? "Có" : "—")</td>
+    <td class="text-end text-nowrap"><a asp-action="Edit" asp-route-id="@item.MaTaiKhoan" class="btn btn-sm btn-outline-secondary">Sửa</a> <a asp-action="ResetPassword" asp-route-id="@item.MaTaiKhoan" class="btn btn-sm btn-outline-secondary">Đặt lại MK</a>
+    @if (!isSelf) {
+        <form id="status-@item.MaTaiKhoan" asp-action="SetStatus" method="post" class="d-none"><input type="hidden" name="id" value="@item.MaTaiKhoan"/><input type="hidden" name="trangThai" value="@(locked ? nameof(TrangThaiTaiKhoan.HoatDong) : nameof(TrangThaiTaiKhoan.BiKhoa))"/><input type="hidden" name="returnUrl" value="@returnUrl"/></form>
+        <button type="button" class="btn btn-sm @(locked ? "btn-outline-success" : "btn-outline-warning")" data-confirm-form="#status-@item.MaTaiKhoan" data-confirm-title="@(locked ? "Mở khóa tài khoản" : "Khóa tài khoản")" data-confirm-ok="@(locked ? "Mở khóa" : "Khóa")" data-confirm-class="@(locked ? "btn-success" : "btn-warning")" data-confirm-message="Xác nhận thay đổi trạng thái tài khoản @item.TenDangNhap?">@(locked ? "Mở khóa" : "Khóa")</button>
+        <form id="delete-@item.MaTaiKhoan" asp-action="Delete" method="post" class="d-none"><input type="hidden" name="id" value="@item.MaTaiKhoan"/></form><button type="button" class="btn btn-sm btn-outline-danger" data-confirm-form="#delete-@item.MaTaiKhoan" data-confirm-title="Xóa tài khoản" data-confirm-message="Xóa tài khoản @item.TenDangNhap?" data-confirm-ok="Xóa" data-confirm-class="btn-danger">Xóa</button>
+    }
+    </td></tr>
+}
+@if (!Model.Result.Items.Any()) { <tr><td colspan="6" class="text-center text-muted py-4">Không có tài khoản nào phù hợp.</td></tr> }
+</tbody></table></div>
+<partial name="_PagerPartial" model="Model.Pager" />

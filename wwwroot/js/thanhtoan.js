@@ -1,7 +1,7 @@
 // Họ và tên: Lại Anh Quân
 // Mã sinh viên: 23103100255
 // Nội dung thực hiện: Xây dựng JavaScript trang thanh toán tiền phạt
-// Chọn khoản phạt + tính tổng (MyFines, ThuPhatBanDoc); trang kết quả tự hỏi trạng thái khi đang chờ thanh toán.
+// Chọn khoản phạt + tính tổng (MyFines); trang kết quả tự hỏi trạng thái khi đang chờ thanh toán.
 (() => {
   'use strict';
 

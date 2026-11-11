@@ -454,9 +454,13 @@ public sealed class ThanhToanService : IThanhToanService
                                      (code != null && g.OrderCode == code));
         }
 
-        var projected = query
-            .OrderByDescending(g => g.NgayTao)
-            .ThenByDescending(g => g.MaGiaoDich)
+        var projected = (filter.Sort?.ToLowerInvariant() switch
+        {
+            "oldest" => query.OrderBy(g => g.NgayTao).ThenBy(g => g.MaGiaoDich),
+            "amount_asc" => query.OrderBy(g => g.TongTien).ThenByDescending(g => g.NgayTao),
+            "amount_desc" => query.OrderByDescending(g => g.TongTien).ThenByDescending(g => g.NgayTao),
+            _ => query.OrderByDescending(g => g.NgayTao).ThenByDescending(g => g.MaGiaoDich)
+        })
             .Select(g => new GiaoDichListItem(
                 g.MaGiaoDich,
                 g.OrderCode,
@@ -511,50 +515,6 @@ public sealed class ThanhToanService : IThanhToanService
         return new GiaoDichDetail(
             h.MaGiaoDich, h.OrderCode, h.MaBanDoc, h.HoTen, h.MaSoThe, h.TongTien, h.PhuongThuc, h.TrangThai,
             h.NhaCungCap, h.CheckoutUrl, h.NgayTao, h.NgayHetHan, h.NgayThanhToan, h.NguoiXacNhan, h.GhiChu, lines);
-    }
-
-    public async Task<PagedResult<DebtorItem>> GetDebtorsAsync(
-        string? search, int page, int pageSize, CancellationToken ct = default)
-    {
-        var fines = from t in _db.TraSachs
-                    where t.TrangThaiPhat == TrangThaiPhat.ChuaNop
-                    join p in _db.PhieuMuons on t.MaPhieuMuon equals p.MaPhieuMuon
-                    select new { p.MaBanDoc, t.TienPhat };
-
-        var grouped = from f in fines
-                      group f by f.MaBanDoc into g
-                      select new { MaBanDoc = g.Key, SoKhoan = g.Count(), TongNo = g.Sum(x => x.TienPhat) };
-
-        var joined = from g in grouped
-                     join b in _db.BanDocs on g.MaBanDoc equals b.MaBanDoc
-                     select new { g, b };
-
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var s = search.Trim();
-            joined = joined.Where(x => x.b.HoTen.Contains(s) || (x.b.MaSoThe != null && x.b.MaSoThe.Contains(s)));
-        }
-
-        var projected = joined
-            .OrderByDescending(x => x.g.TongNo)
-            .ThenBy(x => x.b.MaBanDoc)
-            .Select(x => new DebtorItem(x.b.MaBanDoc, x.b.HoTen, x.b.MaSoThe, x.g.SoKhoan, x.g.TongNo));
-
-        return await PagedResult<DebtorItem>.CreateAsync(projected, page, pageSize, ct);
-    }
-
-    public async Task<IReadOnlyList<UnpaidFine>> GetUnpaidFinesAsync(int maBanDoc, CancellationToken ct = default)
-    {
-        await ReconcileAsync(maBanDoc, null, ct);
-        return await (
-            from t in _db.TraSachs.AsNoTracking()
-            where t.TrangThaiPhat == TrangThaiPhat.ChuaNop
-            join p in _db.PhieuMuons on t.MaPhieuMuon equals p.MaPhieuMuon
-            where p.MaBanDoc == maBanDoc
-            orderby t.NgayTra descending, t.MaTra descending
-            select new UnpaidFine(
-                t.MaTra, p.MaPhieuMuon, p.Sach!.TenSach, t.NgayTra, t.TinhTrangSach, t.SoNgayTre, t.TienPhat,
-                _db.GiaoDichThanhToanChiTiets.Any(c => c.MaTra == t.MaTra && c.DangCho))).ToListAsync(ct);
     }
 
     private static ServiceResult<T> Fail<T>(string message) => ServiceResult<T>.Error(string.Empty, message);

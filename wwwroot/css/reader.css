@@ -64,13 +64,20 @@ body.app-body .app-header-search input { width: 100%; min-width: 0; height: 38px
 .app-notification-trigger { display: inline-grid; }
 .app-notification-count { position: absolute; top: -3px; right: -3px; display: grid; place-items: center; min-width: 18px; height: 18px; padding: 0 4px; border: 2px solid #fff; border-radius: 99px; background: #d0566b; color: #fff; font-size: 9px; font-weight: 800; line-height: 1; }
 .app-notification-count[hidden] { display: none; }
-.app-notification-menu { width: min(390px, calc(100vw - 20px)); max-height: min(570px, calc(100vh - 84px)); margin-top: 10px !important; padding: 0; overflow: hidden; border: 1px solid var(--app-line); border-radius: 16px; background: #fff; box-shadow: 0 16px 42px rgba(28,43,23,.18); }
+.app-notification-menu {
+  position: absolute !important; top: calc(100% + 8px) !important; right: 0 !important; bottom: auto !important; left: auto !important;
+  display: none; flex-direction: column; width: min(390px, calc(100vw - 20px));
+  max-height: min(430px, calc(100dvh - 100px)); margin: 0 !important; padding: 0; overflow: hidden;
+  transform: none !important; border: 1px solid var(--app-line); border-radius: 16px;
+  background: #fff; box-shadow: 0 16px 42px rgba(28,43,23,.18);
+}
+.app-notification-menu.show { display: flex; }
 .app-notification-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 15px 16px 12px; border-bottom: 1px solid var(--app-line); }
 .app-notification-heading strong, .app-notification-heading small { display: block; }
 .app-notification-heading strong { font-size: 15px; }
 .app-notification-heading small { margin-top: 2px; color: var(--app-muted); font-size: 11px; }
 .app-notification-heading .btn { min-height: 30px; padding: 5px 10px; font-size: 11px; }
-.app-notification-list { max-height: 430px; overflow-y: auto; }
+.app-notification-list { flex: 1 1 auto; min-height: 0; max-height: none; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
 .app-notification-item { position: relative; display: flex; align-items: flex-start; gap: 11px; padding: 12px 15px; border-bottom: 1px solid #edf1e9; color: var(--app-text) !important; text-decoration: none; transition: background .15s; }
 .app-notification-item:hover { background: #f7f9f4; }
 .app-notification-item.is-unread { background: #f5f9f1; }
@@ -201,7 +208,11 @@ body.app-body .app-header-search input { width: 100%; min-width: 0; height: 38px
   .app-account-meta, .app-account-chevron { display: none !important; }
   .app-account-trigger { padding: 1px !important; }
   .app-account-trigger .app-avatar { width: 36px; height: 36px; flex-basis: 36px; }
-  .app-notification-menu { position: fixed !important; top: 58px !important; right: 8px !important; left: auto !important; width: min(380px, calc(100vw - 16px)); margin: 0 !important; }
+  .app-notification-menu {
+    position: fixed !important; top: 58px !important; right: 8px !important; bottom: auto !important; left: auto !important;
+    width: min(380px, calc(100vw - 16px)); max-height: calc(100dvh - 72px); margin: 0 !important;
+    transform: none !important;
+  }
   .reader-page { padding-right: 12px !important; padding-left: 12px !important; }
   .reader-page-heading, .reader-loan-toolbar { align-items: flex-start; flex-direction: column; }
   .reader-loan-summary { grid-template-columns: 1fr 1fr; gap: 8px; }

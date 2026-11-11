@@ -1,12 +1,13 @@
 @* Họ và tên: Lại Anh Quân *@
 @* Mã sinh viên: 23103100255 *@
-@* Nội dung thực hiện: Danh sách phiếu đã duyệt quá số ngày quy định mà bạn đọc chưa đến nhận sách *@
+@* Nội dung thực hiện: Danh sách phiếu đã duyệt đến hạn nhận sách nhưng bạn đọc chưa đến nhận *@
 @model List<QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.PhieuMuonItemViewModel>
 @using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Common
 @{
     ViewData["Title"] = "Phiếu đã duyệt chưa nhận sách";
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
-    var today = DateOnly.FromDateTime(DateTime.Today);
+    var today = LibraryClock.Today();
 }
 
 <div class="container-fluid py-2">
@@ -14,7 +15,7 @@
         <div>
             <h1 class="h4 mb-0">Phiếu đã duyệt chưa nhận sách</h1>
             <p class="text-muted small mb-0">
-                Các phiếu ở trạng thái Đã duyệt quá @LoanRules.UncollectedDays ngày mà bạn đọc chưa đến quầy. Mỗi phiếu vẫn đang giữ một bản sách.
+                Các phiếu đã được duyệt và đến ngày hết hạn nhận sách (sau @LoanRules.UncollectedDays ngày) nhưng bạn đọc chưa đến quầy. Mỗi phiếu vẫn đang giữ một bản sách.
             </p>
         </div>
         <a asp-action="Index" class="btn btn-outline-secondary">← Quản lý phiếu mượn</a>
@@ -70,7 +71,7 @@
 
                     @if (!Model.Any())
                     {
-                        <tr><td colspan="7" class="text-center text-muted py-4">Không có phiếu nào đã duyệt quá @LoanRules.UncollectedDays ngày mà chưa nhận sách.</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted py-4">Không có phiếu nào đã đến ngày hết hạn nhận sách mà bạn đọc chưa đến nhận.</td></tr>
                     }
                 </tbody>
             </table>
