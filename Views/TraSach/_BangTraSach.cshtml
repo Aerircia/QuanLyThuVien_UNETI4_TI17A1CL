@@ -3,6 +3,7 @@
 @* Nội dung thực hiện: partial bảng lịch sử trả sách + phân trang, dùng cho render thường và AJAX *@
 @model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.TraSachListViewModel
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@using QuanLyThuVien_UNETI4_TI17A1CL.ViewModels
 
 <div class="table-responsive">
     <table class="table table-striped align-middle">
@@ -22,25 +23,21 @@
         <tbody>
             @foreach (var item in Model.Result.Items)
             {
-                var phatBadge = item.TrangThaiPhat switch
-                {
-                    TrangThaiPhat.ChuaNop => "bg-danger",
-                    TrangThaiPhat.DaNop => "bg-success",
-                    _ => "bg-secondary"
-                };
                 <tr>
                     <td>#@item.MaPhieuMuon</td>
                     <td>@item.TenBanDoc</td>
                     <td>@item.TenSach</td>
                     <td>@item.NgayTra.ToString("dd/MM/yyyy")</td>
-                    <td>@item.TinhTrang.GetDisplayName()</td>
+                    <td><partial name="_TinhTrangSachBadge" model="item.TinhTrang" /></td>
                     <td class="text-end @(item.SoNgayTre > 0 ? "text-danger fw-bold" : "")">@item.SoNgayTre</td>
                     <td class="text-end">@item.TienPhat.ToString("N0") đ</td>
-                    <td><span class="badge @phatBadge">@item.TrangThaiPhat.GetDisplayName()</span></td>
+                    <td><partial name="_TrangThaiPhatBadge" model="item.TrangThaiPhat" /></td>
                     <td class="text-end text-nowrap">
                         <a asp-action="Details" asp-route-id="@item.MaTra" class="btn btn-sm btn-outline-secondary">Chi tiết</a>
                         @if (item.TrangThaiPhat == TrangThaiPhat.ChuaNop)
                         {
+                            var nutPhat = new NutNhacNhoViewModel("NhacNopPhat", item.MaTra, item.TenBanDoc, item.TenSach, "Nhắc nộp phạt", "btn-outline-danger");
+                            <partial name="_NutNhacNho" model="nutPhat" />
                             <form asp-action="MarkPaid" asp-route-id="@item.MaTra" method="post" class="d-inline"
                                   id="nopPhatForm-@item.MaTra" data-nop-phat>
                                 <button type="button" class="btn btn-sm btn-outline-success"

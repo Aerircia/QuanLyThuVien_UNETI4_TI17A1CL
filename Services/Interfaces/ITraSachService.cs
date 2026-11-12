@@ -11,7 +11,8 @@ public sealed record TraSachFilter(
     TinhTrangSach? TinhTrang,
     TrangThaiPhat? TrangThaiPhat,
     int Page = 1,
-    int PageSize = PagingDefaults.DefaultPageSize);
+    int PageSize = PagingDefaults.DefaultPageSize,
+    bool LoaiTruChuaNop = false);  
 public sealed record TraSachListItem(
     int MaTra,
     int MaPhieuMuon,

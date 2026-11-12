@@ -2,7 +2,11 @@
 @* Mã sinh viên: 23103100280 *@
 @* Nội dung thực hiện: partial bảng phiếu chờ nhận trả + phân trang*@
 @model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.PhieuChoTraListViewModel
-
+@using QuanLyThuVien_UNETI4_TI17A1CL.ViewModels
+@{
+    var todayStr = DateOnly.FromDateTime(DateTime.Today).ToString("yyyyMMdd");
+    var daNhacDict = Model.DaNhacDict ?? new Dictionary<string, TimeOnly>();
+}
 <div class="table-responsive">
     <table class="table align-middle">
         <thead>
@@ -13,6 +17,7 @@
                 <th>Ngày mượn</th>
                 <th>Hạn trả</th>
                 <th>Tình trạng</th>
+                <th>Nhắc nhở</th>
                 <th class="text-end">Thao tác</th>
             </tr>
         </thead>
@@ -42,15 +47,64 @@
                             <span class="badge badge-soft-success">Còn hạn</span>
                         }
                     </td>
+                    @{
+                        var homNay = DateOnly.FromDateTime(DateTime.Today);
+                        int conLai = item.HanTra.HasValue ? item.HanTra.Value.DayNumber - homNay.DayNumber : int.MaxValue;
+                        var canNhacTra = quaHan || conLai <= 3;
+                        var canNhacGiaHan = !quaHan && conLai <= 3;
+                        var khoaTra = $"PhieuMuon_{item.MaPhieuMuon}_NhacTra_{todayStr}";
+                        var khoaGiaHan = $"PhieuMuon_{item.MaPhieuMuon}_NhacGiaHan_{todayStr}";
+                        daNhacDict.TryGetValue(khoaTra, out var gioNhacTra);
+                        daNhacDict.TryGetValue(khoaGiaHan, out var gioNhacGiaHan);
+                        
+                        var nutTra = new NutNhacNhoViewModel(
+                            "NhacTraSach", 
+                            item.MaPhieuMuon, 
+                            item.TenBanDoc, 
+                            item.TenSach, 
+                            "Nhắc trả sách", 
+                            quaHan ? "btn-outline-danger" : "btn-outline-primary", 
+                            gioNhacTra != default ? gioNhacTra : null
+                        );
+
+                        var nutGiaHan = new NutNhacNhoViewModel(
+                            "NhacGiaHan", 
+                            item.MaPhieuMuon, 
+                            item.TenBanDoc, 
+                            item.TenSach, 
+                            "Nhắc gia hạn", 
+                            "btn-outline-secondary", 
+                            gioNhacGiaHan != default ? gioNhacGiaHan : null
+                        );
+                    }
+                    <td>
+                        @if (canNhacTra || canNhacGiaHan)
+                        {
+                            <div class="d-flex flex-wrap gap-1">
+                                @if (canNhacTra)
+                                {
+                                    <partial name="_NutNhacNho" model="nutTra" />
+                                }
+                                @if (canNhacGiaHan)
+                                {
+                                    <partial name="_NutNhacNho" model="nutGiaHan" />
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </td>
                     <td class="text-end">
-                        <a asp-action="Create" asp-route-maPhieuMuon="@item.MaPhieuMuon" class="btn btn-sm btn-primary">Nhận trả</a>
+                        <a asp-action="Create" asp-route-maPhieuMuon="@item.MaPhieuMuon" class="btn btn-sm btn-primary text-nowrap">Nhận trả</a>
                     </td>
                 </tr>
             }
 
             @if (!Model.Result.Items.Any())
             {
-                <tr><td colspan="7" class="text-center text-muted py-4">Không có phiếu đang mượn nào chờ nhận trả.</td></tr>
+                <tr><td colspan="8" class="text-center text-muted py-4">Không có phiếu đang mượn nào chờ nhận trả.</td></tr>
             }
         </tbody>
     </table>

@@ -1,0 +1,60 @@
+@* Họ và tên: Vũ Ngọc Hương Giang *@
+@* Mã sinh viên: 23103100280 *@
+@* Nội dung thực hiện: partial bảng quản lý thông báo (ẩn/hiện) + phân trang, dùng cho render thường và AJAX *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.QuanLyThongBaoViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Common
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Notifications
+@{
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+<div class="table-responsive">
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Thời gian</th>
+                <th>Người nhận</th>
+                <th>Loại</th>
+                <th>Nội dung</th>
+                <th>Đọc</th>
+                <th>Hiển thị</th>
+                <th class="text-end">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model.Result.Items)
+        {
+            <tr class="@(item.DangHienThi ? "" : "text-muted")">
+                <td class="text-nowrap">@LibraryClock.ToVietnamTime(item.NgayTao).ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@item.NguoiNhan</td>
+                <td><span class="badge @ThongBaoHienThi.BadgeClass(item.MucDo)">@ThongBaoHienThi.TenLoai(item.LoaiThongBao)</span></td>
+                <td>
+                    <div class="fw-semibold">@item.TieuDe</div>
+                    <small class="text-muted">@item.NoiDung</small>
+                </td>
+                <td>@(item.DaDoc ? "Đã đọc" : "Chưa đọc")</td>
+                <td>
+                    <span class="badge @(item.DangHienThi ? "badge-soft-success" : "badge-soft-secondary")">@(item.DangHienThi ? "Đang hiện" : "Đã ẩn")</span>
+                </td>
+                <td class="text-end text-nowrap">
+                    <form asp-action="DoiHienThi" asp-route-id="@item.MaThongBao" asp-route-hienThi="@(!item.DangHienThi)" asp-route-returnUrl="@returnUrl"
+                          method="post" class="d-inline" id="hienThiForm-@item.MaThongBao">
+                        <button type="button" class="btn btn-sm @(item.DangHienThi ? "btn-outline-danger" : "btn-outline-primary")"
+                                data-confirm-form="#hienThiForm-@item.MaThongBao"
+                                data-confirm-title="@(item.DangHienThi ? "Ẩn thông báo" : "Hiện lại thông báo")"
+                                data-confirm-message="@(item.DangHienThi ? $"Bạn có chắc muốn ẩn thông báo '{item.TieuDe}' của {item.NguoiNhan}?" : $"Hiện lại thông báo '{item.TieuDe}' cho {item.NguoiNhan}?")"
+                                data-confirm-ok="Đồng ý"
+                                data-confirm-class="@(item.DangHienThi ? "btn-danger" : "btn-primary")">
+                            @(item.DangHienThi ? "Ẩn" : "Hiện")
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+        @if (!Model.Result.Items.Any())
+        {
+            <tr><td colspan="7" class="text-center text-muted py-4">Không có thông báo nào.</td></tr>
+        }
+        </tbody>
+    </table>
+</div>
+<partial name="_PagerPartial" model="Model.Pager" />

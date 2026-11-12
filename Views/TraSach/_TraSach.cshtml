@@ -1,0 +1,10 @@
+@* Họ và tên: Vũ Ngọc Hương Giang *@
+@* Mã sinh viên: 23103100280 *@
+@* Nội dung thực hiện: thanh 3 tab Chờ nhận trả / Chưa nộp phạt / Lịch sử. *@
+@model string
+
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item"><a class="nav-link @(Model == "ChoTra" ? "active" : "")" asp-controller="TraSach" asp-action="ChoTra">Chờ nhận trả</a></li>
+    <li class="nav-item"><a class="nav-link @(Model == "ChuaNop" ? "active" : "")" asp-controller="TraSach" asp-action="ChuaNop">Chưa nộp phạt</a></li>
+    <li class="nav-item"><a class="nav-link @(Model == "LichSu" ? "active" : "")" asp-controller="TraSach" asp-action="Index">Lịch sử trả sách</a></li>
+</ul>

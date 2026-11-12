@@ -1,0 +1,139 @@
+@* Họ và tên: Vũ Ngọc Hương Giang *@
+@* Mã sinh viên: 23103100280 *@
+@* Nội dung thực hiện: view tab Chưa nộp phạt: các khoản phạt chưa thanh toán, tìm/lọc/phân trang và đánh dấu đã nộp phạt bằng AJAX *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.TraSachListViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
+@{
+    ViewData["Title"] = "Phạt chưa nộp";
+
+    var tinhTrangItems = Html.GetEnumSelectList<TinhTrangSach>().ToList();
+    foreach (var item in tinhTrangItems)
+        item.Selected = Model.TinhTrang is { } t && item.Value == ((int)t).ToString();
+
+    var dangLoc = !string.IsNullOrWhiteSpace(Model.Search) || Model.TinhTrang.HasValue;
+}
+<div class="mb-3">
+    <h1 class="mb-1">Trả sách và tiền phạt</h1>
+    <p class="text-muted mb-0">Các khoản phạt bạn đọc chưa nộp</p>
+</div>
+
+<partial name="_TraSach" model='"ChuaNop"' />
+<partial name="_AlertsPartial" />
+<div id="tra-sach-alert" aria-live="polite"></div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form id="bo-loc-tra-sach" method="get" asp-action="ChuaNop" class="row g-2 align-items-center">
+            <input type="hidden" id="pageSize" name="pageSize" value="@Model.PageSize" />
+            <div class="col-lg-6">
+                <input id="timKiem" name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo họ tên bạn đọc hoặc tên sách" />
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <select id="tinhTrang" name="tinhTrang" class="form-select" asp-items="tinhTrangItems" onchange="this.form.requestSubmit()">
+                    <option value="">Mọi tình trạng sách</option>
+                </select>
+            </div>
+            <div class="col-lg-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Tìm</button>
+                <a asp-action="ChuaNop" asp-route-pageSize="@Model.PageSize" data-xoa-loc class="btn btn-outline-secondary @(dangLoc ? "" : "d-none")">Xóa lọc</a>
+            </div>
+        </form>
+    </div>
+</div>
+<div id="vung-ket-qua-tra-sach">
+    <partial name="_BangTraSach" model="Model" />
+</div>
+
+@section Scripts {
+    <script src="~/js/nhac-nho.js" asp-append-version="true"></script>
+<script>
+    $(function () {
+
+        // Bước 1: lấy điều kiện tìm kiếm/lọc người dùng đang nhập (tên khớp với tham số của Action)
+        function layDieuKien() {
+            return {
+                search: $('#timKiem').val(),
+                tinhTrang: $('#tinhTrang').val(),
+                pageSize: $('#pageSize').val()
+            };
+        }
+
+        // Bước 2: gửi AJAX tới url (kèm data nếu có) và hiển thị kết quả
+        function taiDanhSach(url, data) {
+            $.ajax({
+                url: url,
+                type: 'GET',
+                data: data,
+                success: function (result) {
+                    $('#vung-ket-qua-tra-sach').html(result);
+                },
+                error: function () {
+                    alert('Có lỗi xảy ra, vui lòng thử lại.');
+                }
+            });
+        }
+
+        // Chỉ hiện nút "Xóa lọc" khi đang có điều kiện lọc
+        function hienNutXoaLoc() {
+            var coLoc = $('#bo-loc-tra-sach').find('input[name="search"], select').filter(function () {
+                return $.trim($(this).val()) !== '';
+            }).length > 0 || $('#bo-loc-tra-sach').find('input[type="checkbox"]:checked').length > 0;
+            $('#bo-loc-tra-sach [data-xoa-loc]').toggleClass('d-none', !coLoc);
+        }
+
+        function timKiem() {
+            hienNutXoaLoc();
+            taiDanhSach($('#bo-loc-tra-sach').attr('action'), layDieuKien());
+        }
+
+        // Bước 3: gắn sự kiện
+        // Bấm nút "Tìm" hoặc đổi ô chọn (onchange đã gọi requestSubmit) -> sự kiện submit
+        $('#bo-loc-tra-sach').submit(function (e) {
+            e.preventDefault();
+            timKiem();
+        });
+
+        // Gõ đến đâu tìm đến đó (keyup)
+        $('#bo-loc-tra-sach input[name="search"]').keyup(function () {
+            timKiem();
+        });
+
+        // Xóa lọc: xóa các ô nhập rồi tìm lại
+        $('#bo-loc-tra-sach [data-xoa-loc]').click(function (e) {
+            e.preventDefault();
+            $('#timKiem').val('');
+            $('#tinhTrang').val('');
+            timKiem();
+        });
+
+        // Phân trang: link nằm trong vùng kết quả 
+        $('#vung-ket-qua-tra-sach').on('click', 'nav[aria-label="Phân trang"] a[href]', function (e) {
+            e.preventDefault();
+            taiDanhSach($(this).attr('href'));
+        });
+
+        // ---- Nút "Đã nộp phạt" ----
+        $('#vung-ket-qua-tra-sach').on('submit', 'form[data-nop-phat]', function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: $(this).attr('action'),
+                type: 'POST',
+                data: $(this).serialize(),      
+                dataType: 'json',
+                success: function (result) {
+                    var loai = result.success ? 'success' : 'danger';
+                    $('#tra-sach-alert').html('<div class="alert alert-' + loai + ' alert-dismissible fade show" role="alert">' +
+                        '<strong></strong> <span></span>' +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button></div>');
+                    $('#tra-sach-alert strong').text(result.success ? 'Thành công!' : 'Lỗi!');
+                    $('#tra-sach-alert span').text(result.message);
+                    if (result.success) timKiem();           
+                },
+                error: function () {
+                    alert('Có lỗi xảy ra, vui lòng thử lại.');
+                }
+            });
+        });
+    });
+</script>
+}

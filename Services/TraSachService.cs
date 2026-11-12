@@ -77,6 +77,10 @@ public class TraSachService : ITraSachService
         if (filter.TrangThaiPhat is { } trangThaiPhat)
             query = query.Where(t => t.TrangThaiPhat == trangThaiPhat);
 
+        // Tab Lịch sử: bỏ các khoản phạt chưa nộp (đã có tab riêng)
+        if (filter.LoaiTruChuaNop)
+            query = query.Where(t => t.TrangThaiPhat != TrangThaiPhat.ChuaNop);
+
         var projected = query
             .OrderByDescending(t => t.NgayTra)
             .ThenByDescending(t => t.MaTra)
