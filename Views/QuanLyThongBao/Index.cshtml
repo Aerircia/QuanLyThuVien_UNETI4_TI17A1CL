@@ -1,0 +1,120 @@
+@* Họ và tên: Vũ Ngọc Hương Giang *@
+@* Mã sinh viên: 23103100280 *@
+@* Nội dung thực hiện: view quản lý thông báo của hệ thống: tìm/lọc/phân trang bằng AJAX, ẩn/hiện có modal xác nhận *@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.QuanLyThongBaoViewModel
+@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Notifications
+@{
+    ViewData["Title"] = "Quản lý thông báo";
+    var dangLoc = !string.IsNullOrWhiteSpace(Model.Search) || !string.IsNullOrEmpty(Model.Loai)
+                  || !string.IsNullOrEmpty(Model.NhomNhan) || Model.DangHienThi.HasValue;
+}
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="mb-0">Quản lý thông báo</h1>
+    <div class="d-flex gap-2">
+        <a asp-controller="ThongBao" asp-action="Index" class="btn btn-outline-secondary">Hộp thư của tôi</a>
+        <a asp-action="Gui" class="btn btn-primary">Gửi thông báo</a>
+    </div>
+</div>
+
+@if (TempData["ThongBao"] is string thongBao)
+{
+    <div class="alert alert-success" role="status">@thongBao</div>
+}
+@if (TempData["Loi"] is string loi)
+{
+    <div class="alert alert-danger" role="alert">@loi</div>
+}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form id="bo-loc-quan-ly" method="get" asp-action="Index" class="row g-2 align-items-center">
+            <input type="hidden" id="pageSize" name="pageSize" value="@Model.PageSize" />
+            <div class="col-lg-4">
+                <input id="timKiem" name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo tiêu đề, nội dung, người nhận" />
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <select id="loai" name="loai" class="form-select" onchange="this.form.requestSubmit()">
+                    <option value="">Tất cả loại</option>
+                    @foreach (var ma in ThongBaoHienThi.CacLoai)
+                    {
+                        <option value="@ma" selected="@(Model.Loai == ma)">@ThongBaoHienThi.TenLoai(ma)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <select id="nhomNhan" name="nhomNhan" class="form-select" onchange="this.form.requestSubmit()">
+                    <option value="">Mọi người nhận</option>
+                    <option value="BanDoc" selected="@(Model.NhomNhan == "BanDoc")">Bạn đọc</option>
+                    <option value="NhanVien" selected="@(Model.NhomNhan == "NhanVien")">Thủ thư / Admin</option>
+                </select>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <select id="hienThi" name="hienThi" class="form-select" onchange="this.form.requestSubmit()">
+                    <option value="">Hiển thị: tất cả</option>
+                    <option value="true" selected="@(Model.DangHienThi == true)">Đang hiện</option>
+                    <option value="false" selected="@(Model.DangHienThi == false)">Đã ẩn</option>
+                </select>
+            </div>
+            <div class="col-lg-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Tìm</button>
+                <a asp-action="Index" data-xoa-loc class="btn btn-outline-secondary @(dangLoc ? "" : "d-none")">Xóa lọc</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="vung-ket-qua-quan-ly">
+    <partial name="_BangQuanLy" model="Model" />
+</div>
+
+@section Scripts {
+<script>
+    $(function () {
+        function layDieuKien() {
+            return {
+                search: $('#timKiem').val(),
+                loai: $('#loai').val(),
+                nhomNhan: $('#nhomNhan').val(),
+                hienThi: $('#hienThi').val(),
+                pageSize: $('#pageSize').val()
+            };
+        }
+
+        function taiDanhSach(url, data) {
+            $.ajax({
+                url: url,
+                type: 'GET',
+                data: data,
+                success: function (result) { $('#vung-ket-qua-quan-ly').html(result); },
+                error: function () { alert('Có lỗi xảy ra, vui lòng thử lại.'); }
+            });
+        }
+
+        function hienNutXoaLoc() {
+            var coLoc = $('#bo-loc-quan-ly').find('input[name="search"], select').filter(function () {
+                return $.trim($(this).val()) !== '';
+            }).length > 0;
+            $('#bo-loc-quan-ly [data-xoa-loc]').toggleClass('d-none', !coLoc);
+        }
+
+        function timKiem() {
+            hienNutXoaLoc();
+            taiDanhSach($('#bo-loc-quan-ly').attr('action'), layDieuKien());
+        }
+
+        $('#bo-loc-quan-ly').submit(function (e) { e.preventDefault(); timKiem(); });
+        $('#bo-loc-quan-ly input[name="search"]').keyup(function () { timKiem(); });
+        $('#bo-loc-quan-ly [data-xoa-loc]').click(function (e) {
+            e.preventDefault();
+            $('#timKiem').val('');
+            $('#loai, #nhomNhan, #hienThi').val('');
+            timKiem();
+        });
+        $('#vung-ket-qua-quan-ly').on('click', 'nav[aria-label="Phân trang"] a[href]', function (e) {
+            e.preventDefault();
+            taiDanhSach($(this).attr('href'));
+        });
+    });
+</script>
+}

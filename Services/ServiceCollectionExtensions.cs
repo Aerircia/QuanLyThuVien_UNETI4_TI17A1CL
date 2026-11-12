@@ -155,6 +155,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IEmailQueue, EmailQueue>();
         services.AddHostedService<EmailNotificationBackgroundService>();
         services.AddScoped<IThongBaoService, ThongBaoService>();
+        services.AddScoped<IQuanLyThongBaoService, QuanLyThongBaoService>();
+        services.AddScoped<INhacNhoService, NhacNhoService>();
         services.AddHostedService<LoanOverdueBackgroundService>();
 
         return services;

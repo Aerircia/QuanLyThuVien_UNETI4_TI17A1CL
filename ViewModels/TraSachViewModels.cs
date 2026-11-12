@@ -20,6 +20,7 @@ public class TraSachListViewModel
 
     public PagedResult<TraSachListItem> Result { get; set; } = default!;
     public PagerViewModel Pager { get; set; } = default!;
+    public Dictionary<string, TimeOnly> DaNhacDict { get; set; } = new();
 }
 // danh sách phiếu đang mượn chờ nhận trả
 public class PhieuChoTraListViewModel
@@ -29,6 +30,7 @@ public class PhieuChoTraListViewModel
     public int PageSize { get; set; } = PagingDefaults.DefaultPageSize;
     public PagedResult<PhieuChoTraItem> Result { get; set; } = default!;
     public PagerViewModel Pager { get; set; } = default!;
+    public Dictionary<string, TimeOnly> DaNhacDict { get; set; } = new();
 }
 // chọn tình trạng sách và ghi chú
 public class TraSachCreateViewModel

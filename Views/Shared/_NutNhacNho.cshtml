@@ -1,0 +1,19 @@
+@* Họ và tên: Vũ Ngọc Hương Giang *@
+@* Mã sinh viên: 23103100280 *@
+@* Nội dung thực hiện: partial nút nhắc nhở bạn đọc*@
+@model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.NutNhacNhoViewModel
+
+@if (Model.DaNhacLuc.HasValue)
+{
+    <button type="button" class="btn btn-sm btn-secondary text-nowrap" disabled title="Đã gửi lúc @Model.DaNhacLuc.Value.ToString("HH:mm")">
+        Đã nhắc nhở 
+    </button>
+}
+else
+{
+    var xacNhan = $"Gửi \"{Model.Nhan.ToLowerInvariant()}\" đến bạn đọc {Model.TenBanDoc} về sách “{Model.TenSach}”?";
+    <form asp-controller="NhacNho" asp-action="@Model.Action" asp-route-id="@Model.Id" method="post" class="d-inline m-0 p-0"
+          data-nhac data-nhac-confirm="@xacNhan" data-nhac-title="@Model.Nhan">
+        <button type="submit" class="btn btn-sm @Model.Lop text-nowrap">@Model.Nhan</button>
+    </form>
+}

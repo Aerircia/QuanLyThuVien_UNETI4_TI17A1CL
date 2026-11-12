@@ -16,12 +16,18 @@ public class TraSachController : Controller
     private readonly ITraSachService _service;
     private readonly IThanhToanService _thanhToanService;
     private readonly ICurrentUserService _current;
+    private readonly INhacNhoService _nhacNhoService;
 
-    public TraSachController(ITraSachService service, IThanhToanService thanhToanService, ICurrentUserService current)
+    public TraSachController(
+        ITraSachService service, 
+        IThanhToanService thanhToanService, 
+        ICurrentUserService current,
+        INhacNhoService nhacNhoService) 
     {
         _service = service;
         _thanhToanService = thanhToanService;
         _current = current;
+        _nhacNhoService = nhacNhoService;
     }
     private bool IsAjax => Request.Headers["X-Requested-With"] == "XMLHttpRequest";
     private IActionResult AjaxLoi(string macDinh = "Không thể ghi nhận trả sách.")
@@ -31,7 +37,7 @@ public class TraSachController : Controller
         return Json(new { success = false, message = loi.Count > 0 ? string.Join(" ", loi) : macDinh });
     }
 
-// Lịch sử trả sách và tiền phạt 
+// Tab Lịch sử: các lượt trả không phạt hoặc đã nộp phạt
     [HttpGet("/ThuThu/QuanLyTraSach")]
     public async Task<IActionResult> Index(
         string? search,
@@ -42,10 +48,12 @@ public class TraSachController : Controller
     {
         if (tinhTrang.HasValue && !Enum.IsDefined(tinhTrang.Value)) tinhTrang = null;
         if (trangThaiPhat.HasValue && !Enum.IsDefined(trangThaiPhat.Value)) trangThaiPhat = null;
+        if (trangThaiPhat == TrangThaiPhat.ChuaNop) trangThaiPhat = null;   // phạt chưa nộp có tab riêng
         search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
 
+        // Tab Lịch sử: chỉ lượt trả không phạt hoặc đã nộp phạt
         var result = await _service.GetListAsync(
-            new TraSachFilter(search, tinhTrang, trangThaiPhat, page, pageSize), HttpContext.RequestAborted);
+            new TraSachFilter(search, tinhTrang, trangThaiPhat, page, pageSize, LoaiTruChuaNop: true), HttpContext.RequestAborted);
 
         var routeValues = new Dictionary<string, string>();
         if (search is not null) routeValues["search"] = search;
@@ -67,6 +75,41 @@ public class TraSachController : Controller
 
         return View(vm);
     }
+// Tab Chưa nộp phạt: các khoản phạt chưa thanh toán
+    [HttpGet("/ThuThu/QuanLyTraSach/ChuaNop")]
+    public async Task<IActionResult> ChuaNop(
+        string? search,
+        TinhTrangSach? tinhTrang,
+        int page = 1,
+        int pageSize = PagingDefaults.DefaultPageSize)
+    {
+        if (tinhTrang.HasValue && !Enum.IsDefined(tinhTrang.Value)) tinhTrang = null;
+        search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+
+        var result = await _service.GetListAsync(
+            new TraSachFilter(search, tinhTrang, TrangThaiPhat.ChuaNop, page, pageSize), HttpContext.RequestAborted);
+
+        var routeValues = new Dictionary<string, string>();
+        if (search is not null) routeValues["search"] = search;
+        if (tinhTrang.HasValue) routeValues["tinhTrang"] = tinhTrang.Value.ToString();
+
+        var vm = new TraSachListViewModel
+        {
+            Search = search,
+            TinhTrang = tinhTrang,
+            TrangThaiPhat = TrangThaiPhat.ChuaNop,
+            PageSize = result.PageSize,
+            Result = result,
+            Pager = PagerViewModel.From(result, "TraSach", nameof(ChuaNop), routeValues)
+        };
+
+        // AJAX (tìm/lọc/phân trang): dùng chung partial bảng với tab Lịch sử
+        if (IsAjax)
+            return PartialView("_BangTraSach", vm);
+
+        return View(vm);
+    }
+
 // Phiếu đang mượn chờ nhận trả
     [HttpGet("/ThuThu/SachChoTra")]
     public async Task<IActionResult> ChoTra(
@@ -84,13 +127,21 @@ public class TraSachController : Controller
         if (search is not null) routeValues["search"] = search;
         if (chiQuaHan) routeValues["chiQuaHan"] = "true";
 
+        var todayStr = DateOnly.FromDateTime(DateTime.Today).ToString("yyyyMMdd");
+        var danhSachKhoa = result.Items.SelectMany(item => new[] {
+            $"PhieuMuon_{item.MaPhieuMuon}_NhacTra_{todayStr}",
+            $"PhieuMuon_{item.MaPhieuMuon}_NhacGiaHan_{todayStr}"
+        }).ToList();
+        var daNhacDict = await _nhacNhoService.GetThoiGianDaNhacHomNayAsync(danhSachKhoa, HttpContext.RequestAborted);
+
         var vm = new PhieuChoTraListViewModel
         {
             Search = search,
             ChiQuaHan = chiQuaHan,
             PageSize = result.PageSize,
             Result = result,
-            Pager = PagerViewModel.From(result, "TraSach", nameof(ChoTra), routeValues)
+            Pager = PagerViewModel.From(result, "TraSach", nameof(ChoTra), routeValues),
+            DaNhacDict = daNhacDict
         };
 
         if (IsAjax)

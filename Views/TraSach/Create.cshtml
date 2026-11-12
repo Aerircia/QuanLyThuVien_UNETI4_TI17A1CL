@@ -22,6 +22,7 @@
     <a asp-action="ChoTra" class="btn btn-outline-secondary">Quay lại</a>
 </div>
 
+<partial name="_AlertsPartial" />
 @if (p.SoNgayTre > 0)
 {
     <div class="alert alert-overdue" role="alert">
@@ -163,8 +164,11 @@
     $(function () {
 
         function hienThongBao(loai, noiDung) {
-            $('#tra-alert').html('<div class="alert alert-' + loai + '"></div>');
-            $('#tra-alert .alert').text(noiDung);    
+            $('#tra-alert').html('<div class="alert alert-' + loai + ' alert-dismissible fade show" role="alert">' +
+                '<strong></strong> <span></span>' +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button></div>');
+            $('#tra-alert strong').text(loai === 'success' ? 'Thành công!' : 'Lỗi!');
+            $('#tra-alert span').text(noiDung);
         }
 
         // ghi tình trạng và tiền phạt đang chọn 

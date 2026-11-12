@@ -9,13 +9,10 @@
 
 <div class="mb-3">
     <h1 class="mb-1">Trả sách và tiền phạt</h1>
-    <p class="text-muted mb-0">Chọn phiếu đang mượn để nhận sách trả. Phiếu quá hạn được tô nổi bật.</p>
+    <p class="text-muted mb-0">Chọn phiếu đang mượn để nhận sách trả</p>
 </div>
 
-<ul class="nav nav-pills mb-3">
-    <li class="nav-item"><a class="nav-link active" asp-action="ChoTra">Chờ nhận trả</a></li>
-    <li class="nav-item"><a class="nav-link" asp-action="Index">Lịch sử trả sách</a></li>
-</ul>
+<partial name="_TraSach" model='"ChoTra"' />
 
 <partial name="_AlertsPartial" />
 <div class="card mb-3">
@@ -44,16 +41,21 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/nhac-nho.js" asp-append-version="true"></script>
 <script>
     $(function () {
+
+        // Bước 1: lấy điều kiện tìm kiếm/lọc người dùng đang nhập (tên khớp với tham số của Action)
         function layDieuKien() {
             var dieuKien = {
                 search: $('#timKiem').val(),
                 pageSize: $('#pageSize').val()
             };
-            if ($('#chiQuaHan').is(':checked')) dieuKien.chiQuaHan = true;   
+            if ($('#chiQuaHan').is(':checked')) dieuKien.chiQuaHan = true;  
             return dieuKien;
         }
+
+        // Bước 2: gửi AJAX tới url (kèm data nếu có) và hiển thị kết quả
         function taiDanhSach(url, data) {
             $.ajax({
                 url: url,
@@ -67,6 +69,8 @@
                 }
             });
         }
+
+        // Chỉ hiện nút "Xóa lọc" khi đang có điều kiện lọc
         function hienNutXoaLoc() {
             var coLoc = $('#bo-loc-cho-tra').find('input[name="search"], select').filter(function () {
                 return $.trim($(this).val()) !== '';
@@ -78,13 +82,20 @@
             hienNutXoaLoc();
             taiDanhSach($('#bo-loc-cho-tra').attr('action'), layDieuKien());
         }
+
+        // Bước 3: gắn sự kiện
+        // Bấm nút "Tìm" hoặc đổi ô chọn (onchange đã gọi requestSubmit) -> sự kiện submit
         $('#bo-loc-cho-tra').submit(function (e) {
             e.preventDefault();
             timKiem();
         });
+
+        // Gõ đến đâu tìm đến đó (keyup)
         $('#bo-loc-cho-tra input[name="search"]').keyup(function () {
             timKiem();
         });
+
+        // Xóa lọc: xóa các ô nhập rồi tìm lại
         $('#bo-loc-cho-tra [data-xoa-loc]').click(function (e) {
             e.preventDefault();
             $('#timKiem').val('');

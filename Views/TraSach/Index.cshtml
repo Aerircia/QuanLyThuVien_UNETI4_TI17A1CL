@@ -10,7 +10,9 @@
     foreach (var item in tinhTrangItems)
         item.Selected = Model.TinhTrang is { } t && item.Value == ((int)t).ToString();
 
-    var phatItems = Html.GetEnumSelectList<TrangThaiPhat>().ToList();
+    // Chưa nộp
+    var phatItems = Html.GetEnumSelectList<TrangThaiPhat>()
+        .Where(i => i.Value != ((int)TrangThaiPhat.ChuaNop).ToString()).ToList();
     foreach (var item in phatItems)
         item.Selected = Model.TrangThaiPhat is { } p && item.Value == ((int)p).ToString();
          
@@ -18,14 +20,10 @@
 }
 <div class="mb-3">
     <h1 class="mb-1">Trả sách và tiền phạt</h1>
-    <p class="text-muted mb-0">Theo dõi các lượt trả sách, số ngày trễ và khoản phạt của bạn đọc.</p>
+    <p class="text-muted mb-0">Các lượt trả sách đã hoàn tất</p>
 </div>
 
-<ul class="nav nav-pills mb-3">
-    <li class="nav-item"><a class="nav-link" asp-action="ChoTra">Chờ nhận trả</a></li>
-    <li class="nav-item"><a class="nav-link active" asp-action="Index">Lịch sử trả sách</a></li>
-</ul>
-
+<partial name="_TraSach" model='"LichSu"' />
 <partial name="_AlertsPartial" />
 <div id="tra-sach-alert" aria-live="polite"></div>
 
@@ -43,7 +41,7 @@
             </div>
             <div class="col-md-6 col-lg-3">
                 <select id="trangThaiPhat" name="trangThaiPhat" class="form-select" asp-items="phatItems" onchange="this.form.requestSubmit()">
-                    <option value="">Mọi trạng thái phạt</option>
+                    <option value="">Không phạt và đã nộp</option>
                 </select>
             </div>
             <div class="col-lg-2 d-flex gap-2">
@@ -53,15 +51,17 @@
         </form>
     </div>
 </div>
+
 <div id="vung-ket-qua-tra-sach">
     <partial name="_BangTraSach" model="Model" />
 </div>
 
 @section Scripts {
+    <script src="~/js/nhac-nho.js" asp-append-version="true"></script>
 <script>
     $(function () {
 
-        // Bước 1: lấy điều kiện tìm kiếm/lọc người dùng đang nhập
+        // Bước 1: lấy điều kiện tìm kiếm/lọc người dùng đang nhập 
         function layDieuKien() {
             return {
                 search: $('#timKiem').val(),
@@ -71,7 +71,7 @@
             };
         }
 
-        // Bước 2: gửi AJAX tới url và hiển thị kết quả
+        // Bước 2: gửi AJAX tới url (kèm data nếu có) và hiển thị kết quả
         function taiDanhSach(url, data) {
             $.ajax({
                 url: url,
@@ -100,17 +100,18 @@
         }
 
         // Bước 3: gắn sự kiện
+        // Bấm nút "Tìm" hoặc đổi ô chọn (onchange đã gọi requestSubmit) -> sự kiện submit
         $('#bo-loc-tra-sach').submit(function (e) {
             e.preventDefault();
             timKiem();
         });
 
-        // keyup
+        // Gõ đến đâu tìm đến đó (keyup)
         $('#bo-loc-tra-sach input[name="search"]').keyup(function () {
             timKiem();
         });
 
-        // Xóa lọc
+        // Xóa lọc: xóa các ô nhập rồi tìm lại
         $('#bo-loc-tra-sach [data-xoa-loc]').click(function (e) {
             e.preventDefault();
             $('#timKiem').val('');
@@ -118,26 +119,25 @@
             $('#trangThaiPhat').val('');
             timKiem();
         });
-
-        // Phân trang
         $('#vung-ket-qua-tra-sach').on('click', 'nav[aria-label="Phân trang"] a[href]', function (e) {
             e.preventDefault();
             taiDanhSach($(this).attr('href'));
         });
-
-        //Đã nộp phạt
         $('#vung-ket-qua-tra-sach').on('submit', 'form[data-nop-phat]', function (e) {
             e.preventDefault();
             $.ajax({
                 url: $(this).attr('action'),
                 type: 'POST',
-                data: $(this).serialize(),  
+                data: $(this).serialize(),    
                 dataType: 'json',
                 success: function (result) {
                     var loai = result.success ? 'success' : 'danger';
-                    $('#tra-sach-alert').html('<div class="alert alert-' + loai + '"></div>');
-                    $('#tra-sach-alert .alert').text(result.message);
-                    if (result.success) timKiem();     
+                    $('#tra-sach-alert').html('<div class="alert alert-' + loai + ' alert-dismissible fade show" role="alert">' +
+                        '<strong></strong> <span></span>' +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button></div>');
+                    $('#tra-sach-alert strong').text(result.success ? 'Thành công!' : 'Lỗi!');
+                    $('#tra-sach-alert span').text(result.message);
+                    if (result.success) timKiem();            
                 },
                 error: function () {
                     alert('Có lỗi xảy ra, vui lòng thử lại.');
