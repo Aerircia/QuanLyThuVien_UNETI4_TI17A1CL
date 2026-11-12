@@ -2,6 +2,7 @@
 // Mã sinh viên: 23103100257
 // Nội dung thực hiện: Xây dựng service cho việc quản lý sách
 using System.Data;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using QuanLyThuVien_UNETI4_TI17A1CL.Data;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models;
@@ -133,7 +134,23 @@ public sealed class SachService : ISachService
         return ServiceResult<int>.Ok(sach.MaSach);
     }
 
-    public async Task<ServiceResult> UpdateAsync(UpdateSachInput input, CancellationToken ct = default)
+    public Task<ServiceResult> UpdateAsync(UpdateSachInput input, CancellationToken ct = default) =>
+        RunWithDeadlockMessageAsync(() => UpdateCoreAsync(input, ct));
+
+    // Deadlock (SQL Server 1205) do giao dịch Serializable tranh chấp: báo người dùng thử lại thay vì lỗi 500.
+    private static async Task<ServiceResult> RunWithDeadlockMessageAsync(Func<Task<ServiceResult>> action)
+    {
+        try { return await action(); }
+        catch (Exception ex) when (IsDeadlock(ex))
+        {
+            return ServiceResult.Fail("Hệ thống đang xử lý giao dịch khác, vui lòng thử lại sau ít giây.");
+        }
+    }
+
+    private static bool IsDeadlock(Exception ex) =>
+        ex is SqlException { Number: 1205 } || (ex.InnerException is { } inner && IsDeadlock(inner));
+
+    private async Task<ServiceResult> UpdateCoreAsync(UpdateSachInput input, CancellationToken ct)
     {
         await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
         var sach = await _db.Sachs.FirstOrDefaultAsync(s => s.MaSach == input.MaSach, ct);
@@ -215,8 +232,13 @@ var result = Validate(new SachFields(
         return ServiceResult<bool>.Ok(true);
     }
     
-    public async Task<ServiceResult> ToggleTrangThaiAsync(int maSach, CancellationToken ct = default)
+    public Task<ServiceResult> ToggleTrangThaiAsync(int maSach, CancellationToken ct = default) =>
+        RunWithDeadlockMessageAsync(() => ToggleCoreAsync(maSach, ct));
+
+    private async Task<ServiceResult> ToggleCoreAsync(int maSach, CancellationToken ct)
     {
+        // Serializable: kiểm tra phiếu đang giữ và đổi trạng thái trong cùng một giao dịch, tránh tranh chấp.
+        await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
         var sach = await _db.Sachs.FirstOrDefaultAsync(s => s.MaSach == maSach, ct);
         if (sach is null)
             return ServiceResult.Fail("Không tìm thấy sách.");
@@ -228,6 +250,7 @@ var result = Validate(new SachFields(
         {
             sach.TrangThai = TrangThaiSach.DangPhucVu;
             await _db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
             return ServiceResult.Success();
         }
 
@@ -237,6 +260,7 @@ var result = Validate(new SachFields(
 
         sach.TrangThai = TrangThaiSach.TamNgung;
         await _db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
         return ServiceResult.Success();
     }
 

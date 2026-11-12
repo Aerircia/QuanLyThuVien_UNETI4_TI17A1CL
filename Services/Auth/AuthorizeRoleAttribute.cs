@@ -51,19 +51,9 @@ public sealed class AuthorizeRoleAttribute : Attribute, IAsyncAuthorizationFilte
         var user = check.User!;
         if (user != sessionUser)
         {
-            var claims = new List<System.Security.Claims.Claim>
-            {
-                new(System.Security.Claims.ClaimTypes.NameIdentifier, user.MaTaiKhoan.ToString()),
-                new(System.Security.Claims.ClaimTypes.Name, user.HoTen),
-                new(System.Security.Claims.ClaimTypes.Role, user.VaiTro.ToString()),
-                new(System.Security.Claims.ClaimTypes.Email, user.Email),
-                new("lms:username", user.TenDangNhap)
-            };
-            var identity = new System.Security.Claims.ClaimsIdentity(
-                claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            await http.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
-                new System.Security.Claims.ClaimsPrincipal(identity));
-            http.User = new System.Security.Claims.ClaimsPrincipal(identity);
+            var principal = AuthTicket.ToPrincipal(user);
+            await http.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+            http.User = principal;
         }
 
         if (_roles.Length > 0 && !_roles.Contains(user.VaiTro))

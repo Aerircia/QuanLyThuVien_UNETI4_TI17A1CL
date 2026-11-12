@@ -91,19 +91,10 @@ public class TaiKhoanController : Controller
 
         // Issue a fresh protected auth ticket. The pre-login session cookie is
         // deliberately not used to identify the authenticated user.
-        var user = result.User!;
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, user.MaTaiKhoan.ToString()),
-            new(ClaimTypes.Name, user.HoTen),
-            new(ClaimTypes.Role, user.VaiTro.ToString()),
-            new(ClaimTypes.Email, user.Email),
-            new("lms:username", user.TenDangNhap)
-        };
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var principal = AuthTicket.ToPrincipal(result.User!);
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
-            new ClaimsPrincipal(identity),
+            principal,
             new AuthenticationProperties { IsPersistent = false });
 
         if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
@@ -303,6 +294,10 @@ public class TaiKhoanController : Controller
                 break;
 
             case ResetPasswordStatus.TooManyAttempts:
+                ModelState.AddModelError(nameof(model.MaOtp),
+                    "Bạn đã nhập sai quá nhiều lần. Vui lòng bấm \"Gửi lại mã\" để nhận mã mới.");
+                break;
+
             default:
                 ModelState.AddModelError(nameof(model.MaOtp), "Mã OTP không đúng hoặc đã hết hạn.");
                 break;
@@ -324,13 +319,33 @@ public class TaiKhoanController : Controller
             return RedirectToAction(nameof(ForgotPassword));
         }
 
-        await _passwordReset.RequestAsync(email, HttpContext.RequestAborted);
+        // Email đã nằm trong phiên của người dùng đang đặt lại, nên báo đúng lý do chờ/giới hạn.
+        var result = await _passwordReset.RequestAsync(email, HttpContext.RequestAborted);
 
-        TempData["ThongBao"] = ResetGenericMessage;
-        TempData[KeyCooldown] = _otp.ResendCooldownSeconds;
+        if (result.Status == RequestResetStatus.Sent)
+        {
+            TempData["ThongBao"] = "Đã gửi lại mã OTP mới tới email của bạn.";
+            TempData[KeyCooldown] = _otp.ResendCooldownSeconds;
+        }
+        else
+        {
+            TempData["Loi"] = DescribeRequestFailure(result);
+            if (result.Status == RequestResetStatus.CooldownActive)
+                TempData[KeyCooldown] = result.RetryAfterSeconds;
+        }
 
         return RedirectToAction(nameof(VerifyOtp));
     }
+
+    private static string DescribeRequestFailure(RequestResetResult result) => result.Status switch
+    {
+        RequestResetStatus.EmailNotFound => "Email không tồn tại trong hệ thống.",
+        RequestResetStatus.AccountLocked => "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.",
+        RequestResetStatus.CooldownActive => $"Vui lòng đợi {result.RetryAfterSeconds} giây trước khi yêu cầu mã mới.",
+        RequestResetStatus.HourlyLimitReached =>
+            $"Bạn đã yêu cầu mã quá nhiều lần. Vui lòng thử lại sau khoảng {Math.Max(1, (result.RetryAfterSeconds + 59) / 60)} phút.",
+        _ => "Không gửi được email. Vui lòng thử lại sau."
+    };
 
     // ---------- Quên mật khẩu, bước 3: đặt mật khẩu mới (kiểm tra lại và tiêu thụ OTP) ----------
 
@@ -383,6 +398,10 @@ public class TaiKhoanController : Controller
             case ResetPasswordStatus.EmailNotFound:
             case ResetPasswordStatus.AccountLocked:
             case ResetPasswordStatus.TooManyAttempts:
+                TempData.Remove(KeyResetOtp);
+                TempData["Loi"] = "Bạn đã nhập sai quá nhiều lần. Vui lòng nhận mã mới.";
+                return RedirectToAction(nameof(VerifyOtp));
+
             default:
                 // Mã hết hạn hoặc bị vô hiệu giữa bước 2 và bước 3: quay lại bước nhập mã (email vẫn nằm trong Session).
                 TempData.Remove(KeyResetOtp);

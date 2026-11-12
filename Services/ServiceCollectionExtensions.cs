@@ -61,7 +61,9 @@ public static class ServiceCollectionExtensions
                     context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                     _ => new FixedWindowRateLimiterOptions
                     {
-                        PermitLimit = 10,
+                        // Hạn mức theo IP đủ rộng cho mạng dùng chung (NAT); chống dò mật khẩu
+                        // vẫn cần khóa theo tài khoản ở AuthService (xem báo cáo, lỗi 1).
+                        PermitLimit = 30,
                         Window = TimeSpan.FromMinutes(5),
                         QueueLimit = 0,
                         AutoReplenishment = true

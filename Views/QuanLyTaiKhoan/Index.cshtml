@@ -6,7 +6,6 @@
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
 @{
     ViewData["Title"] = "Quản lý tài khoản";
-    var dangLoc = !string.IsNullOrWhiteSpace(Model.Search) || Model.VaiTro.HasValue || Model.TrangThai.HasValue || Model.Sort != "username";
 
     var vaiTroItems = Html.GetEnumSelectList<VaiTro>().ToList();
     foreach (var item in vaiTroItems)

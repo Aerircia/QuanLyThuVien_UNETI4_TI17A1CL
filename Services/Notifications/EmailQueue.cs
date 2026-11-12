@@ -15,8 +15,27 @@ public interface IEmailQueue
 
 public sealed class EmailQueue : IEmailQueue
 {
-    private readonly Channel<EmailQueueItem> _channel = Channel.CreateBounded<EmailQueueItem>(new BoundedChannelOptions(500)
+    // Email OTP có kênh riêng để thư thông báo hàng loạt không làm chậm hoặc đẩy lùi mã đặt lại mật khẩu.
+    private readonly Channel<EmailQueueItem> _urgent = Channel.CreateBounded<EmailQueueItem>(new BoundedChannelOptions(100)
     { FullMode = BoundedChannelFullMode.Wait, SingleReader = true, SingleWriter = false });
-    public ValueTask EnqueueAsync(EmailQueueItem item, CancellationToken ct = default) => _channel.Writer.WriteAsync(item, ct);
-    public ValueTask<EmailQueueItem> DequeueAsync(CancellationToken ct) => _channel.Reader.ReadAsync(ct);
+    private readonly Channel<EmailQueueItem> _normal = Channel.CreateBounded<EmailQueueItem>(new BoundedChannelOptions(500)
+    { FullMode = BoundedChannelFullMode.Wait, SingleReader = true, SingleWriter = false });
+
+    public ValueTask EnqueueAsync(EmailQueueItem item, CancellationToken ct = default) =>
+        (item.RevokeOtpOnFailure is null ? _normal : _urgent).Writer.WriteAsync(item, ct);
+
+    public async ValueTask<EmailQueueItem> DequeueAsync(CancellationToken ct)
+    {
+        while (true)
+        {
+            if (_urgent.Reader.TryRead(out var urgent)) return urgent;
+            if (_normal.Reader.TryRead(out var normal)) return normal;
+
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            var waitUrgent = _urgent.Reader.WaitToReadAsync(cts.Token).AsTask();
+            var waitNormal = _normal.Reader.WaitToReadAsync(cts.Token).AsTask();
+            await Task.WhenAny(waitUrgent, waitNormal);
+            cts.Cancel();
+        }
+    }
 }
