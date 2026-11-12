@@ -6,6 +6,7 @@
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
 @{
     ViewData["Title"] = "Quản lý tài khoản";
+    var dangLoc = !string.IsNullOrWhiteSpace(Model.Search) || Model.VaiTro.HasValue || Model.TrangThai.HasValue || Model.Sort != "username";
 
     var vaiTroItems = Html.GetEnumSelectList<VaiTro>().ToList();
     foreach (var item in vaiTroItems)
@@ -31,12 +32,12 @@
 
 <partial name="_AlertsPartial" />
 
-<form id="accountFilter" method="get" asp-action="Index" class="app-card filter-bar">
+<form id="accountFilter" method="get" asp-action="Index" class="app-card filter-bar" data-ajax-filter-form>
     <input type="hidden" name="pageSize" value="@Model.PageSize" />
     <div class="row g-2 align-items-end">
         <div class="col-md-3">
             <label for="fSearch" class="form-label">Tìm kiếm</label>
-            <input id="fSearch" name="search" value="@Model.Search" data-ajax-search data-ajax-search-min="2" class="form-control"
+            <input id="fSearch" name="search" value="@Model.Search" data-ajax-search data-ajax-search-min="2" data-ajax-search-delay="350" class="form-control"
                    placeholder="Tên đăng nhập, họ tên, email" />
         </div>
         <div class="col-md-2">
@@ -63,7 +64,7 @@
             </select>
         </div>
         <div class="col-md-3 d-grid">
-            <button type="submit" class="btn btn-outline-primary">Lọc</button>
+            <a asp-action="Index" asp-route-pageSize="@Model.PageSize" data-ajax-clear class="btn btn-outline-secondary">Xóa bộ lọc</a>
         </div>
     </div>
 </form>

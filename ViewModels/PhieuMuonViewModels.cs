@@ -257,7 +257,8 @@ public sealed record PhieuMuonManageFilter(
     bool? OverdueOnly,
     int Page = 1,
     int PageSize = PagingDefaults.DefaultPageSize,
-    string? GroupFilter = null);
+    string? GroupFilter = null,
+    string? Sort = null);
 
 public sealed class PhieuMuonManageListViewModel
 {
@@ -266,6 +267,7 @@ public sealed class PhieuMuonManageListViewModel
     public string? GroupFilter { get; set; }
     public int? MaTheLoai { get; set; }
     public bool? OverdueOnly { get; set; }
+    public string Sort { get; set; } = "newest";
     public int PageSize { get; set; } = PagingDefaults.DefaultPageSize;
 
     public PagedResult<PhieuMuonItemViewModel> Result { get; set; } = default!;

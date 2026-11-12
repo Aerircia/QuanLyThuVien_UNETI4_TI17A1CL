@@ -1,6 +1,7 @@
 // Họ và tên: Vũ Tiến Thành
 // Mã sinh viên: 23103100257
 // Nội dung thực hiện: Xây dựng service cho việc quản lý sách
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using QuanLyThuVien_UNETI4_TI17A1CL.Data;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models;
@@ -134,6 +135,7 @@ public sealed class SachService : ISachService
 
     public async Task<ServiceResult> UpdateAsync(UpdateSachInput input, CancellationToken ct = default)
     {
+        await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
         var sach = await _db.Sachs.FirstOrDefaultAsync(s => s.MaSach == input.MaSach, ct);
         if (sach is null)
             return ServiceResult.Fail("Không tìm thấy sách.");
@@ -145,11 +147,13 @@ var result = Validate(new SachFields(
         if (!await IsUsableCategoryForUpdateAsync(input.MaTheLoai, sach.MaTheLoai, ct))
             result.AddError(nameof(input.MaTheLoai), "Thể loại không tồn tại hoặc đã ngừng hoạt động.");
 
-        // Sách đang nằm trong phiếu mượn hiệu lực thì không cho thu hẹp số lượng hay chuyển Ngừng phục vụ.
+        // Tổng số bản phải đủ cho cả bản đang giữ và bản đã mất.
         var soDangGiu = await DemDangGiuAsync(input.MaSach, ct);
-        if (input.SoLuongTong < soDangGiu)
+        var soDaMat = await DemDaMatAsync(input.MaSach, ct);
+        var soToiThieu = soDangGiu + soDaMat;
+        if (input.SoLuongTong < soToiThieu)
             result.AddError(nameof(input.SoLuongTong),
-                $"Không giảm số lượng dưới số sách đang giữ/đang mượn ({soDangGiu}).");
+                $"Tổng số lượng không được thấp hơn số bản đang giữ hoặc đã mất ({soToiThieu} bản: {soDangGiu} đang giữ, {soDaMat} đã mất).");
         if (input.TrangThai == TrangThaiSach.NgungPhucVu && soDangGiu > 0)
             result.AddError(nameof(input.TrangThai),
                 "Còn phiếu mượn đang hiệu lực, chưa thể chuyển Ngừng phục vụ.");
@@ -170,6 +174,7 @@ var result = Validate(new SachFields(
         sach.ImgPath = Normalize(input.ImgPath);
 
         await _db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
         return ServiceResult.Success();
     }
 
@@ -239,6 +244,10 @@ var result = Validate(new SachFields(
         _db.PhieuMuons.CountAsync(p =>
             p.MaSach == maSach &&
             (p.TrangThai == TrangThaiPhieuMuon.DaDuyet || p.TrangThai == TrangThaiPhieuMuon.DangMuon), ct);
+
+    private Task<int> DemDaMatAsync(int maSach, CancellationToken ct) =>
+        _db.TraSachs.CountAsync(t =>
+            t.PhieuMuon != null && t.PhieuMuon.MaSach == maSach && t.TinhTrangSach == TinhTrangSach.Mat, ct);
 
     private async Task<bool> IsUsableCategoryAsync(int maTheLoai, CancellationToken ct) =>
         await _db.TheLoais.AnyAsync(t =>

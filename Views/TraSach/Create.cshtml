@@ -114,7 +114,7 @@
             <div class="card">
                 <div class="card-header">Xác nhận trả sách</div>
                 <div class="card-body">
-                    <form id="formTraSach" asp-action="Create" asp-route-maPhieuMuon="@p.MaPhieuMuon" method="post">
+                    <form id="formTraSach" asp-action="Create" asp-route-maPhieuMuon="@p.MaPhieuMuon" method="post" data-ajax-action="json" data-ajax-alert="#tra-alert">
                         <div asp-validation-summary="ModelOnly" class="mb-2"></div>
 
                         <div class="mb-3">
@@ -142,6 +142,8 @@
 
                         <div class="d-flex gap-2">
                             <button type="button" id="btnTraSach" class="btn btn-primary"
+                                    data-ajax-confirm-radio="TinhTrang" data-ajax-confirm-alert="#tra-alert"
+                                    data-ajax-confirm-template="Bạn xác nhận nhận trả sách này? Tình trạng: {status} - Tiền phạt: {amount}."
                                     data-confirm-form="#formTraSach"
                                     data-confirm-title="Xác nhận trả sách"
                                     data-confirm-message="Bạn xác nhận nhận trả sách này?"
@@ -157,54 +159,6 @@
         }
     </div>
 </div>
-
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-<script>
-    $(function () {
-
-        function hienThongBao(loai, noiDung) {
-            $('#tra-alert').html('<div class="alert alert-' + loai + ' alert-dismissible fade show" role="alert">' +
-                '<strong></strong> <span></span>' +
-                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button></div>');
-            $('#tra-alert strong').text(loai === 'success' ? 'Thành công!' : 'Lỗi!');
-            $('#tra-alert span').text(noiDung);
-        }
-
-        // ghi tình trạng và tiền phạt đang chọn 
-        $('#btnTraSach').click(function (e) {
-            var chon = $('#formTraSach input[name="TinhTrang"]:checked');
-            if (chon.length === 0) {
-                hienThongBao('danger', 'Vui lòng chọn tình trạng sách.');
-                e.stopPropagation();         
-                return;
-            }
-            var dong = chon.closest('label');               
-            $(this).attr('data-confirm-message',
-                'Bạn xác nhận nhận trả sách này? Tình trạng: ' + dong.find('span').eq(0).text() +
-                ' - Tiền phạt: ' + dong.find('span').eq(1).text() + '.');
-        });
-
-        // form được submit -> gửi AJAX POST
-        $('#formTraSach').submit(function (e) {
-            e.preventDefault();
-            $.ajax({
-                url: $(this).attr('action'),
-                type: 'POST',
-                data: $(this).serialize(),  
-                dataType: 'json',
-                success: function (result) {
-                    if (result.success) {
-                        location.href = result.redirectUrl; 
-                        return;
-                    }
-                    hienThongBao('danger', result.message);
-                },
-                error: function () {
-                    hienThongBao('danger', 'Có lỗi xảy ra, vui lòng thử lại.');
-                }
-            });
-        });
-    });
-</script>
 }

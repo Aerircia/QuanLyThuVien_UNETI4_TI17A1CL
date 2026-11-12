@@ -48,6 +48,8 @@ app.UseStaticFiles(new StaticFileOptions
 
 app.UseRouting();
 app.UseSession();
+app.UseRateLimiter();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();

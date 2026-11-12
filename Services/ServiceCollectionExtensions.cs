@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Threading.RateLimiting;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Auth;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Email;
@@ -28,6 +30,53 @@ public static class ServiceCollectionExtensions
             options.Cookie.Name = ".LMS.Session";
             options.Cookie.HttpOnly = true;
             options.Cookie.IsEssential = true;
+        });
+
+        // Authentication uses a newly issued, protected cookie at sign-in. The
+        // anonymous reset-flow state remains in Session and is not an auth token.
+        services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(options =>
+            {
+                options.Cookie.Name = ".LMS.Auth";
+                options.Cookie.HttpOnly = true;
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+                options.SlidingExpiration = true;
+                options.LoginPath = "/TaiKhoan/DangNhap";
+                options.AccessDeniedPath = "/TaiKhoan/KhongDuQuyen";
+            });
+
+        // Bound password guessing and reset-email probing by source IP.
+        services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.OnRejected = async (context, cancellationToken) =>
+            {
+                context.HttpContext.Response.ContentType = "text/plain; charset=utf-8";
+                await context.HttpContext.Response.WriteAsync(
+                    "Quá nhiều yêu cầu. Vui lòng thử lại sau.", cancellationToken);
+            };
+
+            options.AddPolicy("login", context =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 10,
+                        Window = TimeSpan.FromMinutes(5),
+                        QueueLimit = 0,
+                        AutoReplenishment = true
+                    }));
+
+            options.AddPolicy("password-reset", context =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 5,
+                        Window = TimeSpan.FromMinutes(15),
+                        QueueLimit = 0,
+                        AutoReplenishment = true
+                    }));
         });
 
         services.AddHttpContextAccessor();

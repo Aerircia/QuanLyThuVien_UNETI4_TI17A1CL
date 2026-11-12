@@ -1,8 +1,9 @@
 // Họ và tên: Lại Anh Quân
 // Mã sinh viên: 23103100255
-// Nội dung thực hiện: Xây dựng service CurrentUserService để đọc thông tin người dùng đang đăng nhập từ Session và cơ sở dữ liệu.
+// Nội dung thực hiện: Đọc xác thực từ cookie và truy vấn dữ liệu bạn đọc đang login.
 
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using QuanLyThuVien_UNETI4_TI17A1CL.Data;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums;
@@ -32,8 +33,22 @@ public class CurrentUserService : ICurrentUserService
     {
         get
         {
-            var session = _http.HttpContext?.Session;
-            return session is { IsAvailable: true } ? session.GetCurrentUser() : null;
+            var principal = _http.HttpContext?.User;
+            if (principal?.Identity?.IsAuthenticated != true)
+                return null;
+
+            var idText = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            var roleText = principal.FindFirstValue(ClaimTypes.Role);
+            if (!int.TryParse(idText, out var id) ||
+                !Enum.TryParse<VaiTro>(roleText, out var role) || !Enum.IsDefined(role))
+                return null;
+
+            return new CurrentUser(
+                id,
+                principal.FindFirstValue(ClaimTypes.Name) ?? string.Empty,
+                role,
+                principal.FindFirstValue("lms:username") ?? string.Empty,
+                principal.FindFirstValue(ClaimTypes.Email) ?? string.Empty);
         }
     }
 

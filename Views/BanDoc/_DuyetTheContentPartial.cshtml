@@ -15,17 +15,13 @@
 <!-- Search bar -->
 <div class="card mb-3">
     <div class="card-body py-2">
-        <form method="get" asp-action="DuyetThe" id="duyetTheSearchForm" class="row g-2 align-items-center">
+        <form method="get" asp-action="DuyetThe" id="duyetTheSearchForm" class="row g-2 align-items-center" data-ajax-filter-form>
             <div class="col-md-9 col-lg-10">
-                <input name="search" value="@Model.Search" class="form-control form-control-sm"
+                <input name="search" value="@Model.Search" class="form-control form-control-sm" data-ajax-search data-ajax-search-min="2" data-ajax-search-delay="350"
                        placeholder="Tìm kiếm theo họ tên, tên đăng nhập, số điện thoại, email..." />
             </div>
             <div class="col-md-3 col-lg-2 d-flex gap-2">
-                <button type="submit" class="btn btn-primary btn-sm flex-grow-1">Tìm kiếm</button>
-                @if (!string.IsNullOrWhiteSpace(Model.Search))
-                {
-                    <a asp-action="DuyetThe" data-ajax-link class="btn btn-outline-secondary btn-sm duyet-the-link">Xóa</a>
-                }
+                <a asp-action="DuyetThe" data-ajax-clear class="btn btn-outline-secondary btn-sm duyet-the-link">Xóa bộ lọc</a>
             </div>
         </form>
     </div>

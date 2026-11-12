@@ -298,6 +298,11 @@ public class TaiKhoanService : ITaiKhoanService
             return ServiceResult.Fail("Tài khoản này đã xử lý phiếu mượn/trả sách. Hãy khóa tài khoản thay vì xóa để giữ lịch sử.");
         }
 
+        if (await _db.Set<GiaoDichThanhToan>().AnyAsync(g => g.MaNguoiXacNhan == tk.MaTaiKhoan, ct))
+        {
+            return ServiceResult.Fail("Tài khoản này đã xác nhận giao dịch thu phạt. Hãy khóa tài khoản thay vì xóa để giữ lịch sử thanh toán.");
+        }
+
         if (banDoc is not null)
             _db.Set<BanDoc>().Remove(banDoc);
         _db.Set<TaiKhoan>().Remove(tk);

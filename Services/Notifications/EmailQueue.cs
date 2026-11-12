@@ -5,7 +5,7 @@ using System.Threading.Channels;
 
 namespace QuanLyThuVien_UNETI4_TI17A1CL.Services.Notifications;
 
-public sealed record EmailQueueItem(string To, string Subject, string TextBody, string HtmlBody);
+public sealed record EmailQueueItem(string To,string Subject,string TextBody,string HtmlBody,string? RevokeOtpOnFailure = null);
 
 public interface IEmailQueue
 {

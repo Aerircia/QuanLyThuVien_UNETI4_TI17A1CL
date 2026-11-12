@@ -112,7 +112,7 @@
                         </div>
                     }
 
-                    <form id="formXuLy" asp-action="Process" asp-route-id="@d.MaGiaHan" method="post">
+                    <form id="formXuLy" asp-action="Process" asp-route-id="@d.MaGiaHan" method="post" data-ajax-action="json" data-ajax-alert="#process-alert">
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
                         <input type="hidden" id="duyet" name="duyet" value="true" />
 
@@ -128,6 +128,7 @@
                             @if (d.DuDieuKienDuyet)
                             {
                                 <button type="button" id="btnDuyet" class="btn btn-primary"
+                                        data-ajax-confirm-set-field="#duyet" data-ajax-confirm-set-value="true"
                                         data-confirm-form="#formXuLy"
                                         data-confirm-title="Duyệt gia hạn"
                                         data-confirm-message="Bạn xác nhận duyệt gia hạn mới của bạn đọc này? Hạn trả mới: @d.HanTraMoi.ToString("dd/MM/yyyy")."
@@ -137,6 +138,9 @@
                                 </button>
                             }
                             <button type="button" id="btnTuChoi" class="btn btn-outline-danger"
+                                    data-ajax-confirm-set-field="#duyet" data-ajax-confirm-set-value="false"
+                                    data-ajax-confirm-required="#NhanXet" data-ajax-confirm-error="#nhanXetLoi"
+                                    data-ajax-confirm-required-message="Vui lòng nhập nhận xét khi từ chối yêu cầu gia hạn."
                                     data-confirm-form="#formXuLy"
                                     data-confirm-title="Từ chối gia hạn"
                                     data-confirm-message="Bạn xác nhận từ chối yêu cầu gia hạn của bạn đọc này?"
@@ -238,52 +242,6 @@
         </div>
     </div>
 </div>
-
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-<script>
-    $(function () {
-
-        // Hiện thông báo lỗi phía trên trang
-        function hienThongBao(loai, noiDung) {
-            $('#process-alert').html('<div class="alert alert-' + loai + '"></div>');
-            $('#process-alert .alert').text(noiDung);  
-        }
-        // Bấm "Duyệt gia hạn" / "Từ chối" -> ghi lựa chọn vào ô ẩn #duyet.
-        $('#btnDuyet, #btnTuChoi').click(function (e) {
-            var duyet = (this.id === 'btnDuyet');
-            $('#duyet').val(duyet);
-
-            if (!duyet && $.trim($('#NhanXet').val()) === '') {
-                $('#nhanXetLoi').text('Vui lòng nhập nhận xét khi từ chối yêu cầu gia hạn.');
-                $('#NhanXet').addClass('is-invalid').focus();
-                e.stopPropagation();
-                return;
-            }
-            $('#nhanXetLoi').text('');
-            $('#NhanXet').removeClass('is-invalid');
-        });
-
-        // form được submit -> gửi AJAX POST
-        $('#formXuLy').submit(function (e) {
-            e.preventDefault();
-            $.ajax({
-                url: $(this).attr('action'),
-                type: 'POST',
-                data: $(this).serialize(),       
-                dataType: 'json',
-                success: function (result) {
-                    if (result.success) {
-                        location.href = result.redirectUrl;     
-                        return;
-                    }
-                    hienThongBao('danger', result.message);
-                },
-                error: function () {
-                    hienThongBao('danger', 'Có lỗi xảy ra, vui lòng thử lại.');
-                }
-            });
-        });
-    });
-</script>
 }

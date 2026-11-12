@@ -31,7 +31,7 @@
                 <input type="hidden" name="pageSize" value="@Model.PageSize" />
                 <div class="col-lg-3 col-md-6">
                     <label class="form-label small fw-semibold">Tìm kiếm (sách, tác giả, NXB)</label>
-                    <input name="search" value="@ViewBag.Search" class="form-control" placeholder="Nhập từ khóa" />
+                    <input name="search" value="@ViewBag.Search" class="form-control" placeholder="Nhập từ khóa" data-ajax-search data-ajax-search-min="2" data-ajax-search-delay="350" />
                 </div>
                 <div class="col-lg-2 col-md-6">
                     <label class="form-label small fw-semibold">Thể loại</label>
@@ -56,20 +56,19 @@
                 <div class="col-lg-2 col-md-6">
                     <label class="form-label small fw-semibold">Năm xuất bản</label>
                     <div class="d-flex gap-2">
-                        <input type="number" name="namTu" value="@ViewBag.NamTu" class="form-control" placeholder="Từ" min="1900" max="2100" />
-                        <input type="number" name="namDen" value="@ViewBag.NamDen" class="form-control" placeholder="Đến" min="1900" max="2100" />
+                        <input type="number" name="namTu" value="@ViewBag.NamTu" class="form-control" placeholder="Từ" min="1900" max="2100" data-ajax-input data-ajax-input-min="4" />
+                        <input type="number" name="namDen" value="@ViewBag.NamDen" class="form-control" placeholder="Đến" min="1900" max="2100" data-ajax-input data-ajax-input-min="4" />
                     </div>
                 </div>
                 <div class="col-lg-1 col-md-6 d-grid gap-2">
-                    <button type="submit" class="btn btn-primary">Lọc</button>
-                    <a asp-action="Index" id="nut-xoa-loc" data-ajax-clear class="btn btn-outline-secondary">Xóa lọc</a>
+                    <a asp-action="Index" id="nut-xoa-loc" data-ajax-clear class="btn btn-outline-secondary">Xóa bộ lọc</a>
                 </div>
             </form>
         </div>
     </div>
 
     @* Vùng kết quả được thay bằng partial _BangSach khi lọc/tìm kiếm/phân trang qua AJAX *@
-    <div id="vung-ket-qua-sach" data-ajax-list data-ajax-form="#bo-loc-sach">
+    <div id="vung-ket-qua-sach" data-ajax-list data-ajax-form="#bo-loc-sach" data-ajax-change>
         <partial name="_BangSach" model="Model" />
     </div>
 </div>

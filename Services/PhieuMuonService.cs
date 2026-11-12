@@ -501,9 +501,17 @@ public class PhieuMuonService : IPhieuMuonService
         if (filter.OverdueOnly == true)
             query = query.Where(p => p.TrangThai == TrangThaiPhieuMuon.DangMuon && p.HanTra.HasValue && p.HanTra.Value < today);
 
-        var projected = query
-            .OrderByDescending(p => p.NgayDangKy)
-            .ThenByDescending(p => p.MaPhieuMuon)
+        IOrderedQueryable<PhieuMuon> ordered = filter.Sort switch
+        {
+            "oldest" => query.OrderBy(p => p.NgayDangKy).ThenBy(p => p.MaPhieuMuon),
+            "due_asc" => query.OrderBy(p => p.HanTra == null).ThenBy(p => p.HanTra).ThenByDescending(p => p.MaPhieuMuon),
+            "due_desc" => query.OrderByDescending(p => p.HanTra).ThenByDescending(p => p.MaPhieuMuon),
+            "reader_asc" => query.OrderBy(p => p.BanDoc != null ? p.BanDoc.HoTen : string.Empty).ThenByDescending(p => p.MaPhieuMuon),
+            "book_asc" => query.OrderBy(p => p.Sach != null ? p.Sach.TenSach : string.Empty).ThenByDescending(p => p.MaPhieuMuon),
+            _ => query.OrderByDescending(p => p.NgayDangKy).ThenByDescending(p => p.MaPhieuMuon)
+        };
+
+        var projected = ordered
             .Select(p => new PhieuMuonItemViewModel
             {
                 MaPhieuMuon = p.MaPhieuMuon,
@@ -729,6 +737,13 @@ public class PhieuMuonService : IPhieuMuonService
             return ServiceResult.Fail($"Chỉ có thể giao sách cho phiếu ở trạng thái 'Đã duyệt' (hiện tại: {phieu.TrangThai.GetDisplayName()}).");
 
         var today = LibraryClock.Today();
+        if (phieu.BanDoc is null)
+            return ServiceResult.Fail("Không tìm thấy hồ sơ bạn đọc của phiếu mượn.");
+
+        var readerBlockers = await GetReaderBlockersAsync(phieu.BanDoc, today, ct);
+        if (readerBlockers.Count > 0)
+            return ServiceResult.Fail(string.Join(" ", readerBlockers));
+
         var cauHinh = await GetCauHinhAsync(ct);
 
         // Số ngày mượn theo loại bạn đọc từ cấu hình thư viện

@@ -3,7 +3,6 @@
 @* Nội dung thực hiện: View quản lý phiếu mượn (Thủ thư & Admin) - 3 nhóm filter, hủy phiếu đã duyệt, tự động hủy quá 7 ngày, AJAX *@
 @model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.PhieuMuonManageListViewModel
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
-@using QuanLyThuVien_UNETI4_TI17A1CL.Services.Interfaces
 @{
     ViewData["Title"] = "Quản lý phiếu mượn";
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
@@ -32,7 +31,7 @@
 
     <partial name="_AlertsPartial" />
 
-    <div id="manageLoansContainer" data-ajax-list data-ajax-form="#manageFilterForm">
+    <div id="manageLoansContainer" data-ajax-list data-ajax-form="#manageFilterForm" data-ajax-change>
         <partial name="_ManageLoansContentPartial" model="Model" />
     </div>
 </div>
