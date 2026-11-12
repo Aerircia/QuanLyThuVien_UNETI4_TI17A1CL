@@ -42,8 +42,7 @@ public class QuanLyPhieuMuonController : Controller
         !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)
             ? LocalRedirect(returnUrl)
             : RedirectToAction(nameof(Index));
-
-    [HttpGet]
+    [HttpGet("/ThuThu/QuanLyPhieuMuon")]
     public async Task<IActionResult> Index(
         string? search,
         string? groupFilter,
@@ -100,7 +99,7 @@ public class QuanLyPhieuMuonController : Controller
     }
 
     // Chi tiết dùng chung view với bạn đọc; view tự ẩn các nút chỉ dành cho bạn đọc.
-    [HttpGet]
+    [HttpGet("/ThuThu/QuanLyPhieuMuon/Details/{id:int}")]
     public async Task<IActionResult> Details(int id)
     {
         var detail = await _phieuMuonService.GetLoanDetailAsync(id, null, HttpContext.RequestAborted);
@@ -108,14 +107,13 @@ public class QuanLyPhieuMuonController : Controller
     }
 
     // Phiếu Đã duyệt quá LoanRules.UncollectedDays ngày mà bạn đọc chưa đến nhận (vẫn giữ một bản sách).
-    [HttpGet]
+    [HttpGet("/ThuThu/PhieuMuonChuaNhanSach")]
     public async Task<IActionResult> ChuaNhanSach()
     {
         var items = await _phieuMuonService.GetUncollectedAsync(HttpContext.RequestAborted);
         return View(items);
     }
-
-    [HttpPost]
+    [HttpPost("/ThuThu/QuanLyPhieuMuon/TuDongHuyQuaHan")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> TuDongHuyQuaHan(string? returnUrl)
     {
@@ -130,8 +128,7 @@ public class QuanLyPhieuMuonController : Controller
         TempData["ThongBao"] = msg;
         return Back(returnUrl);
     }
-
-    [HttpPost]
+    [HttpPost("/ThuThu/QuanLyPhieuMuon/Duyet/{id:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Duyet(int id, string? nhanXet, string? returnUrl)
     {
@@ -153,8 +150,7 @@ public class QuanLyPhieuMuonController : Controller
 
         return Back(returnUrl);
     }
-
-    [HttpPost]
+    [HttpPost("/ThuThu/QuanLyPhieuMuon/TuChoi/{id:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> TuChoi(int id, string? nhanXet, string? returnUrl)
     {
@@ -176,8 +172,7 @@ public class QuanLyPhieuMuonController : Controller
 
         return Back(returnUrl);
     }
-
-    [HttpPost]
+    [HttpPost("/ThuThu/QuanLyPhieuMuon/GiaoSach/{id:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> GiaoSach(int id, string? returnUrl)
     {
@@ -199,8 +194,7 @@ public class QuanLyPhieuMuonController : Controller
 
         return Back(returnUrl);
     }
-
-    [HttpPost]
+    [HttpPost("/ThuThu/QuanLyPhieuMuon/HuyPhieu/{id:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> HuyPhieu(int id, string? nhanXet, string? returnUrl)
     {

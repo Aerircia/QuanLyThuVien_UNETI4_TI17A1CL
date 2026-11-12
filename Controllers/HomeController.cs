@@ -28,7 +28,7 @@ public class HomeController : Controller
     }
 
     // Trang chủ công khai. Nhân viên có giao diện riêng nên đưa thẳng về Dashboard.
-    [HttpGet]
+    [HttpGet("/TrangChu")]
     public async Task<IActionResult> Index()
     {
         if (_current.IsInRole(VaiTro.Admin, VaiTro.ThuThu))
@@ -38,7 +38,7 @@ public class HomeController : Controller
     }
 
     // Tra cứu kho sách: khách và mọi vai trò đều xem được (chỉ đăng ký mượn mới cần đăng nhập).
-    [HttpGet]
+    [HttpGet("/TrangChu/KhoSach")]
     public async Task<IActionResult> Catalog(
         [FromQuery] CatalogFilter filter,
         int page = 1,
@@ -55,20 +55,21 @@ public class HomeController : Controller
         var vm = await _home.GetCatalogAsync(filter, page, pageSize, includeSidebar: !ajax, HttpContext.RequestAborted);
         return ajax ? PartialView("_CatalogResults", vm) : View(vm);
     }
-
-    [HttpGet]
+    [HttpGet("/TrangChu/ChiTietSach/{id:int}")]
     public async Task<IActionResult> Book(int id)
     {
         var detail = await _home.GetBookAsync(id, HttpContext.RequestAborted);
         return detail is null ? NotFound() : View(detail);
     }
 
+    [HttpGet("/TrangChu/QuyenRiengTu")]
     public IActionResult Privacy()
     {
         return View();
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    [HttpGet("/Loi")]
     public IActionResult Error(int? statusCode = null)
     {
         var code = statusCode is >= 400 and <= 599 ? statusCode.Value : 500;

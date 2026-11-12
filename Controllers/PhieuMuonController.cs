@@ -30,7 +30,7 @@ public class PhieuMuonController : Controller
 
     // 7.3. ĐĂNG KÝ MƯỢN SÁCH (Dành cho bạn đọc)
     [AuthorizeRole(VaiTro.BanDoc)]
-    [HttpGet]
+    [HttpGet("/BanDoc/DangKyMuon/{id:int}")]
     public async Task<IActionResult> Register(int id)
     {
         var maSach = id;
@@ -113,7 +113,7 @@ public class PhieuMuonController : Controller
     }
 
     [AuthorizeRole(VaiTro.BanDoc)]
-    [HttpPost]
+    [HttpPost("/BanDoc/DangKyMuon/{id:int}")]
     [ActionName("Register")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RegisterPost(int id, PhieuMuonRegisterViewModel model)
@@ -165,7 +165,7 @@ public class PhieuMuonController : Controller
     }
 
     [AuthorizeRole(VaiTro.BanDoc)]
-    [HttpGet]
+    [HttpGet("/BanDoc/DangKyMuonThanhCong/{id:int}")]
     public async Task<IActionResult> RegisterSuccess(int id)
     {
         var user = _current.User!;
@@ -192,7 +192,7 @@ public class PhieuMuonController : Controller
     // 7.5. THEO DÕI PHIẾU MƯỢN CỦA BẠN ĐỌC (cần thẻ đang hoạt động)
     [AuthorizeRole(VaiTro.BanDoc)]
     [RequireActiveCard]
-    [HttpGet]
+    [HttpGet("/BanDoc/PhieuMuonCuaToi")]
     public async Task<IActionResult> MyLoans(string? filter = "all")
     {
         var ct = HttpContext.RequestAborted;
@@ -232,7 +232,7 @@ public class PhieuMuonController : Controller
     // 7.5. CHI TIẾT PHIẾU MƯỢN (bạn đọc xem phiếu của chính mình; thủ thư được chuyển sang trang quản lý)
     [AuthorizeRole]
     [RequireActiveCard]
-    [HttpGet]
+    [HttpGet("/BanDoc/PhieuMuonCuaToi/Details/{id:int}")]
     public async Task<IActionResult> Details(int id)
     {
         if (_current.IsInRole(VaiTro.Admin, VaiTro.ThuThu))
@@ -250,7 +250,7 @@ public class PhieuMuonController : Controller
     // 7.4. HỦY PHIẾU MƯỢN (POST only)
     [AuthorizeRole(VaiTro.BanDoc)]
     [RequireActiveCard]
-    [HttpPost]
+    [HttpPost("/BanDoc/PhieuMuonCuaToi/Cancel/{id:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Cancel(int id, string? returnUrl = null)
     {
@@ -287,7 +287,7 @@ public class PhieuMuonController : Controller
     // 7.5. TIỀN PHẠT CỦA BẠN ĐỌC (cần thẻ đang hoạt động)
     [AuthorizeRole(VaiTro.BanDoc)]
     [RequireActiveCard]
-    [HttpGet]
+    [HttpGet("/BanDoc/TienPhat")]
     public async Task<IActionResult> MyFines()
     {
         var maBanDoc = await _current.GetMaBanDocAsync(HttpContext.RequestAborted);

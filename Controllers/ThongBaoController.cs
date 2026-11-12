@@ -22,8 +22,7 @@ public sealed class ThongBaoController : Controller
         _thongBao = thongBao;
         _current = current;
     }
-
-    [HttpGet]
+    [HttpGet("/BanDoc/ThongBao")]
     public async Task<IActionResult> Index(string? filter = "all", int page = 1, CancellationToken ct = default)
     {
         var user = _current.User;
@@ -49,8 +48,7 @@ public sealed class ThongBaoController : Controller
             CaiDat = settings
         });
     }
-
-    [HttpPost]
+    [HttpPost("/ThongBao/SaveSettings")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SaveSettings(ThongBaoSettingsInputModel input, CancellationToken ct = default)
     {
@@ -69,8 +67,7 @@ public sealed class ThongBaoController : Controller
 
         return Json(new { success = true, message = "Đã lưu cài đặt thông báo." });
     }
-
-    [HttpGet]
+    [HttpGet("/ThongBao/Open/{id:int}")]
     public async Task<IActionResult> Open(int id, CancellationToken ct)
     {
         var user = _current.User;
@@ -90,7 +87,7 @@ public sealed class ThongBaoController : Controller
         return LocalRedirect(target);
     }
 
-    [HttpPost]
+    [HttpPost("/ThongBao/MarkAllReadPage")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkAllReadPage(string? filter = "all", CancellationToken ct = default)
     {
@@ -101,8 +98,7 @@ public sealed class ThongBaoController : Controller
         TempData["ThongBao"] = "Đã đánh dấu tất cả thông báo là đã đọc.";
         return RedirectToAction(nameof(Index), new { filter });
     }
-
-    [HttpGet]
+    [HttpGet("/ThongBao/Bell")]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public async Task<IActionResult> Bell(CancellationToken ct)
     {
@@ -130,8 +126,7 @@ public sealed class ThongBaoController : Controller
             })
         });
     }
-
-    [HttpPost]
+    [HttpPost("/ThongBao/MarkRead/{id:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkRead(int id, CancellationToken ct)
     {
@@ -142,8 +137,7 @@ public sealed class ThongBaoController : Controller
         var unread = await _thongBao.GetUnreadCountAsync(user.MaTaiKhoan, ct);
         return Json(new { success = succeeded, chuaDoc = unread });
     }
-
-    [HttpPost]
+    [HttpPost("/ThongBao/MarkAllRead")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkAllRead(CancellationToken ct)
     {

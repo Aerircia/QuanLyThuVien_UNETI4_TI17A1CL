@@ -296,12 +296,12 @@ public class TraSachService : ITraSachService
             await NotifySafelyAsync(() => _thongBao.NotifyReaderForFineAsync(
                 traSach.MaTra, "Bạn có khoản tiền phạt mới",
                 $"Sách đã được nhận trả. Khoản phạt hiện tại: {tienPhat:N0} đ. Vui lòng xem chi tiết trong mục Tiền phạt.",
-                $"fine-created:{traSach.MaTra}", "/PhieuMuon/MyFines", ct), "fine-created");
+                $"fine-created:{traSach.MaTra}", "/BanDoc/TienPhat", ct), "fine-created");
         else
             await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
                 phieu.MaPhieuMuon, "Trả sách thành công",
                 "Thư viện đã ghi nhận bạn trả sách thành công. Cảm ơn bạn đã sử dụng dịch vụ.",
-                $"loan-returned:{phieu.MaPhieuMuon}", "/PhieuMuon/MyLoans", "loan", ct), "loan-returned");
+                $"loan-returned:{phieu.MaPhieuMuon}", "/BanDoc/PhieuMuonCuaToi", "loan", ct), "loan-returned");
         return ServiceResult<int>.Ok(traSach.MaTra);
     }
 
@@ -330,7 +330,7 @@ public class TraSachService : ITraSachService
         await NotifySafelyAsync(() => _thongBao.NotifyReaderForFineAsync(
             traSach.MaTra, "Khoản tiền phạt đã được thanh toán",
             "Thư viện đã xác nhận khoản tiền phạt của bạn được thanh toán.",
-            $"fine-paid:{traSach.MaTra}", "/PhieuMuon/MyFines", ct), "fine-paid");
+            $"fine-paid:{traSach.MaTra}", "/BanDoc/TienPhat", ct), "fine-paid");
         return ServiceResult.Success();
     }
 

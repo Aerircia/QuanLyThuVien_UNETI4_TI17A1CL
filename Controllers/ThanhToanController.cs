@@ -22,7 +22,7 @@ public class ThanhToanController : Controller
     }
 
     // Bạn đọc chọn các khoản phạt ở MyFines; chỉ nhận danh sách MaTra, số tiền do server tính.
-    [HttpPost]
+    [HttpPost("/ThanhToan/Pay")]
     [AuthorizeRole(VaiTro.BanDoc)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Pay(int[]? maTras)
@@ -44,7 +44,7 @@ public class ThanhToanController : Controller
 
     // payOS đưa trình duyệt về đây. Query string KHÔNG được tin: chỉ dùng orderCode để hỏi lại payOS.
     // Cố ý không có [AuthorizeRole]: kết quả không phụ thuộc session; trang Result mới kiểm tra chủ sở hữu.
-    [HttpGet]
+    [HttpGet("/ThanhToan/Return")]
     public async Task<IActionResult> Return(long orderCode)
     {
         await _service.SettleAsync(orderCode, HttpContext.RequestAborted);
@@ -52,14 +52,13 @@ public class ThanhToanController : Controller
     }
 
     // Khách bấm "Hủy" trên trang payOS. Không đổi trạng thái bằng GET: chỉ đối soát rồi hiện kết quả.
-    [HttpGet]
+    [HttpGet("/ThanhToan/Cancel")]
     public async Task<IActionResult> Cancel(long orderCode)
     {
         await _service.SettleAsync(orderCode, HttpContext.RequestAborted);
         return RedirectToAction(nameof(Result), new { orderCode });
     }
-
-    [HttpGet]
+    [HttpGet("/BanDoc/KetQuaThanhToan")]
     [AuthorizeRole(VaiTro.BanDoc)]
     public async Task<IActionResult> Result(long orderCode)
     {
@@ -70,7 +69,7 @@ public class ThanhToanController : Controller
     }
 
     // Trang chờ gọi định kỳ (dùng khi trình duyệt không quay về được, vd chạy localhost).
-    [HttpGet]
+    [HttpGet("/ThanhToan/Status")]
     [AuthorizeRole(VaiTro.BanDoc)]
     public async Task<IActionResult> Status(long orderCode)
     {
@@ -89,8 +88,7 @@ public class ThanhToanController : Controller
             final = r.Value != TrangThaiGiaoDich.ChoThanhToan
         });
     }
-
-    [HttpPost]
+    [HttpPost("/BanDoc/HuyGiaoDich")]
     [AuthorizeRole(VaiTro.BanDoc)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> HuyGiaoDich(long orderCode)
@@ -105,7 +103,7 @@ public class ThanhToanController : Controller
     }
 
     // Webhook payOS (tùy chọn, cần URL công khai). Không antiforgery, không session; xác thực bằng chữ ký.
-    [HttpPost]
+    [HttpPost("/ThanhToan/Webhook")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> Webhook()
     {
@@ -115,7 +113,7 @@ public class ThanhToanController : Controller
     }
 
     // Lịch sử thanh toán của bạn đọc (chỉ giao dịch của chính mình).
-    [HttpGet]
+    [HttpGet("/BanDoc/LichSuThanhToan")]
     [AuthorizeRole(VaiTro.BanDoc)]
     public async Task<IActionResult> LichSu(
         string? search, PhuongThucThanhToan? phuongThuc, TrangThaiGiaoDich? trangThai,
@@ -146,8 +144,7 @@ public class ThanhToanController : Controller
             Pager = PagerViewModel.From(result, "ThanhToan", nameof(LichSu), route)
         });
     }
-
-    [HttpGet]
+    [HttpGet("/BanDoc/LichSuThanhToan/Details/{id:int}")]
     [AuthorizeRole(VaiTro.BanDoc)]
     public async Task<IActionResult> ChiTiet(int id)
     {

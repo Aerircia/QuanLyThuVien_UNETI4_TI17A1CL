@@ -14,14 +14,7 @@
 
 <partial name="_TraSach" model='"ChoTra"' />
 
-@if (TempData["ThongBao"] is string thongBao)
-{
-    <div class="alert alert-success" role="status">@thongBao</div>
-}
-@if (TempData["Loi"] is string loi)
-{
-    <div class="alert alert-danger" role="alert">@loi</div>
-}
+<partial name="_AlertsPartial" />
 <div class="card mb-3">
     <div class="card-body">
         <form id="bo-loc-cho-tra" method="get" asp-action="ChoTra" class="row g-2 align-items-center">
@@ -58,7 +51,7 @@
                 search: $('#timKiem').val(),
                 pageSize: $('#pageSize').val()
             };
-            if ($('#chiQuaHan').is(':checked')) dieuKien.chiQuaHan = true;   // không tick thì không gửi
+            if ($('#chiQuaHan').is(':checked')) dieuKien.chiQuaHan = true;  
             return dieuKien;
         }
 

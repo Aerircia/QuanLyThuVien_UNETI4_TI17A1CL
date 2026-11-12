@@ -259,7 +259,7 @@ public class GiaHanMuonService : IGiaHanMuonService
             ? $"Yêu cầu gia hạn phiếu #{giaHan.MaPhieuMuon} đã được duyệt. Hạn trả mới: {giaHan.HanTraMoi:dd/MM/yyyy}."
             : $"Yêu cầu gia hạn phiếu #{giaHan.MaPhieuMuon} đã bị từ chối. Lý do: {giaHan.NhanXet}";
         await NotifySafelyAsync(() => _thongBao.NotifyReaderForExtensionAsync(
-            giaHan.MaGiaHan, title, content, $"extension-processed:{giaHan.MaGiaHan}", "/PhieuMuon/MyLoans", "extension", ct), "extension-processed");
+            giaHan.MaGiaHan, title, content, $"extension-processed:{giaHan.MaGiaHan}", "/BanDoc/PhieuMuonCuaToi", "extension", ct), "extension-processed");
         return ServiceResult.Success();
     }
 

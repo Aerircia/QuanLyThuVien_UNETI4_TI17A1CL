@@ -37,8 +37,8 @@ public class TraSachController : Controller
         return Json(new { success = false, message = loi.Count > 0 ? string.Join(" ", loi) : macDinh });
     }
 
-// Tab Lịch sử: các lượt trả không phạt hoặc đã nộp phạt 
-    [HttpGet]
+// Tab Lịch sử: các lượt trả không phạt hoặc đã nộp phạt
+    [HttpGet("/ThuThu/QuanLyTraSach")]
     public async Task<IActionResult> Index(
         string? search,
         TinhTrangSach? tinhTrang,
@@ -76,7 +76,7 @@ public class TraSachController : Controller
         return View(vm);
     }
 // Tab Chưa nộp phạt: các khoản phạt chưa thanh toán
-    [HttpGet]
+    [HttpGet("/ThuThu/QuanLyTraSach/ChuaNop")]
     public async Task<IActionResult> ChuaNop(
         string? search,
         TinhTrangSach? tinhTrang,
@@ -111,7 +111,7 @@ public class TraSachController : Controller
     }
 
 // Phiếu đang mượn chờ nhận trả
-    [HttpGet]
+    [HttpGet("/ThuThu/SachChoTra")]
     public async Task<IActionResult> ChoTra(
         string? search,
         bool chiQuaHan = false,
@@ -151,7 +151,7 @@ public class TraSachController : Controller
     }
 
 //Nhận trả sách 
-    [HttpGet("TraSach/Create/{maPhieuMuon:int}")]
+    [HttpGet("/ThuThu/QuanLyTraSach/Create/{maPhieuMuon:int}")]
     public async Task<IActionResult> Create(int maPhieuMuon)
     {
         var preview = await _service.GetPreviewAsync(maPhieuMuon, HttpContext.RequestAborted);
@@ -160,8 +160,7 @@ public class TraSachController : Controller
 
         return View(new TraSachCreateViewModel { Preview = preview });
     }
-
-    [HttpPost("TraSach/Create/{maPhieuMuon:int}")]
+    [HttpPost("/ThuThu/QuanLyTraSach/Create/{maPhieuMuon:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(int maPhieuMuon, TraSachCreateViewModel model)
     {
@@ -197,7 +196,7 @@ public class TraSachController : Controller
     }
 
 //Chi tiết
-    [HttpGet]
+    [HttpGet("/ThuThu/QuanLyTraSach/Details/{id:int}")]
     public async Task<IActionResult> Details(int id)
     {
         var detail = await _service.GetAsync(id, HttpContext.RequestAborted);
@@ -208,7 +207,7 @@ public class TraSachController : Controller
     }
 
 // Đánh dấu đã nộp phạt 
-    [HttpPost]
+    [HttpPost("/ThuThu/QuanLyTraSach/MarkPaid/{id:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkPaid(int id)
     {

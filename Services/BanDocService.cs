@@ -573,7 +573,7 @@ public class BanDocService : IBanDocService
             await _thongBaoService.CreateAsync(banDoc.MaTaiKhoan,
                 "Thẻ thư viện của bạn đã được duyệt",
                 $"Xin chúc mừng {banDoc.HoTen}! Thẻ bạn đọc {banDoc.MaSoThe} đã được duyệt và có hiệu lực từ {banDoc.NgayCapThe:dd/MM/yyyy} đến {banDoc.NgayHetHanThe:dd/MM/yyyy}.",
-                $"card-approved:{banDoc.MaBanDoc}", "system", "success", "/BanDoc/MyProfile", "BanDoc", banDoc.MaBanDoc, ct);
+                $"card-approved:{banDoc.MaBanDoc}", "system", "success", "/BanDoc/HoSo", "BanDoc", banDoc.MaBanDoc, ct);
         return ServiceResult.Success();
     }
 
@@ -592,7 +592,7 @@ public class BanDocService : IBanDocService
             await _thongBaoService.CreateAsync(banDoc.MaTaiKhoan,
                 "Yêu cầu đăng ký thẻ chưa được chấp thuận",
                 string.IsNullOrWhiteSpace(lyDo) ? "Hồ sơ đăng ký thẻ của bạn chưa được chấp thuận. Vui lòng liên hệ thư viện để biết thêm chi tiết." : $"Hồ sơ đăng ký thẻ của bạn chưa được chấp thuận. Lý do: {lyDo.Trim()}",
-                $"card-rejected:{banDoc.MaBanDoc}", "system", "warning", "/BanDoc/MyProfile", "BanDoc", banDoc.MaBanDoc, ct);
+                $"card-rejected:{banDoc.MaBanDoc}", "system", "warning", "/BanDoc/HoSo", "BanDoc", banDoc.MaBanDoc, ct);
         return ServiceResult.Success();
     }
 

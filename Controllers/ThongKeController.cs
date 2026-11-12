@@ -21,8 +21,7 @@ public sealed class ThongKeController : Controller
     }
 
     // ---------- 9 chỉ số Dashboard ----------
-
-    [HttpGet]
+    [HttpGet("/ThuThu/TongQuan")]
     public async Task<IActionResult> Dashboard()
     {
         var ct = HttpContext.RequestAborted;
@@ -39,8 +38,7 @@ public sealed class ThongKeController : Controller
     }
 
     // ---------- 11 nhóm thống kê LINQ ----------
-
-    [HttpGet]
+    [HttpGet("/ThuThu/BaoCaoThongKe")]
     public async Task<IActionResult> Index()
     {
         var model = await _service.GetReportAsync(HttpContext.RequestAborted);

@@ -26,8 +26,7 @@ public class SachController : Controller
         _anhBiaService = anhBiaService;
         _current = current;
     }
-
-    [HttpGet]
+    [HttpGet("/ThuThu/QuanLySach")]
     [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
     public async Task<IActionResult> Index(
         string? search,
@@ -70,8 +69,7 @@ public class SachController : Controller
         ViewBag.TacGiaOptions = await _sachService.GetAuthorOptionsAsync(HttpContext.RequestAborted);
         return View(result);
     }
-
-    [HttpGet]
+    [HttpGet("/ThuThu/QuanLySach/Details/{id:int}")]
     public async Task<IActionResult> Details(int id)
     {
         var detail = await _sachService.GetAsync(id, HttpContext.RequestAborted);
@@ -85,16 +83,14 @@ public class SachController : Controller
         }
         return View(detail);
     }
-
-    [HttpGet]
+    [HttpGet("/ThuThu/QuanLySach/Create")]
     [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
     public async Task<IActionResult> Create()
     {
         ViewBag.TheLoaiOptions = await GetCategoryOptionsAsync(null);
         return View(new Sach());
     }
-
-    [HttpPost]
+    [HttpPost("/ThuThu/QuanLySach/Create")]
     [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Sach model, IFormFile? anhBia, bool xoaAnh = false)
@@ -141,8 +137,7 @@ public class SachController : Controller
             return Json(new { success = true, redirectUrl = Url.Action(nameof(Index)), message = "Đã thêm sách." });
         return RedirectToAction(nameof(Index));
     }
-
-    [HttpGet]
+    [HttpGet("/ThuThu/QuanLySach/Edit/{id:int}")]
     [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
     public async Task<IActionResult> Edit(int id)
     {
@@ -153,8 +148,7 @@ public class SachController : Controller
         ViewBag.TheLoaiOptions = await GetCategoryOptionsAsync(detail.MaTheLoai);
         return View(ToModel(detail));
     }
-
-    [HttpPost]
+    [HttpPost("/ThuThu/QuanLySach/Edit/{id:int}")]
     [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, Sach model, IFormFile? anhBia, bool xoaAnh = false)
@@ -208,8 +202,7 @@ public class SachController : Controller
             return Json(new { success = true, redirectUrl = Url.Action(nameof(Index)), message = "Đã cập nhật sách." });
         return RedirectToAction(nameof(Index));
     }
-
-    [HttpPost]
+    [HttpPost("/ThuThu/QuanLySach/ToggleTrangThai/{id:int}")]
     [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ToggleTrangThai(int id, string? returnUrl)
@@ -239,7 +232,7 @@ public class SachController : Controller
         return Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : RedirectToAction(nameof(Index));
     }
 
-    [HttpPost, ActionName("Delete")]
+    [HttpPost("/ThuThu/QuanLySach/Delete/{id:int}"), ActionName("Delete")]
     [AuthorizeRole(VaiTro.Admin, VaiTro.ThuThu)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
