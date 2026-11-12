@@ -5,6 +5,7 @@
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
 @{
     ViewData["Title"] = "Lịch sử thanh toán";
+    var dangLoc = !string.IsNullOrWhiteSpace(Model.Search) || Model.PhuongThuc.HasValue || Model.TrangThai.HasValue || Model.Tu.HasValue || Model.Den.HasValue || Model.Sort != "newest";
 }
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
     <div><h1 class="h4 mb-0">Quản lý lịch sử thanh toán</h1><p class="text-muted small mb-0">Theo dõi giao dịch trực tuyến và các khoản thu tiền phạt tại quầy.</p></div>
@@ -12,9 +13,9 @@
 </div>
 <partial name="_AlertsPartial" />
 <div class="app-card mb-3 p-3">
-    <form id="paymentFilter" method="get" asp-action="Index" class="row g-2 align-items-end">
+    <form id="paymentFilter" method="get" asp-action="Index" class="row g-2 align-items-end" data-ajax-filter-form>
         <input type="hidden" name="pageSize" value="@Model.Result.PageSize" />
-        <div class="col-xl-3 col-md-6"><label class="form-label">Tìm kiếm</label><input name="search" value="@Model.Search" data-ajax-search data-ajax-search-min="2" class="form-control" placeholder="Bạn đọc, mã thẻ, mã đơn" /></div>
+        <div class="col-xl-3 col-md-6"><label class="form-label">Tìm kiếm</label><input name="search" value="@Model.Search" data-ajax-search data-ajax-search-min="2" data-ajax-search-delay="350" class="form-control" placeholder="Bạn đọc, mã thẻ, mã đơn" /></div>
         <div class="col-xl-2 col-md-3"><label class="form-label">Hình thức</label>
             <select name="phuongThuc" class="form-select" asp-items="Html.GetEnumSelectList<PhuongThucThanhToan>()" asp-for="PhuongThuc"><option value="">Tất cả</option></select></div>
         <div class="col-xl-2 col-md-3"><label class="form-label">Trạng thái</label>
@@ -22,7 +23,7 @@
         <div class="col-xl-2 col-md-3"><label class="form-label">Từ ngày</label><input type="date" name="tu" value="@Model.Tu?.ToString("yyyy-MM-dd")" class="form-control" /></div>
         <div class="col-xl-2 col-md-3"><label class="form-label">Đến ngày</label><input type="date" name="den" value="@Model.Den?.ToString("yyyy-MM-dd")" class="form-control" /></div>
         <div class="col-xl-2 col-md-3"><label class="form-label">Sắp xếp</label><select name="sort" class="form-select"><option value="newest" selected="@(Model.Sort == "newest")">Mới nhất</option><option value="oldest" selected="@(Model.Sort == "oldest")">Cũ nhất</option><option value="amount_desc" selected="@(Model.Sort == "amount_desc")">Số tiền cao</option><option value="amount_asc" selected="@(Model.Sort == "amount_asc")">Số tiền thấp</option></select></div>
-        <div class="col-xl-1 col-md-3 d-grid"><button type="submit" class="btn btn-primary">Lọc</button></div>
+        <div class="col-xl-2 col-md-3 d-grid"><a asp-action="Index" asp-route-pageSize="@Model.Result.PageSize" data-ajax-clear class="btn btn-outline-secondary">Xóa bộ lọc</a></div>
     </form>
 </div>
 <div id="paymentResults" class="app-card p-0 overflow-hidden" data-ajax-list data-ajax-form="#paymentFilter" data-ajax-change><partial name="_IndexResults" model="Model" /></div>

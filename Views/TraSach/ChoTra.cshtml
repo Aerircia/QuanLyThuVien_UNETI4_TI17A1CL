@@ -17,95 +17,27 @@
 <partial name="_AlertsPartial" />
 <div class="card mb-3">
     <div class="card-body">
-        <form id="bo-loc-cho-tra" method="get" asp-action="ChoTra" class="row g-2 align-items-center">
+        <form id="bo-loc-cho-tra" method="get" asp-action="ChoTra" class="row g-2 align-items-center" data-ajax-filter-form>
             <input type="hidden" id="pageSize" name="pageSize" value="@Model.PageSize" />
             <div class="col-lg-6">
-                <input id="timKiem" name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo họ tên, mã số thẻ bạn đọc hoặc tên sách" />
+                <input id="timKiem" name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo họ tên, mã số thẻ bạn đọc hoặc tên sách" data-ajax-search data-ajax-search-min="2" data-ajax-search-delay="350" />
             </div>
             <div class="col-md-6 col-lg-3">
                 <div class="form-check mb-0">
                     <input class="form-check-input" type="checkbox" id="chiQuaHan" name="chiQuaHan" value="true"
-                           checked="@Model.ChiQuaHan" onchange="this.form.requestSubmit()" />
+                           checked="@Model.ChiQuaHan" />
                     <label class="form-check-label" for="chiQuaHan">Chỉ phiếu quá hạn</label>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3 d-flex gap-2">
-                <button type="submit" class="btn btn-primary">Tìm</button>
-                <a asp-action="ChoTra" asp-route-pageSize="@Model.PageSize" data-xoa-loc class="btn btn-outline-secondary @(dangLoc ? "" : "d-none")">Xóa lọc</a>
+                <a asp-action="ChoTra" asp-route-pageSize="@Model.PageSize" data-xoa-loc data-ajax-clear class="btn btn-outline-secondary">Xóa bộ lọc</a>
             </div>
         </form>
     </div>
 </div>
-<div id="vung-ket-qua-cho-tra">
+<div id="vung-ket-qua-cho-tra" data-ajax-list data-ajax-form="#bo-loc-cho-tra" data-ajax-change>
     <partial name="_BangChoTra" model="Model" />
 </div>
-
 @section Scripts {
     <script src="~/js/nhac-nho.js" asp-append-version="true"></script>
-<script>
-    $(function () {
-
-        // Bước 1: lấy điều kiện tìm kiếm/lọc người dùng đang nhập (tên khớp với tham số của Action)
-        function layDieuKien() {
-            var dieuKien = {
-                search: $('#timKiem').val(),
-                pageSize: $('#pageSize').val()
-            };
-            if ($('#chiQuaHan').is(':checked')) dieuKien.chiQuaHan = true;  
-            return dieuKien;
-        }
-
-        // Bước 2: gửi AJAX tới url (kèm data nếu có) và hiển thị kết quả
-        function taiDanhSach(url, data) {
-            $.ajax({
-                url: url,
-                type: 'GET',
-                data: data,
-                success: function (result) {
-                    $('#vung-ket-qua-cho-tra').html(result);
-                },
-                error: function () {
-                    alert('Có lỗi xảy ra, vui lòng thử lại.');
-                }
-            });
-        }
-
-        // Chỉ hiện nút "Xóa lọc" khi đang có điều kiện lọc
-        function hienNutXoaLoc() {
-            var coLoc = $('#bo-loc-cho-tra').find('input[name="search"], select').filter(function () {
-                return $.trim($(this).val()) !== '';
-            }).length > 0 || $('#bo-loc-cho-tra').find('input[type="checkbox"]:checked').length > 0;
-            $('#bo-loc-cho-tra [data-xoa-loc]').toggleClass('d-none', !coLoc);
-        }
-
-        function timKiem() {
-            hienNutXoaLoc();
-            taiDanhSach($('#bo-loc-cho-tra').attr('action'), layDieuKien());
-        }
-
-        // Bước 3: gắn sự kiện
-        // Bấm nút "Tìm" hoặc đổi ô chọn (onchange đã gọi requestSubmit) -> sự kiện submit
-        $('#bo-loc-cho-tra').submit(function (e) {
-            e.preventDefault();
-            timKiem();
-        });
-
-        // Gõ đến đâu tìm đến đó (keyup)
-        $('#bo-loc-cho-tra input[name="search"]').keyup(function () {
-            timKiem();
-        });
-
-        // Xóa lọc: xóa các ô nhập rồi tìm lại
-        $('#bo-loc-cho-tra [data-xoa-loc]').click(function (e) {
-            e.preventDefault();
-            $('#timKiem').val('');
-            $('#chiQuaHan').prop('checked', false);
-            timKiem();
-        });
-        $('#vung-ket-qua-cho-tra').on('click', 'nav[aria-label="Phân trang"] a[href]', function (e) {
-            e.preventDefault();
-            taiDanhSach($(this).attr('href'));
-        });
-    });
-</script>
 }

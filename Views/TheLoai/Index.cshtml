@@ -29,21 +29,20 @@
             <form id="bo-loc-the-loai" method="get" asp-action="Index" class="row g-2 align-items-center">
                 <input type="hidden" name="pageSize" value="@Model.PageSize" />
                 <div class="col-md-5">
-                    <input name="search" value="@ViewBag.Search" class="form-control" placeholder="Tìm theo tên, mô tả hoặc khu vực lưu trữ..." />
+                    <input name="search" value="@ViewBag.Search" class="form-control" placeholder="Tìm theo tên, mô tả hoặc khu vực lưu trữ..." data-ajax-search data-ajax-search-min="2" data-ajax-search-delay="350" />
                 </div>
                 <div class="col-md-4">
                     <select name="trangThai" class="form-select" asp-items="statuses"><option value="">Tất cả trạng thái</option></select>
                 </div>
                 <div class="col-md-3 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary flex-fill">Lọc</button>
-                    <a asp-action="Index" id="nut-xoa-loc-the-loai" data-ajax-clear class="btn btn-outline-secondary flex-fill">Xóa lọc</a>
+                    <a asp-action="Index" id="nut-xoa-loc-the-loai" data-ajax-clear class="btn btn-outline-secondary flex-fill">Xóa bộ lọc</a>
                 </div>
             </form>
         </div>
     </div>
 
     @* Vùng kết quả được thay bằng partial _BangTheLoai khi lọc/tìm kiếm/phân trang qua AJAX *@
-    <div id="vung-ket-qua-the-loai" data-ajax-list data-ajax-form="#bo-loc-the-loai">
+    <div id="vung-ket-qua-the-loai" data-ajax-list data-ajax-form="#bo-loc-the-loai" data-ajax-change>
         <partial name="_BangTheLoai" model="Model" />
     </div>
 </div>

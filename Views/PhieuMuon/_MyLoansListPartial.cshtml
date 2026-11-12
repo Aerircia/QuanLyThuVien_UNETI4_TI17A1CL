@@ -127,7 +127,7 @@
 
                             @if (item.CanCancel)
                             {
-                                <form asp-action="Cancel" asp-route-id="@item.MaPhieuMuon" method="post" class="d-inline myloans-cancel-form" id="cancelLoanForm-@item.MaPhieuMuon">
+                                <form asp-action="Cancel" asp-route-id="@item.MaPhieuMuon" method="post" class="d-inline myloans-cancel-form" id="cancelLoanForm-@item.MaPhieuMuon" data-ajax-action="json" data-ajax-refresh="#myLoansContainer" data-ajax-alert="#myLoansAlertContainer">
                                     <input type="hidden" name="returnUrl" value="@returnUrl" />
                                     <button type="button" class="btn btn-sm btn-outline-danger"
                                             data-confirm-form="#cancelLoanForm-@item.MaPhieuMuon"

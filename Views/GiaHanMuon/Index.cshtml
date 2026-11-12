@@ -21,78 +21,22 @@
 
 <div class="card mb-3">
     <div class="card-body">
-        <form id="bo-loc-gia-han" method="get" asp-action="Index" class="row g-2 align-items-center">
+        <form id="bo-loc-gia-han" method="get" asp-action="Index" class="row g-2 align-items-center" data-ajax-filter-form>
             <input type="hidden" id="pageSize" name="pageSize" value="@Model.PageSize" />
             <div class="col-lg-6">
-                <input id="timKiem" name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo họ tên bạn đọc hoặc tên sách" />
+                <input id="timKiem" name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo họ tên bạn đọc hoặc tên sách" data-ajax-search data-ajax-search-min="2" data-ajax-search-delay="350" />
             </div>
             <div class="col-md-6 col-lg-3">
-                <select id="trangThai" name="trangThai" class="form-select" asp-items="trangThaiItems" onchange="this.form.requestSubmit()">
+                <select id="trangThai" name="trangThai" class="form-select" asp-items="trangThaiItems">
                     <option value="">Tất cả trạng thái</option>
                 </select>
             </div>
             <div class="col-md-6 col-lg-3 d-flex gap-2">
-                <button type="submit" class="btn btn-primary">Tìm</button>
-                <a asp-action="Index" asp-route-pageSize="@Model.PageSize" data-xoa-loc class="btn btn-outline-secondary @(dangLoc ? "" : "d-none")">Xóa lọc</a>
+                <a asp-action="Index" asp-route-pageSize="@Model.PageSize" data-xoa-loc data-ajax-clear class="btn btn-outline-secondary">Xóa bộ lọc</a>
             </div>
         </form>
     </div>
 </div>
-<div id="vung-ket-qua-gia-han">
+<div id="vung-ket-qua-gia-han" data-ajax-list data-ajax-form="#bo-loc-gia-han" data-ajax-change>
     <partial name="_BangGiaHan" model="Model" />
 </div>
-
-@section Scripts {
-<script>
-    $(function () {
-        function layDieuKien() {
-            return {
-                search: $('#timKiem').val(),
-                trangThai: $('#trangThai').val(),
-                pageSize: $('#pageSize').val()
-            };
-        }
-        function taiDanhSach(url, data) {
-            $.ajax({
-                url: url,
-                type: 'GET',
-                data: data,
-                success: function (result) {
-                    $('#vung-ket-qua-gia-han').html(result);
-                },
-                error: function () {
-                    alert('Có lỗi xảy ra, vui lòng thử lại.');
-                }
-            });
-        }
-        function hienNutXoaLoc() {
-            var coLoc = $('#bo-loc-gia-han').find('input[name="search"], select').filter(function () {
-                return $.trim($(this).val()) !== '';
-            }).length > 0 || $('#bo-loc-gia-han').find('input[type="checkbox"]:checked').length > 0;
-            $('#bo-loc-gia-han [data-xoa-loc]').toggleClass('d-none', !coLoc);
-        }
-
-        function timKiem() {
-            hienNutXoaLoc();
-            taiDanhSach($('#bo-loc-gia-han').attr('action'), layDieuKien());
-        }
-        $('#bo-loc-gia-han').submit(function (e) {
-            e.preventDefault();
-            timKiem();
-        });
-        $('#bo-loc-gia-han input[name="search"]').keyup(function () {
-            timKiem();
-        });
-        $('#bo-loc-gia-han [data-xoa-loc]').click(function (e) {
-            e.preventDefault();
-            $('#timKiem').val('');
-            $('#trangThai').val('');
-            timKiem();
-        });
-        $('#vung-ket-qua-gia-han').on('click', 'nav[aria-label="Phân trang"] a[href]', function (e) {
-            e.preventDefault();
-            taiDanhSach($(this).attr('href'));
-        });
-    });
-</script>
-}

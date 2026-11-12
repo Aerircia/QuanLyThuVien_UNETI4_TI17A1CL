@@ -49,6 +49,7 @@ public class QuanLyPhieuMuonController : Controller
         TrangThaiPhieuMuon? trangThai,
         int? maTheLoai,
         bool? overdueOnly,
+        string? sort = null,
         int page = 1,
         int pageSize = PagingDefaults.DefaultPageSize)
     {
@@ -58,9 +59,10 @@ public class QuanLyPhieuMuonController : Controller
         if (trangThai.HasValue && !Enum.IsDefined(trangThai.Value)) trangThai = null;
         search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
         groupFilter = string.IsNullOrWhiteSpace(groupFilter) ? null : groupFilter.Trim().ToLowerInvariant();
+        sort = sort is "oldest" or "due_asc" or "due_desc" or "reader_asc" or "book_asc" ? sort : "newest";
 
         var result = await _phieuMuonService.GetManageListAsync(
-            new PhieuMuonManageFilter(search, trangThai, maTheLoai, overdueOnly, page, pageSize, groupFilter), ct);
+            new PhieuMuonManageFilter(search, trangThai, maTheLoai, overdueOnly, page, pageSize, groupFilter, sort), ct);
         var summary = await _phieuMuonService.GetManageSummaryAsync(ct);
 
         ViewBag.TheLoais = await _theLoaiService.GetActiveOptionsAsync(ct);
@@ -72,6 +74,7 @@ public class QuanLyPhieuMuonController : Controller
         if (trangThai.HasValue) routeValues["trangThai"] = trangThai.Value.ToString();
         if (maTheLoai.HasValue) routeValues["maTheLoai"] = maTheLoai.Value.ToString();
         if (overdueOnly == true) routeValues["overdueOnly"] = "true";
+        if (sort != "newest") routeValues["sort"] = sort;
 
         var model = new PhieuMuonManageListViewModel
         {
@@ -80,6 +83,7 @@ public class QuanLyPhieuMuonController : Controller
             TrangThai = trangThai,
             MaTheLoai = maTheLoai,
             OverdueOnly = overdueOnly,
+            Sort = sort,
             PageSize = result.PageSize,
             Result = result,
             Pager = PagerViewModel.From(result, "QuanLyPhieuMuon", nameof(Index), routeValues),

@@ -39,7 +39,7 @@
                             var nutPhat = new NutNhacNhoViewModel("NhacNopPhat", item.MaTra, item.TenBanDoc, item.TenSach, "Nhắc nộp phạt", "btn-outline-danger");
                             <partial name="_NutNhacNho" model="nutPhat" />
                             <form asp-action="MarkPaid" asp-route-id="@item.MaTra" method="post" class="d-inline"
-                                  id="nopPhatForm-@item.MaTra" data-nop-phat>
+                                  id="nopPhatForm-@item.MaTra" data-nop-phat data-ajax-action="json" data-ajax-refresh="#vung-ket-qua-tra-sach" data-ajax-alert="#tra-sach-alert">
                                 <button type="button" class="btn btn-sm btn-outline-success"
                                         data-confirm-form="#nopPhatForm-@item.MaTra"
                                         data-confirm-title="Xác nhận nộp phạt"

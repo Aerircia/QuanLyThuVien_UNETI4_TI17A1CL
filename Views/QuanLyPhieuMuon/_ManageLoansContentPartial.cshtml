@@ -7,7 +7,6 @@
 @{
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
     var theLoais = ViewBag.TheLoais as IReadOnlyList<TheLoaiOption> ?? new List<TheLoaiOption>();
-    var isFiltered = !string.IsNullOrEmpty(Model.GroupFilter) || Model.TrangThai.HasValue || Model.MaTheLoai.HasValue || !string.IsNullOrWhiteSpace(Model.Search) || Model.OverdueOnly == true;
 }
 
 <div id="manageLoansAlertContainer"></div>
@@ -45,11 +44,10 @@
 
 <!-- Bộ lọc tìm kiếm và phân loại -->
 <div class="app-card mb-3 p-3">
-    <form method="get" asp-action="Index" id="manageFilterForm" class="row g-2 align-items-center">
+    <form method="get" asp-action="Index" id="manageFilterForm" class="row g-2 align-items-center" data-ajax-filter-form>
         <input type="hidden" name="pageSize" value="@Model.PageSize" />
         <div class="col-md-4">
-            <input name="search" value="@Model.Search" class="form-control"
-                   placeholder="Tìm theo tên bạn đọc, mã thẻ, tên sách..." />
+            <input name="search" value="@Model.Search" class="form-control" data-ajax-search data-ajax-search-min="2" data-ajax-search-delay="350" placeholder="Tìm theo tên bạn đọc, mã thẻ, tên sách..." />
         </div>
         <div class="col-md-3">
             <select name="groupFilter" class="form-select">
@@ -68,12 +66,8 @@
                 }
             </select>
         </div>
-        <div class="col-md-2 d-flex gap-2">
-            <button type="submit" class="btn btn-primary flex-grow-1">Lọc</button>
-            @if (isFiltered)
-            {
-                <a asp-action="Index" class="btn btn-outline-secondary filter-card-link" title="Xóa bộ lọc">Xóa</a>
-            }
+        <div class="col-md-2 d-grid">
+            <a asp-action="Index" asp-route-pageSize="@Model.PageSize" data-ajax-clear class="btn btn-outline-secondary">Xóa bộ lọc</a>
         </div>
     </form>
 </div>

@@ -9,7 +9,7 @@
   const lists = new Map();
 
   function getForm(list) {
-    return list.dataset.ajaxForm ? document.querySelector(list.dataset.ajaxForm) : list.querySelector('form');
+    return list.dataset.ajaxForm ? document.querySelector(list.dataset.ajaxForm) : list.querySelector('form[data-ajax-filter-form]');
   }
 
   function stateForForm(form) {
@@ -34,8 +34,18 @@
       if (!field.name) continue;
       const values = params.getAll(field.name);
       if (field.type === 'checkbox' || field.type === 'radio') field.checked = values.includes(field.value);
-      else field.value = params.get(field.name) || '';
+      else field.value = params.get(field.name) ?? field.dataset.default ?? '';
     }
+  }
+
+  function updateClearVisibility(list, form) {
+    if (!form || !list.hasAttribute('data-ajax-toggle-clear')) return;
+    const hasValue = Array.from(form.querySelectorAll('input[name], select[name], textarea[name]')).some((field) => {
+      if (field.type === 'hidden' || field.type === 'submit' || field.type === 'button') return false;
+      if (field.type === 'checkbox' || field.type === 'radio') return field.checked;
+      return Boolean((field.value || '').trim());
+    });
+    form.querySelectorAll('[data-ajax-clear]').forEach((button) => button.classList.toggle('d-none', !hasValue));
   }
 
   function updateTabs(list, url) {
@@ -78,8 +88,14 @@
       const html = await response.text();
       list.innerHTML = extractContent(list, html);
       state.url = url;
-      if (options.push) history.pushState({ libraryAjax: true }, '', url);
+      if (options.push) {
+        const replaceTyping = options.typing && history.state && history.state.libraryAjax && history.state.typing;
+        const historyState = { libraryAjax: true, typing: Boolean(options.typing) };
+        if (replaceTyping) history.replaceState(historyState, '', url);
+        else history.pushState(historyState, '', url);
+      }
       if (options.sync) syncForm(getForm(list), url);
+      updateClearVisibility(list, getForm(list));
       updateTabs(list, url);
       if (list.dataset.ajaxBadge) {
         const meta = document.querySelector(list.dataset.ajaxMeta || '[data-total-count]');
@@ -128,13 +144,14 @@
   document.querySelectorAll('[data-ajax-list]').forEach((list) => {
     const state = { formSelector: list.dataset.ajaxForm || null, url: location.pathname + location.search, request: null };
     lists.set(list, state);
+    updateClearVisibility(list, getForm(list));
   });
 
   document.addEventListener('submit', (event) => {
     const form = event.target;
     if (!(form instanceof HTMLFormElement) || form.method.toLowerCase() !== 'get' || form.matches('[data-ajax-crud], [data-ajax-action]')) return;
     const owner = stateForForm(form);
-    if (!owner) return;
+    if (!owner || (owner.state.formSelector ? !form.matches(owner.state.formSelector) : !form.matches('[data-ajax-filter-form]'))) return;
     event.preventDefault();
     loadList(owner.list, makeUrl(form, event.submitter), { push: true });
   });
@@ -143,19 +160,20 @@
     const form = event.target.form;
     if (!form) return;
     const owner = stateForForm(form);
-    if (owner && owner.list.hasAttribute('data-ajax-change') && !event.target.matches('[data-ajax-search]'))
+    if (owner && owner.list.hasAttribute('data-ajax-change') && !event.target.matches('[data-ajax-search], [data-ajax-input]'))
       loadList(owner.list, makeUrl(form), { push: true });
   });
 
   document.addEventListener('input', (event) => {
     const field = event.target;
-    if (!field.matches('[data-ajax-search]') || !field.form) return;
+    if (!field.matches('[data-ajax-search], [data-ajax-input]') || !field.form) return;
     const owner = stateForForm(field.form);
     if (!owner) return;
+    updateClearVisibility(owner.list, field.form);
     clearTimeout(owner.state.timer);
-    const minimum = Number(field.dataset.ajaxSearchMin || 0);
+    const minimum = Number(field.dataset.ajaxSearchMin || field.dataset.ajaxInputMin || 0);
     if (field.value.trim().length > 0 && field.value.trim().length < minimum) return;
-    owner.state.timer = setTimeout(() => loadList(owner.list, makeUrl(field.form), { push: true }), Number(field.dataset.ajaxSearchDelay || 350));
+    owner.state.timer = setTimeout(() => loadList(owner.list, makeUrl(field.form), { push: true, typing: true }), Number(field.dataset.ajaxSearchDelay || 350));
   });
 
   document.addEventListener('click', (event) => {
@@ -166,8 +184,53 @@
     event.preventDefault();
     const form = clear.closest('form');
     clearForm(form);
-    loadList(owner.list, clear.href || makeUrl(form), { push: true });
+    loadList(owner.list, makeUrl(form), { push: true });
   });
+
+  // Optional client-side checks and confirmation text for confirm-modal buttons.
+  // Capture runs before forms.js opens the modal, so the shared modal keeps its existing behavior.
+  document.addEventListener('click', (event) => {
+    const trigger = event.target.closest('[data-confirm-form]');
+    if (!trigger) return;
+    const form = document.querySelector(trigger.dataset.confirmForm);
+    if (!form) return;
+
+    if (trigger.dataset.ajaxConfirmSetField) {
+      const field = form.querySelector(trigger.dataset.ajaxConfirmSetField);
+      if (field) field.value = trigger.dataset.ajaxConfirmSetValue || '';
+    }
+
+    if (trigger.dataset.ajaxConfirmRequired) {
+      const field = form.querySelector(trigger.dataset.ajaxConfirmRequired);
+      const error = trigger.dataset.ajaxConfirmError && document.querySelector(trigger.dataset.ajaxConfirmError);
+      if (field && !field.value.trim()) {
+        if (error) error.textContent = trigger.dataset.ajaxConfirmRequiredMessage || 'Vui lòng điền trường bắt buộc.';
+        field.classList.add('is-invalid');
+        field.focus();
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+      if (field) field.classList.remove('is-invalid');
+      if (error) error.textContent = '';
+    }
+
+    if (trigger.dataset.ajaxConfirmRadio) {
+      const selected = Array.from(form.querySelectorAll('input[type="radio"]'))
+        .find((radio) => radio.name === trigger.dataset.ajaxConfirmRadio && radio.checked);
+      if (!selected) {
+        showAlert(trigger.dataset.ajaxConfirmAlert, 'Vui lòng chọn tình trạng sách.', 'danger');
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+      const spans = selected.closest('label')?.querySelectorAll('span') || [];
+      const template = trigger.dataset.ajaxConfirmTemplate || trigger.dataset.confirmMessage || '';
+      trigger.dataset.confirmMessage = template
+        .replace('{status}', spans[0]?.textContent.trim() || '')
+        .replace('{amount}', spans[1]?.textContent.trim() || '');
+    }
+  }, true);
 
   document.addEventListener('click', (event) => {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -185,7 +248,7 @@
     const list = event.target.closest('[data-ajax-list]');
     if (!list) return;
     const state = lists.get(list);
-    const link = event.target.closest('[data-ajax-link], nav[aria-label="Phân trang"] a, .pagination a, a.filter-card-link');
+    const link = event.target.closest('[data-ajax-link], a.myloans-tab-link, nav[aria-label="Phân trang"] a, .pagination a, a.filter-card-link');
     if (!state || !link || !list.contains(link) || !link.href) return;
     if (link.closest('.disabled') || link.getAttribute('aria-disabled') === 'true') { event.preventDefault(); return; }
     event.preventDefault();
@@ -267,6 +330,10 @@
       const list = form.dataset.ajaxRefresh && document.querySelector(form.dataset.ajaxRefresh);
       const state = list && lists.get(list);
       if (state) await loadList(list, state.url, { push: false });
+      if (result.success && result.redirectUrl && form.dataset.ajaxRedirect !== 'false') {
+        location.assign(result.redirectUrl);
+        return;
+      }
       const type = result.success ? 'success' : 'danger';
       showAlert(form.dataset.ajaxAlert, result.message || (result.success ? 'Thao tác thành công.' : 'Thao tác không thành công.'), type);
     } catch (error) {

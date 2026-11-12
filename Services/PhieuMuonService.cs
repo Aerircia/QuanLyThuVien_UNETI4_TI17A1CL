@@ -501,9 +501,17 @@ public class PhieuMuonService : IPhieuMuonService
         if (filter.OverdueOnly == true)
             query = query.Where(p => p.TrangThai == TrangThaiPhieuMuon.DangMuon && p.HanTra.HasValue && p.HanTra.Value < today);
 
-        var projected = query
-            .OrderByDescending(p => p.NgayDangKy)
-            .ThenByDescending(p => p.MaPhieuMuon)
+        IOrderedQueryable<PhieuMuon> ordered = filter.Sort switch
+        {
+            "oldest" => query.OrderBy(p => p.NgayDangKy).ThenBy(p => p.MaPhieuMuon),
+            "due_asc" => query.OrderBy(p => p.HanTra == null).ThenBy(p => p.HanTra).ThenByDescending(p => p.MaPhieuMuon),
+            "due_desc" => query.OrderByDescending(p => p.HanTra).ThenByDescending(p => p.MaPhieuMuon),
+            "reader_asc" => query.OrderBy(p => p.BanDoc != null ? p.BanDoc.HoTen : string.Empty).ThenByDescending(p => p.MaPhieuMuon),
+            "book_asc" => query.OrderBy(p => p.Sach != null ? p.Sach.TenSach : string.Empty).ThenByDescending(p => p.MaPhieuMuon),
+            _ => query.OrderByDescending(p => p.NgayDangKy).ThenByDescending(p => p.MaPhieuMuon)
+        };
+
+        var projected = ordered
             .Select(p => new PhieuMuonItemViewModel
             {
                 MaPhieuMuon = p.MaPhieuMuon,

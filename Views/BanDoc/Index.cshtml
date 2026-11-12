@@ -53,10 +53,10 @@
     <!-- Bộ lọc tìm kiếm -->
     <div class="card mb-3">
         <div class="card-body">
-            <form id="bo-loc-ban-doc" method="get" asp-action="Index" class="row g-2 align-items-center">
+            <form id="bo-loc-ban-doc" method="get" asp-action="Index" class="row g-2 align-items-center" data-ajax-filter-form>
                 <input type="hidden" name="pageSize" value="@Model.PageSize" />
                 <div class="col-md-5">
-                    <input name="search" value="@Model.Search" class="form-control"
+                    <input name="search" value="@Model.Search" class="form-control" data-ajax-search data-ajax-search-min="2" data-ajax-search-delay="350"
                            placeholder="Tìm theo tên bạn đọc, mã thẻ, số điện thoại, email..." />
                 </div>
                 <div class="col-md-3">
@@ -70,14 +70,14 @@
                     </select>
                 </div>
                 <div class="col-md-1 d-grid">
-                    <button type="submit" class="btn btn-primary">Lọc</button>
+                    <a asp-action="Index" data-ajax-clear class="btn btn-outline-secondary">Xóa bộ lọc</a>
                 </div>
             </form>
         </div>
     </div>
 
     @* Vùng kết quả: lọc/tìm kiếm/phân trang qua AJAX - JS tải cả trang rồi cắt vùng này thay vào *@
-    <div id="vung-ket-qua-ban-doc" data-ajax-list data-ajax-form="#bo-loc-ban-doc" data-ajax-document-selector="#vung-ket-qua-ban-doc" data-ajax-tabs="#tab-loc-ban-doc">
+    <div id="vung-ket-qua-ban-doc" data-ajax-list data-ajax-form="#bo-loc-ban-doc" data-ajax-document-selector="#vung-ket-qua-ban-doc" data-ajax-tabs="#tab-loc-ban-doc" data-ajax-change>
     <div class="table-responsive">
         <table class="table table-striped align-middle mb-0">
             <thead>
