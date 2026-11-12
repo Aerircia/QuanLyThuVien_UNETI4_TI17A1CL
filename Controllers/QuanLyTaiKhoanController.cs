@@ -145,12 +145,21 @@ public class QuanLyTaiKhoanController : Controller
     // ---------- Khóa / mở khóa ----------
     [HttpPost("/Admin/QuanLyTaiKhoan/SetStatus/{id:int}")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SetStatus(int id, TrangThaiTaiKhoan trangThai, string? returnUrl)
+    public async Task<IActionResult> SetStatus(int id, TrangThaiTaiKhoan? trangThai, string? returnUrl)
     {
-        var result = await _service.SetStatusAsync(id, trangThai, ActingId, HttpContext.RequestAborted);
+        if (trangThai is null || !Enum.IsDefined(trangThai.Value) || !ModelState.IsValid)
+        {
+            TempData["Loi"] = "Trạng thái tài khoản không hợp lệ.";
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return LocalRedirect(returnUrl);
+            return RedirectToAction(nameof(Index));
+        }
+
+        var status = trangThai.Value;
+        var result = await _service.SetStatusAsync(id, status, ActingId, HttpContext.RequestAborted);
 
         if (result.Succeeded)
-            TempData["ThongBao"] = trangThai == TrangThaiTaiKhoan.BiKhoa
+            TempData["ThongBao"] = status == TrangThaiTaiKhoan.BiKhoa
                 ? "Đã khóa tài khoản."
                 : "Đã mở khóa tài khoản.";
         else

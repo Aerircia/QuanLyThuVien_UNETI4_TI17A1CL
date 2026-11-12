@@ -737,6 +737,13 @@ public class PhieuMuonService : IPhieuMuonService
             return ServiceResult.Fail($"Chỉ có thể giao sách cho phiếu ở trạng thái 'Đã duyệt' (hiện tại: {phieu.TrangThai.GetDisplayName()}).");
 
         var today = LibraryClock.Today();
+        if (phieu.BanDoc is null)
+            return ServiceResult.Fail("Không tìm thấy hồ sơ bạn đọc của phiếu mượn.");
+
+        var readerBlockers = await GetReaderBlockersAsync(phieu.BanDoc, today, ct);
+        if (readerBlockers.Count > 0)
+            return ServiceResult.Fail(string.Join(" ", readerBlockers));
+
         var cauHinh = await GetCauHinhAsync(ct);
 
         // Số ngày mượn theo loại bạn đọc từ cấu hình thư viện

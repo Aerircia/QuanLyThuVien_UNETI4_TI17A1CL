@@ -276,6 +276,17 @@ public class GiaHanMuonService : IGiaHanMuonService
             return errors;
         }
 
+        var banDoc = await _db.BanDocs.AsNoTracking()
+            .FirstOrDefaultAsync(b => b.MaBanDoc == phieu.MaBanDoc, ct);
+        if (banDoc is null)
+        {
+            errors.Add("Không tìm thấy hồ sơ bạn đọc của phiếu mượn.");
+        }
+        else
+        {
+            errors.AddRange(await GetReaderBlockersAsync(banDoc, Today, ct));
+        }
+
 // Quá hạn = Đang mượn và HanTra < hôm nay
         if (phieu.HanTra is null || phieu.HanTra.Value < Today)
             errors.Add("Phiếu đã quá hạn trả nên không thể gia hạn.");
@@ -301,6 +312,37 @@ public class GiaHanMuonService : IGiaHanMuonService
             if (coNguoiCho)
                 errors.Add("Sách đã hết bản còn lại và đang có bạn đọc khác chờ mượn nên không thể gia hạn.");
         }
+
+        return errors;
+    }
+
+    private async Task<List<string>> GetReaderBlockersAsync(BanDoc banDoc, DateOnly today, CancellationToken ct)
+    {
+        var errors = new List<string>();
+
+        if (banDoc.TrangThai != TrangThaiBanDoc.HoatDong)
+            errors.Add("Hồ sơ bạn đọc chưa ở trạng thái hoạt động.");
+
+        if (banDoc.NgayHetHanThe < today)
+            errors.Add($"Thẻ thư viện đã hết hạn từ ngày {banDoc.NgayHetHanThe:dd/MM/yyyy}.");
+
+        var missing = new List<string>();
+        if (string.IsNullOrWhiteSpace(banDoc.HoTen)) missing.Add("họ tên");
+        if (string.IsNullOrWhiteSpace(banDoc.SoDienThoai)) missing.Add("số điện thoại");
+        if (string.IsNullOrWhiteSpace(banDoc.Email)) missing.Add("email");
+        if (string.IsNullOrWhiteSpace(banDoc.DiaChi)) missing.Add("địa chỉ");
+        if (missing.Count > 0)
+            errors.Add($"Hồ sơ chưa khai báo đủ thông tin bắt buộc ({string.Join(", ", missing)}).");
+
+        if (await _db.PhieuMuons.AnyAsync(p => p.MaBanDoc == banDoc.MaBanDoc &&
+                                              p.TrangThai == TrangThaiPhieuMuon.DangMuon &&
+                                              p.HanTra.HasValue && p.HanTra.Value < today, ct))
+            errors.Add("Đang có sách mượn quá hạn chưa trả, cần trả sách quá hạn trước khi gia hạn.");
+
+        if (await _db.PhieuMuons.AnyAsync(p => p.MaBanDoc == banDoc.MaBanDoc &&
+                                              p.TraSach != null &&
+                                              p.TraSach.TrangThaiPhat == TrangThaiPhat.ChuaNop, ct))
+            errors.Add("Đang có khoản tiền phạt chưa nộp, cần thanh toán trước khi gia hạn.");
 
         return errors;
     }
