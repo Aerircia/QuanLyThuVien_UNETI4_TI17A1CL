@@ -123,36 +123,8 @@ public class PhieuMuonService : IPhieuMuonService
     }
 
     // Điều kiện về phía bạn đọc, dùng chung cho lúc đăng ký và lúc thủ thư duyệt phiếu.
-    private async Task<List<string>> GetReaderBlockersAsync(BanDoc banDoc, DateOnly today, CancellationToken ct)
-    {
-        var errors = new List<string>();
-
-        if (banDoc.TrangThai != TrangThaiBanDoc.HoatDong)
-            errors.Add("Hồ sơ bạn đọc đang chờ duyệt, bị từ chối, tạm khóa hoặc ngừng hoạt động.");
-
-        if (banDoc.NgayHetHanThe < today)
-            errors.Add($"Thẻ thư viện đã hết hạn từ ngày {banDoc.NgayHetHanThe:dd/MM/yyyy}.");
-
-        var thongTinThieu = new List<string>();
-        if (string.IsNullOrWhiteSpace(banDoc.HoTen)) thongTinThieu.Add("Họ tên");
-        if (string.IsNullOrWhiteSpace(banDoc.SoDienThoai)) thongTinThieu.Add("Số điện thoại");
-        if (string.IsNullOrWhiteSpace(banDoc.Email)) thongTinThieu.Add("Email");
-        if (string.IsNullOrWhiteSpace(banDoc.DiaChi)) thongTinThieu.Add("Địa chỉ");
-        if (thongTinThieu.Count > 0)
-            errors.Add($"Hồ sơ chưa khai báo đủ thông tin bắt buộc ({string.Join(", ", thongTinThieu)}).");
-
-        if (await _db.PhieuMuons.AnyAsync(p => p.MaBanDoc == banDoc.MaBanDoc &&
-                                              p.TrangThai == TrangThaiPhieuMuon.DangMuon &&
-                                              p.HanTra.HasValue && p.HanTra.Value < today, ct))
-            errors.Add("Đang có sách mượn quá hạn chưa trả, cần trả sách quá hạn trước khi mượn thêm.");
-
-        if (await _db.PhieuMuons.AnyAsync(p => p.MaBanDoc == banDoc.MaBanDoc &&
-                                              p.TraSach != null &&
-                                              p.TraSach.TrangThaiPhat == TrangThaiPhat.ChuaNop, ct))
-            errors.Add("Đang có khoản tiền phạt chưa nộp, cần thanh toán tại thư viện trước khi mượn sách.");
-
-        return errors;
-    }
+    private Task<List<string>> GetReaderBlockersAsync(BanDoc banDoc, DateOnly today, CancellationToken ct) =>
+        ReaderEligibility.GetBlockersAsync(_db, banDoc, today, ct);
 
     public async Task<ServiceResult<int>> RegisterLoanAsync(int maBanDoc, int maSach, string? ghiChu, CancellationToken ct = default)
     {

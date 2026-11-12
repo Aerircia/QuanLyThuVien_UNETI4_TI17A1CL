@@ -46,7 +46,7 @@
 <div class="app-card mb-3 p-3">
     <form method="get" asp-action="Index" id="manageFilterForm" class="row g-2 align-items-center" data-ajax-filter-form>
         <input type="hidden" name="pageSize" value="@Model.PageSize" />
-        <div class="col-md-4">
+        <div class="col-md-3">
             <input name="search" value="@Model.Search" class="form-control" data-ajax-search data-ajax-search-min="2" data-ajax-search-delay="350" placeholder="Tìm theo tên bạn đọc, mã thẻ, tên sách..." />
         </div>
         <div class="col-md-3">
@@ -57,13 +57,23 @@
                 <option value="hoan_thanh" selected="@(Model.GroupFilter == "hoan_thanh")">Đã hoàn thành (trả/từ chối/hủy)</option>
             </select>
         </div>
-        <div class="col-md-3">
-            <select name="maTheLoai" class="form-select">
+        <div class="col-md-2">
+            <select name="maTheLoai" class="form-select" aria-label="Thể loại">
                 <option value="">Tất cả thể loại</option>
                 @foreach (var tl in theLoais)
                 {
                     <option value="@tl.MaTheLoai" selected="@(Model.MaTheLoai == tl.MaTheLoai)">@tl.TenTheLoai</option>
                 }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="sort" class="form-select" aria-label="Sắp xếp">
+                <option value="newest" selected="@(Model.Sort == "newest")">Mới nhất</option>
+                <option value="oldest" selected="@(Model.Sort == "oldest")">Cũ nhất</option>
+                <option value="due_asc" selected="@(Model.Sort == "due_asc")">Hạn trả gần nhất</option>
+                <option value="due_desc" selected="@(Model.Sort == "due_desc")">Hạn trả xa nhất</option>
+                <option value="reader_asc" selected="@(Model.Sort == "reader_asc")">Bạn đọc A–Z</option>
+                <option value="book_asc" selected="@(Model.Sort == "book_asc")">Sách A–Z</option>
             </select>
         </div>
         <div class="col-md-2 d-grid">

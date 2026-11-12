@@ -38,14 +38,16 @@
     }
   }
 
-  function updateClearVisibility(list, form) {
-    if (!form || !list.hasAttribute('data-ajax-toggle-clear')) return;
-    const hasValue = Array.from(form.querySelectorAll('input[name], select[name], textarea[name]')).some((field) => {
-      if (field.type === 'hidden' || field.type === 'submit' || field.type === 'button') return false;
-      if (field.type === 'checkbox' || field.type === 'radio') return field.checked;
-      return Boolean((field.value || '').trim());
-    });
-    form.querySelectorAll('[data-ajax-clear]').forEach((button) => button.classList.toggle('d-none', !hasValue));
+  function restoreField(list, caret) {
+    const field = list.querySelector('[name="' + CSS.escape(caret.name) + '"]');
+    if (!field) return;
+    field.focus();
+    // Nếu người dùng gõ thêm trong lúc chờ, đưa lại giá trị mới nhất và tìm lại.
+    if (field.value !== caret.value) {
+      field.value = caret.value;
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    try { field.setSelectionRange(caret.start, caret.end); } catch (_) { /* ô không hỗ trợ con trỏ */ }
   }
 
   function updateTabs(list, url) {
@@ -86,7 +88,13 @@
       });
       if (!response.ok) throw new Error('HTTP ' + response.status);
       const html = await response.text();
+      // Giữ focus và con trỏ của ô đang gõ: vùng kết quả (kèm form lọc) bị thay bằng HTML mới.
+      const typing = document.activeElement;
+      const caret = typing && list.contains(typing) && typing.name && typing.matches('[data-ajax-search], [data-ajax-input]')
+        ? { name: typing.name, value: typing.value, start: typing.selectionStart, end: typing.selectionEnd }
+        : null;
       list.innerHTML = extractContent(list, html);
+      if (caret) restoreField(list, caret);
       state.url = url;
       if (options.push) {
         const replaceTyping = options.typing && history.state && history.state.libraryAjax && history.state.typing;
@@ -95,7 +103,6 @@
         else history.pushState(historyState, '', url);
       }
       if (options.sync) syncForm(getForm(list), url);
-      updateClearVisibility(list, getForm(list));
       updateTabs(list, url);
       if (list.dataset.ajaxBadge) {
         const meta = document.querySelector(list.dataset.ajaxMeta || '[data-total-count]');
@@ -118,6 +125,11 @@
     for (const field of form.querySelectorAll('input[name], select[name], textarea[name]')) {
       if (field.type === 'hidden') continue;
       if (field.type === 'checkbox' || field.type === 'radio') field.checked = false;
+      else if (field.tagName === 'SELECT') {
+        // Ô chọn không có lựa chọn rỗng: về mặc định (hoặc lựa chọn đầu) thay vì để trống.
+        field.value = field.dataset.default ?? '';
+        if (field.selectedIndex < 0) field.selectedIndex = 0;
+      }
       else field.value = '';
     }
   }
@@ -144,7 +156,6 @@
   document.querySelectorAll('[data-ajax-list]').forEach((list) => {
     const state = { formSelector: list.dataset.ajaxForm || null, url: location.pathname + location.search, request: null };
     lists.set(list, state);
-    updateClearVisibility(list, getForm(list));
   });
 
   document.addEventListener('submit', (event) => {
@@ -169,7 +180,6 @@
     if (!field.matches('[data-ajax-search], [data-ajax-input]') || !field.form) return;
     const owner = stateForForm(field.form);
     if (!owner) return;
-    updateClearVisibility(owner.list, field.form);
     clearTimeout(owner.state.timer);
     const minimum = Number(field.dataset.ajaxSearchMin || field.dataset.ajaxInputMin || 0);
     if (field.value.trim().length > 0 && field.value.trim().length < minimum) return;
