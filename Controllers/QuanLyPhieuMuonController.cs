@@ -117,21 +117,6 @@ public class QuanLyPhieuMuonController : Controller
         var items = await _phieuMuonService.GetUncollectedAsync(HttpContext.RequestAborted);
         return View(items);
     }
-    [HttpPost("/ThuThu/QuanLyPhieuMuon/TuDongHuyQuaHan")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> TuDongHuyQuaHan(string? returnUrl)
-    {
-        var count = await _phieuMuonService.AutoCancelOverdueApprovedLoansAsync(HttpContext.RequestAborted);
-        var msg = count > 0
-            ? $"Đã tự động hủy thành công {count} phiếu mượn đã duyệt nhưng quá 7 ngày chưa nhận sách."
-            : "Không có phiếu mượn nào quá hạn nhận sách cần hủy.";
-
-        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-            return Json(new { success = true, count, message = msg });
-
-        TempData["ThongBao"] = msg;
-        return Back(returnUrl);
-    }
     [HttpPost("/ThuThu/QuanLyPhieuMuon/Duyet/{id:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Duyet(int id, string? nhanXet, string? returnUrl)
