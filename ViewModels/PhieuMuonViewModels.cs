@@ -286,5 +286,6 @@ public sealed class LoanEligibilityResult
 {
     public bool CanBorrow { get; set; }
     public int SoLuongConLai { get; set; }
+    public int SoPhieuDangXuLy { get; set; }
     public List<string> Errors { get; set; } = new();
 }

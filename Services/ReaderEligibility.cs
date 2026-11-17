@@ -1,4 +1,6 @@
-// Quy tắc đủ điều kiện của bạn đọc, dùng chung cho mượn sách, giao sách và gia hạn.
+// Họ và tên: Vũ Tiến Thành
+// Mã sinh viên: 23103100257
+// Nội dung thực hiện: Xây dựng quy tắc đủ điều kiện của bạn đọc dùng chung cho mượn sách, giao sách và gia hạn.
 
 using Microsoft.EntityFrameworkCore;
 using QuanLyThuVien_UNETI4_TI17A1CL.Data;

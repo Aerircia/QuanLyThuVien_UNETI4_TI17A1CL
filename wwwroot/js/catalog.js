@@ -69,9 +69,18 @@
   // ---------- Tải kết quả ----------
   async function load(url, opts = {}) {
     const { mode = 'push', sync = false, scroll = false, typing = false } = opts;
-    if (mode !== 'pop' && url === lastUrl) return;
+    // Hủy request cũ trước cả khi bỏ qua URL đã tải; nếu không response cũ
+    // vẫn có thể ghi đè trạng thái người dùng vừa khôi phục.
+    if (current) {
+      current.abort();
+      current = null;
+    }
+    if (mode !== 'pop' && url === lastUrl) {
+      results.classList.remove('is-loading');
+      results.removeAttribute('aria-busy');
+      return;
+    }
 
-    if (current) current.abort();
     const mine = new AbortController();
     current = mine;
     results.classList.add('is-loading');

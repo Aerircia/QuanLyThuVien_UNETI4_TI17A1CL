@@ -80,6 +80,20 @@ public class BanDocService : IBanDocService
         return await PagedResult<BanDocListItem>.CreateAsync(projected, filter.Page, filter.PageSize, ct);
     }
 
+    public async Task<BanDocStatusCounts> GetStatusCountsAsync(CancellationToken ct = default)
+    {
+        return await _db.BanDocs
+            .GroupBy(_ => 1)
+            .Select(group => new BanDocStatusCounts(
+                group.Count(),
+                group.Count(b => b.TrangThai == TrangThaiBanDoc.ChoDuyet),
+                group.Count(b => b.TrangThai == TrangThaiBanDoc.HoatDong),
+                group.Count(b => b.TrangThai == TrangThaiBanDoc.NgungHoatDong),
+                group.Count(b => b.TrangThai == TrangThaiBanDoc.TuChoi)))
+            .FirstOrDefaultAsync(ct)
+            ?? new BanDocStatusCounts(0, 0, 0, 0, 0);
+    }
+
     public async Task<BanDocDetail?> GetAsync(int maBanDoc, CancellationToken ct = default)
     {
         var today = DateOnly.FromDateTime(DateTime.Today);

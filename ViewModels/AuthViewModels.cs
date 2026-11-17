@@ -1,5 +1,5 @@
-// Họ và tên: <điền tên>
-// Mã sinh viên: <điền MSSV>
+// Họ và tên: Lại Anh Quân
+// Mã sinh viên: 23103100255
 // Nội dung thực hiện: ViewModel đăng ký tài khoản và bước nhập OTP của quên mật khẩu
 
 using System.ComponentModel.DataAnnotations;

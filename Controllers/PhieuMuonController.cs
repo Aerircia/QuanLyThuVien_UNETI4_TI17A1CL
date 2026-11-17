@@ -3,8 +3,6 @@
 // Nội dung thực hiện: Controller phía bạn đọc: đăng ký mượn sách, hủy phiếu, theo dõi phiếu mượn và tiền phạt (Module 3). Phần quản lý của thủ thư nằm ở QuanLyPhieuMuonController.
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using QuanLyThuVien_UNETI4_TI17A1CL.Data;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Auth;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Common;
@@ -17,15 +15,25 @@ public class PhieuMuonController : Controller
 {
     private readonly IPhieuMuonService _phieuMuonService;
     private readonly IThanhToanService _thanhToanService;
+    private readonly IBanDocService _banDocService;
+    private readonly ISachService _sachService;
+    private readonly ICauHinhThuVienService _cauHinh;
     private readonly ICurrentUserService _current;
-    private readonly AppDbContext _db;
 
-    public PhieuMuonController(IPhieuMuonService phieuMuonService, IThanhToanService thanhToanService, ICurrentUserService current, AppDbContext db)
+    public PhieuMuonController(
+        IPhieuMuonService phieuMuonService,
+        IThanhToanService thanhToanService,
+        IBanDocService banDocService,
+        ISachService sachService,
+        ICauHinhThuVienService cauHinh,
+        ICurrentUserService current)
     {
         _phieuMuonService = phieuMuonService;
         _thanhToanService = thanhToanService;
+        _banDocService = banDocService;
+        _sachService = sachService;
+        _cauHinh = cauHinh;
         _current = current;
-        _db = db;
     }
 
     // 7.3. ĐĂNG KÝ MƯỢN SÁCH (Dành cho bạn đọc)
@@ -35,9 +43,8 @@ public class PhieuMuonController : Controller
     {
         var maSach = id;
         var user = _current.User!;
-        var banDoc = await _db.BanDocs
-            .AsNoTracking()
-            .FirstOrDefaultAsync(b => b.MaTaiKhoan == user.MaTaiKhoan, HttpContext.RequestAborted);
+        var ct = HttpContext.RequestAborted;
+        var banDoc = await _banDocService.GetByTaiKhoanAsync(user.MaTaiKhoan, ct);
 
         if (banDoc is null)
         {
@@ -57,24 +64,14 @@ public class PhieuMuonController : Controller
             return RedirectToAction("MyProfile", "BanDoc");
         }
 
-        var sach = await _db.Sachs
-            .Include(s => s.TheLoai)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.MaSach == maSach, HttpContext.RequestAborted);
+        var sach = await _sachService.GetAsync(maSach, ct);
 
         if (sach is null)
             return NotFound("Không tìm thấy đầu sách.");
 
-        var cauHinh = await _db.CauHinhThuViens.FirstOrDefaultAsync(HttpContext.RequestAborted) ?? new Models.CauHinhThuVien();
+        var cauHinh = await _cauHinh.GetAsync();
 
-        var check = await _phieuMuonService.CheckCanBorrowAsync(banDoc.MaBanDoc, maSach, HttpContext.RequestAborted);
-
-        var soPhieuDangXuLy = await _db.PhieuMuons.CountAsync(
-            p => p.MaBanDoc == banDoc.MaBanDoc &&
-                (p.TrangThai == TrangThaiPhieuMuon.ChoDuyet ||
-                 p.TrangThai == TrangThaiPhieuMuon.DaDuyet ||
-                 p.TrangThai == TrangThaiPhieuMuon.DangMuon),
-            HttpContext.RequestAborted);
+        var check = await _phieuMuonService.CheckCanBorrowAsync(banDoc.MaBanDoc, maSach, ct);
 
         var thongTinHopLe = !string.IsNullOrWhiteSpace(banDoc.HoTen)
                          && !string.IsNullOrWhiteSpace(banDoc.SoDienThoai)
@@ -86,7 +83,7 @@ public class PhieuMuonController : Controller
             MaSach = sach.MaSach,
             TenSach = sach.TenSach,
             TacGia = sach.TacGia,
-            TheLoai = sach.TheLoai?.TenTheLoai,
+            TheLoai = sach.TenTheLoai,
             NamXuatBan = sach.NamXuatBan,
             GiaBia = sach.GiaBia,
             ViTriKe = sach.ViTriKe,
@@ -101,7 +98,7 @@ public class PhieuMuonController : Controller
             MaSoThe = banDoc.MaSoThe,
             LoaiBanDoc = banDoc.LoaiBanDoc,
             NgayHetHanThe = banDoc.NgayHetHanThe,
-            SoPhieuDangXuLy = soPhieuDangXuLy,
+            SoPhieuDangXuLy = check.SoPhieuDangXuLy,
             SoPhieuToiDa = cauHinh.SoPhieuToiDa,
             ThongTinBatBuocHopLe = thongTinHopLe,
 
@@ -120,9 +117,8 @@ public class PhieuMuonController : Controller
     {
         var maSach = id;
         var user = _current.User!;
-        var banDoc = await _db.BanDocs
-            .AsNoTracking()
-            .FirstOrDefaultAsync(b => b.MaTaiKhoan == user.MaTaiKhoan, HttpContext.RequestAborted);
+        var ct = HttpContext.RequestAborted;
+        var banDoc = await _banDocService.GetByTaiKhoanAsync(user.MaTaiKhoan, ct);
 
         if (banDoc is null || banDoc.TrangThai != TrangThaiBanDoc.HoatDong)
         {
@@ -135,20 +131,21 @@ public class PhieuMuonController : Controller
         if (!result.Succeeded)
         {
             // Nạp lại thông tin để hiển thị lỗi
-            var sach = await _db.Sachs.Include(s => s.TheLoai).AsNoTracking().FirstOrDefaultAsync(s => s.MaSach == maSach, HttpContext.RequestAborted);
-            var cauHinh = await _db.CauHinhThuViens.FirstOrDefaultAsync(HttpContext.RequestAborted) ?? new Models.CauHinhThuVien();
-            var check = await _phieuMuonService.CheckCanBorrowAsync(banDoc.MaBanDoc, maSach, HttpContext.RequestAborted);
+            var sach = await _sachService.GetAsync(maSach, ct);
+            var cauHinh = await _cauHinh.GetAsync();
+            var check = await _phieuMuonService.CheckCanBorrowAsync(banDoc.MaBanDoc, maSach, ct);
 
             model.MaSach = sach?.MaSach ?? maSach;
             model.TenSach = sach?.TenSach ?? string.Empty;
             model.TacGia = sach?.TacGia ?? string.Empty;
-            model.TheLoai = sach?.TheLoai?.TenTheLoai;
+            model.TheLoai = sach?.TenTheLoai;
             model.NamXuatBan = sach?.NamXuatBan ?? 0;
             model.GiaBia = sach?.GiaBia ?? 0;
             model.ViTriKe = sach?.ViTriKe;
             model.ImgPath = sach?.ImgPath;
             model.SoLuongTong = sach?.SoLuongTong ?? 0;
             model.SoLuongConLai = check.SoLuongConLai;
+            model.SoPhieuDangXuLy = check.SoPhieuDangXuLy;
             model.HoTenBanDoc = banDoc.HoTen;
             model.MaSoThe = banDoc.MaSoThe;
             model.LoaiBanDoc = banDoc.LoaiBanDoc;
@@ -169,23 +166,20 @@ public class PhieuMuonController : Controller
     public async Task<IActionResult> RegisterSuccess(int id)
     {
         var user = _current.User!;
-        var banDoc = await _db.BanDocs.AsNoTracking()
-            .FirstOrDefaultAsync(b => b.MaTaiKhoan == user.MaTaiKhoan, HttpContext.RequestAborted);
+        var ct = HttpContext.RequestAborted;
+        var banDoc = await _banDocService.GetByTaiKhoanAsync(user.MaTaiKhoan, ct);
         if (banDoc is null)
             return NotFound();
 
-        var phieu = await _db.PhieuMuons
-            .AsNoTracking()
-            .Include(p => p.Sach)
-            .FirstOrDefaultAsync(p => p.MaPhieuMuon == id && p.MaBanDoc == banDoc.MaBanDoc, HttpContext.RequestAborted);
+        var phieu = await _phieuMuonService.GetLoanDetailAsync(id, banDoc.MaBanDoc, ct);
         if (phieu is null)
             return NotFound();
 
         return View(new PhieuMuonRegisterSuccessViewModel
         {
             MaPhieuMuon = phieu.MaPhieuMuon,
-            TenSach = phieu.Sach?.TenSach ?? string.Empty,
-            ViTriKe = phieu.Sach?.ViTriKe
+            TenSach = phieu.TenSach,
+            ViTriKe = phieu.ViTriKe
         });
     }
 

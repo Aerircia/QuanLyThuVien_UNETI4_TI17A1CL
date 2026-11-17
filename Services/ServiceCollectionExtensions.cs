@@ -1,3 +1,15 @@
+// Họ và tên: Lại Anh Quân; Phùng Ngọc Bảo; Vũ Tiến Thành
+// Mã sinh viên: 23103100255
+// Nội dung thực hiện: xây dựng cấu hình dịch vụ chung
+
+// Họ và tên: Phùng Ngọc Bảo
+// Mã sinh viên: 23103100278
+// Nội dung thực hiện: bổ sung cấu hình antiforgery và dịch vụ email/thông báo
+
+// Họ và tên: Vũ Tiến Thành
+// Mã sinh viên: 23103100257
+// Nội dung thực hiện: cập nhật giới hạn rate limit.
+
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Threading.RateLimiting;

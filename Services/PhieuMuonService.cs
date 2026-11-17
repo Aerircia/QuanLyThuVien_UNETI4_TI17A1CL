@@ -135,6 +135,7 @@ public class PhieuMuonService : IPhieuMuonService
                             (p.TrangThai == TrangThaiPhieuMuon.ChoDuyet ||
                              p.TrangThai == TrangThaiPhieuMuon.DaDuyet ||
                              p.TrangThai == TrangThaiPhieuMuon.DangMuon), ct);
+        result.SoPhieuDangXuLy = tongDangXuLy;
 
         if (tongDangXuLy >= cauHinh.SoPhieuToiDa)
         {

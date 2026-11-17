@@ -1,3 +1,11 @@
+// Họ và tên: Lại Anh Quân; Vũ Tiến Thành
+// Mã sinh viên: 23103100255; 23103100257
+// Nội dung thực hiện: xây dựng pipeline khởi động
+
+// Họ và tên: Vũ Tiến Thành
+// Mã sinh viên: 23103100257
+// Nội dung thực hiện: bổ sung middleware phục vụ ảnh bìa tải lên.
+
 using Microsoft.EntityFrameworkCore;
 using QuanLyThuVien_UNETI4_TI17A1CL.Data;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services;
