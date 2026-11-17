@@ -17,12 +17,14 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Services;
 public class PhieuMuonService : IPhieuMuonService
 {
     private readonly AppDbContext _db;
+    private readonly ICauHinhThuVienService _cauHinh;
     private readonly IThongBaoService _thongBao;
     private readonly ILogger<PhieuMuonService> _logger;
 
-    public PhieuMuonService(AppDbContext db, IThongBaoService thongBao, ILogger<PhieuMuonService> logger)
+    public PhieuMuonService(AppDbContext db, ICauHinhThuVienService cauHinh, IThongBaoService thongBao, ILogger<PhieuMuonService> logger)
     {
         _db = db;
+        _cauHinh = cauHinh;
         _thongBao = thongBao;
         _logger = logger;
     }
@@ -33,17 +35,12 @@ public class PhieuMuonService : IPhieuMuonService
         catch (Exception ex) { _logger.LogError(ex, "Không thể tạo thông báo cho sự kiện {EventName}", eventName); }
     }
 
-    private async Task<CauHinhThuVien> GetCauHinhAsync(CancellationToken ct = default)
-    {
-        return await _db.CauHinhThuViens.FirstOrDefaultAsync(ct) ?? new CauHinhThuVien();
-    }
-
     // 7.3. Đăng ký mượn sách: Kiểm tra 7 điều kiện bằng EF Core / LINQ
     public async Task<LoanEligibilityResult> CheckCanBorrowAsync(int maBanDoc, int maSach, CancellationToken ct = default)
     {
         var result = new LoanEligibilityResult { CanBorrow = true };
         var today = LibraryClock.Today();
-        var cauHinh = await GetCauHinhAsync(ct);
+        var cauHinh = await _cauHinh.GetAsync();
 
         // 1. Bạn đọc tồn tại, đang hoạt động và thẻ thư viện còn hạn
         var banDoc = await _db.BanDocs.AsNoTracking().FirstOrDefaultAsync(b => b.MaBanDoc == maBanDoc, ct);
@@ -322,7 +319,7 @@ public class PhieuMuonService : IPhieuMuonService
         if (p is null) return null;
 
         var isOverdue = p.TrangThai == TrangThaiPhieuMuon.DangMuon && p.HanTra.HasValue && p.HanTra.Value < today;
-        var cauHinh = await GetCauHinhAsync(ct);
+        var cauHinh = await _cauHinh.GetAsync();
 
         return new PhieuMuonDetailViewModel
         {
@@ -716,16 +713,8 @@ public class PhieuMuonService : IPhieuMuonService
         if (readerBlockers.Count > 0)
             return ServiceResult.Fail(string.Join(" ", readerBlockers));
 
-        var cauHinh = await GetCauHinhAsync(ct);
-
-        // Số ngày mượn theo loại bạn đọc từ cấu hình thư viện
         var loaiBanDoc = phieu.BanDoc?.LoaiBanDoc ?? LoaiBanDoc.SinhVien;
-        var soNgayMuon = loaiBanDoc switch
-        {
-            LoaiBanDoc.GiangVien => cauHinh.SoNgayMuonGiangVien,
-            LoaiBanDoc.Khac => cauHinh.SoNgayMuonKhac,
-            _ => cauHinh.SoNgayMuonSinhVien
-        };
+        var soNgayMuon = await _cauHinh.GetSoNgayMuonAsync(loaiBanDoc);
 
         var oldStatus = phieu.TrangThai;
         phieu.TrangThai = TrangThaiPhieuMuon.DangMuon;

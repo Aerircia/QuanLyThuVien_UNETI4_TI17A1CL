@@ -20,13 +20,15 @@ public class GiaHanMuonService : IGiaHanMuonService
     private const string MsgSaveFailed = "Không thể lưu thay đổi. Vui lòng thử lại.";
 
     private readonly AppDbContext _db;
+    private readonly ICauHinhThuVienService _cauHinh;
     private readonly TimeProvider _time;
     private readonly IThongBaoService _thongBao;
     private readonly ILogger<GiaHanMuonService> _logger;
 
-    public GiaHanMuonService(AppDbContext db, TimeProvider time, IThongBaoService thongBao, ILogger<GiaHanMuonService> logger)
+    public GiaHanMuonService(AppDbContext db, ICauHinhThuVienService cauHinh, TimeProvider time, IThongBaoService thongBao, ILogger<GiaHanMuonService> logger)
     {
         _db = db;
+        _cauHinh = cauHinh;
         _time = time;
         _thongBao = thongBao;
         _logger = logger;
@@ -82,7 +84,7 @@ public class GiaHanMuonService : IGiaHanMuonService
         if (phieu is null || phieu.MaBanDoc != maBanDoc)
             return null;
 
-        var cfg = await GetConfigAsync(ct);
+        var cfg = await _cauHinh.GetAsync();
         var canhBao = await CheckEligibilityAsync(phieu, cfg, 0, ct);
         var soLan = await CountApprovedAsync(phieu.MaPhieuMuon, ct);
         var tenSach = await _db.Sachs.AsNoTracking()
@@ -100,7 +102,7 @@ public class GiaHanMuonService : IGiaHanMuonService
         if (phieu is null || phieu.MaBanDoc != maBanDoc)
             return ServiceResult<int>.Error(string.Empty, MsgPhieuNotFound);
 
-        var cfg = await GetConfigAsync(ct);
+        var cfg = await _cauHinh.GetAsync();
         var result = new ServiceResult<int>();
 
         foreach (var loi in await CheckEligibilityAsync(phieu, cfg, 0, ct))
@@ -180,7 +182,7 @@ public class GiaHanMuonService : IGiaHanMuonService
         if (row is null)
             return null;
 
-        var cfg = await GetConfigAsync(ct);
+        var cfg = await _cauHinh.GetAsync();
         var soLan = await CountApprovedAsync(row.MaPhieuMuon, ct);
         var conLai = await SoLuongConLaiAsync(row.MaSach, ct);
 
@@ -221,7 +223,7 @@ public class GiaHanMuonService : IGiaHanMuonService
 
         if (input.Duyet)
         {
-            var cfg = await GetConfigAsync(ct);
+            var cfg = await _cauHinh.GetAsync();
             var phieu = new PhieuInfo(
                 phieuMuon.MaPhieuMuon, phieuMuon.MaBanDoc, phieuMuon.MaSach, phieuMuon.TrangThai, phieuMuon.HanTra);
 
@@ -364,6 +366,4 @@ public class GiaHanMuonService : IGiaHanMuonService
             .Select(p => new PhieuInfo(p.MaPhieuMuon, p.MaBanDoc, p.MaSach, p.TrangThai, p.HanTra))
             .FirstOrDefaultAsync(ct);
 
-    private async Task<CauHinhThuVien> GetConfigAsync(CancellationToken ct) =>
-        await _db.CauHinhThuViens.AsNoTracking().FirstOrDefaultAsync(ct) ?? new CauHinhThuVien();
 }

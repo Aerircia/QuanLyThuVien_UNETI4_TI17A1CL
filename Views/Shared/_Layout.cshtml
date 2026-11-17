@@ -24,6 +24,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#5b7f4d" />
     <title>@pageTitle - Thư viện UNETI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -31,7 +34,6 @@
     <link rel="stylesheet" href="~/css/crud.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
     <link rel="stylesheet" href="~/css/thongke.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/QuanLyThuVien_UNETI4_TI17A1CL.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/reader.css" asp-append-version="true" />
 </head>
 <body class="app-body @(isStaffLayout ? "app-body--staff" : "app-body--public")">

@@ -10,6 +10,8 @@
     var isOverdue = d.HanTraHienTai.HasValue && d.HanTraHienTai.Value < DateOnly.FromDateTime(DateTime.Now);
     var diffDays = d.HanTraMoi.DayNumber - d.HanTraCu.DayNumber;
     var validDays = diffDays > 0 && diffDays <= d.SoNgayToiDa;
+    const string warningPendingRenewal = "Phiếu đang có một yêu cầu gia hạn khác chờ duyệt.";
+    var hasOtherPendingRenewal = d.CanhBao.Contains(warningPendingRenewal);
 }
 <div id="process-alert" aria-live="polite"></div>
 
@@ -218,10 +220,10 @@
 
                     <div class="list-group-item px-0 py-2 border-0">
                         <div class="d-flex align-items-start gap-2">
-                            <span class="badge badge-soft-success mt-1">✓</span>
+                            <span class="badge @(hasOtherPendingRenewal ? "badge-soft-danger" : "badge-soft-success") mt-1">@(hasOtherPendingRenewal ? "✗" : "✓")</span>
                             <div>
-                                <strong class="d-block text-dark">Không có yêu cầu gia hạn khác đang chờ duyệt</strong>
-                                <span class="text-muted">Mỗi phiếu mượn chỉ tồn tại duy nhất 01 yêu cầu đang chờ xử lý.</span>
+                                <strong class="d-block text-dark">@(hasOtherPendingRenewal ? "Đã có yêu cầu gia hạn khác đang chờ duyệt" : "Không có yêu cầu gia hạn khác đang chờ duyệt")</strong>
+                                <span class="text-muted">@(hasOtherPendingRenewal ? "Chỉ một yêu cầu gia hạn cho mỗi phiếu được xử lý tại một thời điểm." : "Mỗi phiếu mượn chỉ tồn tại duy nhất 01 yêu cầu đang chờ xử lý.")</span>
                             </div>
                         </div>
                     </div>

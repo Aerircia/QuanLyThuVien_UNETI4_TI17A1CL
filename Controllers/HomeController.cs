@@ -62,12 +62,6 @@ public class HomeController : Controller
         return detail is null ? NotFound() : View(detail);
     }
 
-    [HttpGet("/TrangChu/QuyenRiengTu")]
-    public IActionResult Privacy()
-    {
-        return View();
-    }
-
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     [HttpGet("/Loi")]
     public IActionResult Error(int? statusCode = null)

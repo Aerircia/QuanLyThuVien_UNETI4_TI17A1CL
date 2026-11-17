@@ -77,5 +77,4 @@ public interface ITraSachService
     Task<TraSachPreview?> GetPreviewAsync(int maPhieuMuon, CancellationToken ct = default);
     Task<ServiceResult<int>> CreateAsync(TraSachInput input, int actingMaTaiKhoan, CancellationToken ct = default);
     Task<TraSachDetail?> GetAsync(int maTra, CancellationToken ct = default);
-    Task<ServiceResult> MarkPaidAsync(int maTra, CancellationToken ct = default);
 }

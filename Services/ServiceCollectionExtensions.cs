@@ -30,6 +30,8 @@ public static class ServiceCollectionExtensions
             options.Cookie.Name = ".LMS.Session";
             options.Cookie.HttpOnly = true;
             options.Cookie.IsEssential = true;
+            options.Cookie.SameSite = SameSiteMode.Lax;
+            options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
         });
 
         // Authentication uses a newly issued, protected cookie at sign-in. The
@@ -39,6 +41,8 @@ public static class ServiceCollectionExtensions
             {
                 options.Cookie.Name = ".LMS.Auth";
                 options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
                 options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
                 options.SlidingExpiration = true;
                 options.LoginPath = "/TaiKhoan/DangNhap";
