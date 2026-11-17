@@ -51,7 +51,8 @@ public class QuanLyBanDocController : Controller
         var tongSo = await _db.BanDocs.CountAsync(HttpContext.RequestAborted);
         var choDuyet = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.ChoDuyet, HttpContext.RequestAborted);
         var hoatDong = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.HoatDong, HttpContext.RequestAborted);
-        var ngungHoatDong = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.NgungHoatDong || b.TrangThai == TrangThaiBanDoc.TuChoi, HttpContext.RequestAborted);
+        var ngungHoatDong = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.NgungHoatDong, HttpContext.RequestAborted);
+        var tuChoi = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.TuChoi, HttpContext.RequestAborted);
 
         return BanDocView(nameof(Index), new BanDocListViewModel
         {
@@ -64,7 +65,8 @@ public class QuanLyBanDocController : Controller
             TongSoBanDoc = tongSo,
             SoBanDocChoDuyet = choDuyet,
             SoBanDocHoatDong = hoatDong,
-            SoBanDocNgungHoatDong = ngungHoatDong
+            SoBanDocNgungHoatDong = ngungHoatDong,
+            SoBanDocTuChoi = tuChoi
         });
     }
 
@@ -86,7 +88,8 @@ public class QuanLyBanDocController : Controller
         var tongSo = await _db.BanDocs.CountAsync(HttpContext.RequestAborted);
         var choDuyet = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.ChoDuyet, HttpContext.RequestAborted);
         var hoatDong = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.HoatDong, HttpContext.RequestAborted);
-        var ngungHoatDong = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.NgungHoatDong || b.TrangThai == TrangThaiBanDoc.TuChoi, HttpContext.RequestAborted);
+        var ngungHoatDong = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.NgungHoatDong, HttpContext.RequestAborted);
+        var tuChoi = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.TuChoi, HttpContext.RequestAborted);
 
         var model = new BanDocListViewModel
         {
@@ -99,7 +102,8 @@ public class QuanLyBanDocController : Controller
             TongSoBanDoc = tongSo,
             SoBanDocChoDuyet = choDuyet,
             SoBanDocHoatDong = hoatDong,
-            SoBanDocNgungHoatDong = ngungHoatDong
+            SoBanDocNgungHoatDong = ngungHoatDong,
+            SoBanDocTuChoi = tuChoi
         };
 
         var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Query.ContainsKey("ajax");

@@ -51,6 +51,7 @@ public sealed class BanDocListViewModel
     public int SoBanDocChoDuyet { get; set; }
     public int SoBanDocHoatDong { get; set; }
     public int SoBanDocNgungHoatDong { get; set; }
+    public int SoBanDocTuChoi { get; set; }
 }
 
 public sealed class BanDocDetail

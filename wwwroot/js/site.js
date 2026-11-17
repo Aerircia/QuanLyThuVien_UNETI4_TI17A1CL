@@ -6,22 +6,36 @@
 
   const sidebarToggle = document.querySelector('[data-app-sidebar-toggle]');
   const sidebarClose = document.querySelector('[data-app-sidebar-close]');
+  const sidebar = document.getElementById('appSidebar');
   const publicNavToggle = document.querySelector('[data-app-nav-toggle]');
   const publicNav = document.getElementById('appPublicNav');
 
   const setSidebarOpen = (isOpen) => {
     document.body.classList.toggle('app-sidebar-open', isOpen);
+    const isMobile = window.matchMedia('(max-width: 900px)').matches;
+    if (sidebar) {
+      sidebar.inert = isMobile && !isOpen;
+      sidebar.setAttribute('aria-hidden', String(isMobile && !isOpen));
+    }
     if (sidebarToggle) {
       sidebarToggle.setAttribute('aria-expanded', String(isOpen));
       sidebarToggle.setAttribute('aria-label', isOpen ? 'Đóng menu điều hướng' : 'Mở menu điều hướng');
     }
   };
 
+  setSidebarOpen(false);
+
   sidebarToggle?.addEventListener('click', () => {
     setSidebarOpen(!document.body.classList.contains('app-sidebar-open'));
   });
 
   sidebarClose?.addEventListener('click', () => setSidebarOpen(false));
+
+  sidebar?.querySelectorAll('a[href]').forEach((link) => {
+    link.addEventListener('click', () => {
+      if (window.matchMedia('(max-width: 900px)').matches) setSidebarOpen(false);
+    });
+  });
 
   publicNavToggle?.addEventListener('click', () => {
     if (!publicNav) return;

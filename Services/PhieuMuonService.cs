@@ -4,6 +4,7 @@
 
 using System.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using QuanLyThuVien_UNETI4_TI17A1CL.Data;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums;
@@ -33,6 +34,31 @@ public class PhieuMuonService : IPhieuMuonService
     {
         try { await action(); }
         catch (Exception ex) { _logger.LogError(ex, "Không thể tạo thông báo cho sự kiện {EventName}", eventName); }
+    }
+
+    // Acquire an update lock before checking a loan's current state. The lock stays
+    // held through the transaction that writes both the loan and its history row.
+    private IQueryable<PhieuMuon> LoanForUpdate(int maPhieuMuon, bool includeReader = false, bool includeBook = false)
+    {
+        IQueryable<PhieuMuon> query = _db.PhieuMuons.FromSqlInterpolated(
+            $"SELECT * FROM [PhieuMuon] WITH (UPDLOCK, ROWLOCK) WHERE [MaPhieuMuon] = {maPhieuMuon}");
+        if (includeReader) query = query.Include(p => p.BanDoc);
+        if (includeBook) query = query.Include(p => p.Sach);
+        return query;
+    }
+
+    private async Task<bool> TryAcquireReaderLoanLockAsync(int maBanDoc, CancellationToken ct)
+    {
+        await using var command = _db.Database.GetDbConnection().CreateCommand();
+        command.Transaction = _db.Database.CurrentTransaction?.GetDbTransaction();
+        command.CommandText = "DECLARE @result int; EXEC @result = sp_getapplock @Resource = @resource, @LockMode = 'Exclusive', @LockOwner = 'Transaction', @LockTimeout = 15000; SELECT @result;";
+        var resource = command.CreateParameter();
+        resource.ParameterName = "@resource";
+        resource.Value = $"LMS:ActiveLoans:Reader:{maBanDoc}";
+        command.Parameters.Add(resource);
+
+        await using var reader = await command.ExecuteReaderAsync(ct);
+        return await reader.ReadAsync(ct) && reader.GetInt32(0) >= 0;
     }
 
     // 7.3. Đăng ký mượn sách: Kiểm tra 7 điều kiện bằng EF Core / LINQ
@@ -125,6 +151,12 @@ public class PhieuMuonService : IPhieuMuonService
 
     public async Task<ServiceResult<int>> RegisterLoanAsync(int maBanDoc, int maSach, string? ghiChu, CancellationToken ct = default)
     {
+        // Serialize registrations for the same reader across app instances so the
+        // active-loan count cannot be exceeded by concurrent requests.
+        await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        if (!await TryAcquireReaderLoanLockAsync(maBanDoc, ct))
+            return ServiceResult<int>.Error(string.Empty, "Không thể đăng ký mượn cùng lúc. Vui lòng thử lại.");
+
         var check = await CheckCanBorrowAsync(maBanDoc, maSach, ct);
         if (!check.CanBorrow)
         {
@@ -135,7 +167,8 @@ public class PhieuMuonService : IPhieuMuonService
         }
 
         var banDoc = await _db.BanDocs.FindAsync(new object[] { maBanDoc }, ct);
-        if (banDoc is null) return ServiceResult<int>.Error(string.Empty, "Bạn đọc không tồn tại.");
+        if (banDoc is null)
+            return ServiceResult<int>.Error(string.Empty, "Bạn đọc không tồn tại.");
 
         var today = LibraryClock.Today();
         var phieuMuon = new PhieuMuon
@@ -168,6 +201,7 @@ public class PhieuMuonService : IPhieuMuonService
         try
         {
             await _db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
         }
         catch (DbUpdateException)
         {
@@ -183,9 +217,8 @@ public class PhieuMuonService : IPhieuMuonService
     // 7.4. Hủy phiếu mượn
     public async Task<ServiceResult> CancelLoanAsync(int maPhieuMuon, int maBanDoc, CancellationToken ct = default)
     {
-        var phieu = await _db.PhieuMuons
-            .Include(p => p.BanDoc)
-            .FirstOrDefaultAsync(p => p.MaPhieuMuon == maPhieuMuon, ct);
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        var phieu = await LoanForUpdate(maPhieuMuon, includeReader: true).FirstOrDefaultAsync(ct);
 
         if (phieu is null)
             return ServiceResult.Fail("Không tìm thấy phiếu mượn.");
@@ -216,6 +249,7 @@ public class PhieuMuonService : IPhieuMuonService
         });
 
         await _db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
         await NotifySafelyAsync(() => _thongBao.NotifyStaffAsync(
             "Bạn đọc đã hủy yêu cầu mượn", $"Phiếu #{phieu.MaPhieuMuon} đã được bạn đọc hủy.",
             $"loan-reader-cancel:{phieu.MaPhieuMuon}", "/ThuThu/QuanLyPhieuMuon", "loan", ct), "loan-reader-cancel");
@@ -578,10 +612,8 @@ public class PhieuMuonService : IPhieuMuonService
         // Serializable: hai thủ thư duyệt cùng lúc không thể cùng lấy bản sách cuối.
         await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
 
-        var phieu = await _db.PhieuMuons
-            .Include(p => p.Sach)
-            .Include(p => p.BanDoc)
-            .FirstOrDefaultAsync(p => p.MaPhieuMuon == maPhieuMuon, ct);
+        var phieu = await LoanForUpdate(maPhieuMuon, includeReader: true, includeBook: true)
+            .FirstOrDefaultAsync(ct);
 
         if (phieu is null)
             return ServiceResult.Fail("Không tìm thấy phiếu mượn.");
@@ -663,7 +695,8 @@ public class PhieuMuonService : IPhieuMuonService
         if (nhanXet.Length > 100)
             return ServiceResult.Fail("Lý do từ chối tối đa 100 ký tự.");
 
-        var phieu = await _db.PhieuMuons.FirstOrDefaultAsync(p => p.MaPhieuMuon == maPhieuMuon, ct);
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        var phieu = await LoanForUpdate(maPhieuMuon).FirstOrDefaultAsync(ct);
         if (phieu is null)
             return ServiceResult.Fail("Không tìm thấy phiếu mượn.");
 
@@ -686,6 +719,7 @@ public class PhieuMuonService : IPhieuMuonService
         });
 
         await _db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
         await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
             phieu.MaPhieuMuon, "Yêu cầu mượn sách bị từ chối",
             $"Yêu cầu mượn sách của bạn đã bị từ chối. Lý do: {nhanXet}",
@@ -695,9 +729,8 @@ public class PhieuMuonService : IPhieuMuonService
 
     public async Task<ServiceResult> DeliverBookAsync(int maPhieuMuon, int actingMaTaiKhoan, CancellationToken ct = default)
     {
-        var phieu = await _db.PhieuMuons
-            .Include(p => p.BanDoc)
-            .FirstOrDefaultAsync(p => p.MaPhieuMuon == maPhieuMuon, ct);
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        var phieu = await LoanForUpdate(maPhieuMuon, includeReader: true).FirstOrDefaultAsync(ct);
 
         if (phieu is null)
             return ServiceResult.Fail("Không tìm thấy phiếu mượn.");
@@ -732,6 +765,7 @@ public class PhieuMuonService : IPhieuMuonService
         });
 
         await _db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
         await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
             phieu.MaPhieuMuon, "Bạn đã nhận sách thành công",
             $"Thư viện đã bàn giao sách cho bạn. Hạn trả: {phieu.HanTra:dd/MM/yyyy}.",
@@ -741,9 +775,8 @@ public class PhieuMuonService : IPhieuMuonService
 
     public async Task<ServiceResult> CancelLoanByStaffAsync(int maPhieuMuon, int actingMaTaiKhoan, string? lyDo = null, CancellationToken ct = default)
     {
-        var phieu = await _db.PhieuMuons
-            .Include(p => p.BanDoc)
-            .FirstOrDefaultAsync(p => p.MaPhieuMuon == maPhieuMuon, ct);
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        var phieu = await LoanForUpdate(maPhieuMuon, includeReader: true).FirstOrDefaultAsync(ct);
 
         if (phieu is null)
             return ServiceResult.Fail("Không tìm thấy phiếu mượn.");
@@ -774,6 +807,7 @@ public class PhieuMuonService : IPhieuMuonService
         });
 
         await _db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
         await NotifySafelyAsync(() => _thongBao.NotifyReaderForLoanAsync(
             phieu.MaPhieuMuon, "Phiếu mượn đã bị hủy",
             $"Phiếu mượn của bạn đã bị hủy. Lý do: {phieu.NhanXetThuThu}",
@@ -791,6 +825,7 @@ public class PhieuMuonService : IPhieuMuonService
         await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
 
         var overdueLoans = await _db.PhieuMuons
+            .FromSqlRaw("SELECT * FROM [PhieuMuon] WITH (UPDLOCK, ROWLOCK)")
             .Include(p => p.BanDoc)
             .Where(p => p.TrangThai == TrangThaiPhieuMuon.DaDuyet
                      && !p.NgayMuon.HasValue
