@@ -1,4 +1,6 @@
-// Dựng ClaimsPrincipal cho cookie xác thực từ CurrentUser. Đây là nơi duy nhất định nghĩa các claim.
+// Họ và tên: Vũ Tiến Thành
+// Mã sinh viên: 23103100257
+// Nội dung thực hiện: Dựng ClaimsPrincipal cho cookie xác thực từ CurrentUser; tập trung định nghĩa các claim tại một nơi.
 
 using System.Security.Claims;
 

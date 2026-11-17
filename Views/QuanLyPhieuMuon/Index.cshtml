@@ -1,32 +1,16 @@
      @* Họ và tên: Nguyễn Hữu Tuấn *@
 @* Mã sinh viên: 23103100136 *@
-@* Nội dung thực hiện: View quản lý phiếu mượn (Thủ thư & Admin) - 3 nhóm filter, hủy phiếu đã duyệt, tự động hủy quá 7 ngày, AJAX *@
+@* Nội dung thực hiện: View quản lý phiếu mượn (Thủ thư & Admin) - lọc, sắp xếp và xử lý phiếu mượn bằng AJAX *@
 @model QuanLyThuVien_UNETI4_TI17A1CL.ViewModels.PhieuMuonManageListViewModel
 @using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums
 @{
     ViewData["Title"] = "Quản lý phiếu mượn";
-    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
 }
 
 <div class="container-fluid py-2">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-        <div>
-            <h1 class="h4 mb-0">Quản lý phiếu mượn</h1>
-            <p class="text-muted small mb-0">Xử lý yêu cầu đăng ký mượn sách, xác nhận duyệt, giao sách, hủy phiếu và giám sát hạn trả.</p>
-        </div>
-        <div>
-        <form asp-action="TuDongHuyQuaHan" method="post" class="d-inline loan-action-form" id="autoCancelOverdueForm" data-ajax-action="json" data-ajax-refresh="#manageLoansContainer" data-ajax-alert="#manageLoansAlertContainer">
-                <input type="hidden" name="returnUrl" value="@returnUrl" />
-                <button type="button" class="btn btn-outline-danger"
-                        data-confirm-form="#autoCancelOverdueForm"
-                        data-confirm-title="Tự động hủy phiếu quá 7 ngày"
-                        data-confirm-message="Hệ thống sẽ quét và hủy tất cả các phiếu mượn đã duyệt nhưng quá 7 ngày bạn đọc chưa đến nhận sách. Bản sách sẽ được hoàn lại kho. Bạn có muốn tiếp tục?"
-                        data-confirm-ok="Tự động hủy"
-                        data-confirm-class="btn-danger">
-                    <i class="bi bi-clock-history"></i> Tự động hủy quá 7 ngày
-                </button>
-            </form>
-        </div>
+    <div class="mb-3">
+        <h1 class="h4 mb-0">Quản lý phiếu mượn</h1>
+        <p class="text-muted small mb-0">Xử lý yêu cầu đăng ký mượn sách, xác nhận duyệt, giao sách, hủy phiếu và giám sát hạn trả.</p>
     </div>
 
     <partial name="_AlertsPartial" />

@@ -15,7 +15,7 @@
     var cards = new[]
     {
         new { Label = "Tổng số cuốn", Value = summary.TongCuonSach.ToString("N0"), Note = "Quy mô kho sách", Tone = "cyan", Icon = "layers" },
-        new { Label = "Bạn đọc", Value = summary.TongBanDoc.ToString("N0"), Note = "Thẻ đã được cấp", Tone = "green", Icon = "users" },
+        new { Label = "Hồ sơ bạn đọc", Value = summary.TongBanDoc.ToString("N0"), Note = "Tổng số hồ sơ trong hệ thống", Tone = "green", Icon = "users" },
         new { Label = "Tổng phiếu mượn", Value = summary.TongPhieuMuon.ToString("N0"), Note = "Mọi trạng thái", Tone = "cyan", Icon = "clipboard" },
         new { Label = "Chờ duyệt", Value = summary.SoPhieuChoDuyet.ToString("N0"), Note = "Cần thủ thư xử lý", Tone = "amber", Icon = "clock" },
         new { Label = "Đang mượn", Value = summary.SoPhieuDangMuon.ToString("N0"), Note = "Phiếu đã giao sách", Tone = "green", Icon = "book" },

@@ -277,8 +277,15 @@ body.app-body h3 { font-size: 1.1rem; }
 .app-eyebrow { display: block; margin-bottom: 2px; color: var(--app-muted); font-size: 10px; font-weight: 800; letter-spacing: .10em; }
 .app-topbar-context { color: var(--app-text); font-size: 15px; font-weight: 700; }
 .app-content { flex: 1; min-width: 0; padding: 26px 28px 34px; }
-.app-sidebar-toggle { display: none !important; }
+.app-sidebar-toggle { display: none; }
 .app-sidebar-backdrop { display: none; }
+.app-icon-button {
+  display: inline-grid; place-items: center; width: 40px; height: 40px; padding: 0;
+  border: 1px solid var(--app-line); border-radius: 12px; background: #fff; color: var(--app-text);
+  font-size: 19px; line-height: 1; cursor: pointer;
+}
+.app-icon-button:hover { color: var(--app-ac); background: var(--app-ac-soft); }
+.app-icon-button:focus-visible { outline: 3px solid rgba(91,127,77,.28); outline-offset: 2px; }
 .app-public-shell { min-height: 100vh; display: flex; flex-direction: column; }
 .app-public-header {
   position: sticky; top: 0; z-index: 1030; display: flex; align-items: center; gap: 24px;
@@ -562,3 +569,27 @@ body.app-body .form-select option:checked { color: #fff; background: var(--app-a
 .app-nav-icon svg { display: block; width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; fill: none; }
 /* Trạng thái icon sidebar đã được định nghĩa cùng nhóm .app-nav-link ở trên */
 .app-nav-link:focus-visible { outline: 3px solid rgba(91,127,77,.22); outline-offset: 2px; }
+
+@media (max-width: 900px) {
+  .app-shell { display: block; }
+  .app-sidebar {
+    position: fixed; inset: 0 auto 0 0; width: min(290px, calc(100vw - 52px)); height: 100dvh;
+    transform: translateX(-105%); transition: transform .22s ease; box-shadow: 12px 0 32px rgba(27,44,20,.14);
+  }
+  body.app-sidebar-open { overflow: hidden; }
+  body.app-sidebar-open .app-sidebar { transform: translateX(0); }
+  .app-sidebar-backdrop {
+    position: fixed; inset: 0; z-index: 1035; display: block; visibility: hidden; padding: 0; border: 0;
+    background: rgba(21,31,18,.42); opacity: 0; pointer-events: none;
+    transition: opacity .22s ease, visibility 0s linear .22s;
+  }
+  body.app-sidebar-open .app-sidebar-backdrop { visibility: visible; opacity: 1; pointer-events: auto; transition: opacity .22s ease; }
+  .app-sidebar-toggle { display: inline-grid !important; flex: 0 0 40px; }
+  .app-topbar { min-height: 64px; padding: 9px 16px; }
+  .app-content { padding: 20px 16px 28px; }
+  .app-footer--staff { padding-inline: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar, .app-sidebar-backdrop { transition: none; }
+}

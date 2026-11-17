@@ -3,8 +3,6 @@
 // Nội dung thực hiện: Controller quản lý bạn đọc (Admin và Thủ thư). Tách từ BanDocController phía bạn đọc.
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using QuanLyThuVien_UNETI4_TI17A1CL.Data;
 using QuanLyThuVien_UNETI4_TI17A1CL.Models.Enums;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Auth;
 using QuanLyThuVien_UNETI4_TI17A1CL.Services.Common;
@@ -16,12 +14,10 @@ namespace QuanLyThuVien_UNETI4_TI17A1CL.Controllers;
 public class QuanLyBanDocController : Controller
 {
     private readonly IBanDocService _banDocService;
-    private readonly AppDbContext _db;
 
-    public QuanLyBanDocController(IBanDocService banDocService, AppDbContext db)
+    public QuanLyBanDocController(IBanDocService banDocService)
     {
         _banDocService = banDocService;
-        _db = db;
     }
 
     private ViewResult BanDocView(string viewName, object? model = null) => View($"~/Views/BanDoc/{viewName}.cshtml", model);
@@ -48,10 +44,7 @@ public class QuanLyBanDocController : Controller
         if (loaiBanDoc.HasValue) routeValues["loaiBanDoc"] = loaiBanDoc.Value.ToString();
         if (trangThai.HasValue) routeValues["trangThai"] = trangThai.Value.ToString();
 
-        var tongSo = await _db.BanDocs.CountAsync(HttpContext.RequestAborted);
-        var choDuyet = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.ChoDuyet, HttpContext.RequestAborted);
-        var hoatDong = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.HoatDong, HttpContext.RequestAborted);
-        var ngungHoatDong = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.NgungHoatDong || b.TrangThai == TrangThaiBanDoc.TuChoi, HttpContext.RequestAborted);
+        var counts = await _banDocService.GetStatusCountsAsync(HttpContext.RequestAborted);
 
         return BanDocView(nameof(Index), new BanDocListViewModel
         {
@@ -61,10 +54,11 @@ public class QuanLyBanDocController : Controller
             PageSize = result.PageSize,
             Result = result,
             Pager = PagerViewModel.From(result, "QuanLyBanDoc", nameof(Index), routeValues),
-            TongSoBanDoc = tongSo,
-            SoBanDocChoDuyet = choDuyet,
-            SoBanDocHoatDong = hoatDong,
-            SoBanDocNgungHoatDong = ngungHoatDong
+            TongSoBanDoc = counts.TongSo,
+            SoBanDocChoDuyet = counts.ChoDuyet,
+            SoBanDocHoatDong = counts.HoatDong,
+            SoBanDocNgungHoatDong = counts.NgungHoatDong,
+            SoBanDocTuChoi = counts.TuChoi
         });
     }
 
@@ -83,10 +77,7 @@ public class QuanLyBanDocController : Controller
         var routeValues = new Dictionary<string, string>();
         if (search is not null) routeValues["search"] = search;
 
-        var tongSo = await _db.BanDocs.CountAsync(HttpContext.RequestAborted);
-        var choDuyet = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.ChoDuyet, HttpContext.RequestAborted);
-        var hoatDong = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.HoatDong, HttpContext.RequestAborted);
-        var ngungHoatDong = await _db.BanDocs.CountAsync(b => b.TrangThai == TrangThaiBanDoc.NgungHoatDong || b.TrangThai == TrangThaiBanDoc.TuChoi, HttpContext.RequestAborted);
+        var counts = await _banDocService.GetStatusCountsAsync(HttpContext.RequestAborted);
 
         var model = new BanDocListViewModel
         {
@@ -96,10 +87,11 @@ public class QuanLyBanDocController : Controller
             PageSize = result.PageSize,
             Result = result,
             Pager = PagerViewModel.From(result, "QuanLyBanDoc", nameof(DuyetThe), routeValues),
-            TongSoBanDoc = tongSo,
-            SoBanDocChoDuyet = choDuyet,
-            SoBanDocHoatDong = hoatDong,
-            SoBanDocNgungHoatDong = ngungHoatDong
+            TongSoBanDoc = counts.TongSo,
+            SoBanDocChoDuyet = counts.ChoDuyet,
+            SoBanDocHoatDong = counts.HoatDong,
+            SoBanDocNgungHoatDong = counts.NgungHoatDong,
+            SoBanDocTuChoi = counts.TuChoi
         };
 
         var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Query.ContainsKey("ajax");

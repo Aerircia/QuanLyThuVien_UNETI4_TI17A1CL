@@ -20,6 +20,7 @@ public class TraSachService : ITraSachService
     private const string MsgSaveFailed = "Không thể lưu thay đổi. Vui lòng thử lại.";
 
     private readonly AppDbContext _db;
+    private readonly ICauHinhThuVienService _cauHinh;
     private readonly TimeProvider _time;
     private readonly ITienPhatTreHanService _phatTre;
     private readonly ITienPhatTinhTrangSachService _phatTinhTrang;
@@ -28,6 +29,7 @@ public class TraSachService : ITraSachService
 
     public TraSachService(
         AppDbContext db,
+        ICauHinhThuVienService cauHinh,
         TimeProvider time,
         ITienPhatTreHanService phatTre,
         ITienPhatTinhTrangSachService phatTinhTrang,
@@ -35,6 +37,7 @@ public class TraSachService : ITraSachService
         ILogger<TraSachService> logger)
     {
         _db = db;
+        _cauHinh = cauHinh;
         _time = time;
         _phatTre = phatTre;
         _phatTinhTrang = phatTinhTrang;
@@ -123,7 +126,7 @@ public class TraSachService : ITraSachService
     if (detail is null)
         return null;
 
-    var cfg = await GetConfigAsync(ct);
+    var cfg = await _cauHinh.GetAsync();
     return detail with
     {
         PhatTre = _phatTre.TinhTienPhat(cfg, detail.SoNgayTre),
@@ -193,7 +196,7 @@ public class TraSachService : ITraSachService
         if (row is null)
             return null;
 
-        var cfg = await GetConfigAsync(ct);
+        var cfg = await _cauHinh.GetAsync();
         var ngayTra = Today;
         var soNgayTre = _phatTre.TinhSoNgayTre(row.HanTra, ngayTra);
 
@@ -240,7 +243,7 @@ public class TraSachService : ITraSachService
         if (await _db.TraSachs.AnyAsync(t => t.MaPhieuMuon == phieu.MaPhieuMuon, ct))
             return ServiceResult<int>.Error(string.Empty, "Phiếu này đã có bản ghi trả sách.");
 
-        var cfg = await GetConfigAsync(ct);
+        var cfg = await _cauHinh.GetAsync();
         var ngayTra = Today;
         var phat = TinhPhat(cfg, phieu.HanTra, ngayTra, input.TinhTrang, phieu.Sach.GiaBia);
         var soNgayTre = phat.SoNgayTre;
@@ -305,35 +308,4 @@ public class TraSachService : ITraSachService
         return ServiceResult<int>.Ok(traSach.MaTra);
     }
 
- //Nộp phạt
-
-    public async Task<ServiceResult> MarkPaidAsync(int maTra, CancellationToken ct = default)
-    {
-        var traSach = await _db.TraSachs.FirstOrDefaultAsync(t => t.MaTra == maTra, ct);
-        if (traSach is null)
-            return ServiceResult.Fail(MsgTraNotFound);
-
-        if (traSach.TrangThaiPhat != TrangThaiPhat.ChuaNop)
-            return ServiceResult.Fail("Chỉ khoản phạt chưa nộp mới được đánh dấu đã nộp.");
-
-        traSach.TrangThaiPhat = TrangThaiPhat.DaNop;
-
-        try
-        {
-            await _db.SaveChangesAsync(ct);
-        }
-        catch (DbUpdateException)
-        {
-            return ServiceResult.Fail(MsgSaveFailed);
-        }
-
-        await NotifySafelyAsync(() => _thongBao.NotifyReaderForFineAsync(
-            traSach.MaTra, "Khoản tiền phạt đã được thanh toán",
-            "Thư viện đã xác nhận khoản tiền phạt của bạn được thanh toán.",
-            $"fine-paid:{traSach.MaTra}", "/BanDoc/TienPhat", ct), "fine-paid");
-        return ServiceResult.Success();
-    }
-
-    private async Task<CauHinhThuVien> GetConfigAsync(CancellationToken ct) =>
-        await _db.CauHinhThuViens.AsNoTracking().FirstOrDefaultAsync(ct) ?? new CauHinhThuVien();
 }

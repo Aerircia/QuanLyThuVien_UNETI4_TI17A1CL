@@ -1,3 +1,15 @@
+// Họ và tên: Lại Anh Quân; Phùng Ngọc Bảo; Vũ Tiến Thành
+// Mã sinh viên: 23103100255
+// Nội dung thực hiện: xây dựng cấu hình dịch vụ chung
+
+// Họ và tên: Phùng Ngọc Bảo
+// Mã sinh viên: 23103100278
+// Nội dung thực hiện: bổ sung cấu hình antiforgery và dịch vụ email/thông báo
+
+// Họ và tên: Vũ Tiến Thành
+// Mã sinh viên: 23103100257
+// Nội dung thực hiện: cập nhật giới hạn rate limit.
+
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Threading.RateLimiting;
@@ -30,6 +42,8 @@ public static class ServiceCollectionExtensions
             options.Cookie.Name = ".LMS.Session";
             options.Cookie.HttpOnly = true;
             options.Cookie.IsEssential = true;
+            options.Cookie.SameSite = SameSiteMode.Lax;
+            options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
         });
 
         // Authentication uses a newly issued, protected cookie at sign-in. The
@@ -39,6 +53,8 @@ public static class ServiceCollectionExtensions
             {
                 options.Cookie.Name = ".LMS.Auth";
                 options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
                 options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
                 options.SlidingExpiration = true;
                 options.LoginPath = "/TaiKhoan/DangNhap";

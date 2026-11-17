@@ -48,6 +48,9 @@
         <a asp-action="Index" asp-route-trangThai="@(nameof(TrangThaiBanDoc.NgungHoatDong))" data-ajax-list-target="#vung-ket-qua-ban-doc" data-ajax-clear-form="#bo-loc-ban-doc" class="btn btn-sm quick-tab-ban-doc @(Model.TrangThai == TrangThaiBanDoc.NgungHoatDong ? "btn-primary" : "btn-light border")" data-active-class="btn-primary" data-gia-tri="@((int)TrangThaiBanDoc.NgungHoatDong)">
             Ngừng hoạt động / Khóa (@Model.SoBanDocNgungHoatDong)
         </a>
+        <a asp-action="Index" asp-route-trangThai="@(nameof(TrangThaiBanDoc.TuChoi))" data-ajax-list-target="#vung-ket-qua-ban-doc" data-ajax-clear-form="#bo-loc-ban-doc" class="btn btn-sm quick-tab-ban-doc @(Model.TrangThai == TrangThaiBanDoc.TuChoi ? "btn-danger" : "btn-light border")" data-active-class="btn-danger" data-gia-tri="@((int)TrangThaiBanDoc.TuChoi)">
+            Từ chối (@Model.SoBanDocTuChoi)
+        </a>
     </div>
 
     <!-- Bộ lọc tìm kiếm -->

@@ -53,9 +53,13 @@ public sealed record DangKyTheBanDocInput(
     string DiaChi,
     LoaiBanDoc LoaiBanDoc);
 
+public sealed record BanDocStatusCounts(int TongSo, int ChoDuyet, int HoatDong, int NgungHoatDong, int TuChoi);
+
 public interface IBanDocService
 {
     Task<PagedResult<BanDocListItem>> GetListAsync(BanDocFilter filter, CancellationToken ct = default);
+
+    Task<BanDocStatusCounts> GetStatusCountsAsync(CancellationToken ct = default);
 
     Task<BanDocDetail?> GetAsync(int maBanDoc, CancellationToken ct = default);
 
